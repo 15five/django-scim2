@@ -24,7 +24,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
     description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
-    download_url='https://bitbucket.org/atlassian/django_scim/downloads/scim-0.1.tar.gz',
+    download_url='https://bitbucket.org/atlassian/django_scim/downloads/django_scim-0.1.tar.gz',
     keywords='django scim',
     license='MIT',
     long_description=long_description(),
