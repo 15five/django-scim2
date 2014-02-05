@@ -26,6 +26,7 @@ setup(
     description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
     download_url='https://bitbucket.org/evzijst/django_scim/downloads/scim-0.1.tar.gz',
     keywords='django scim',
+    license='MIT',
     long_description=long_description(),
     name='django_scim',
     packages=['django_scim'],
