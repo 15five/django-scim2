@@ -1,6 +1,5 @@
 import pytz
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
 
@@ -15,13 +14,7 @@ class SCIMUser(object):
 
     @property
     def display_name(self):
-        try:
-            profile = self.user.get_profile()
-        except ObjectDoesNotExist:
-            return self.user.username
-        if profile and profile.is_team:
-            return self.user.first_name or self.user.username
-        elif self.user.first_name and self.user.last_name:
+        if self.user.first_name and self.user.last_name:
             return u'{0.first_name} {0.last_name}'.format(self.user)
         return self.user.username
 
@@ -36,7 +29,7 @@ class SCIMUser(object):
     @property
     def preferred_language(self):
         """SCIM 1.1 has a stricter definition of locale and language code than
-        we use in Bitbucket:
+        used in most Django applications:
 
         preferredLanguage: "Valid values are concatenation of the ISO 639-1 two
                             letter language code, an underscore, and the ISO
@@ -48,9 +41,8 @@ class SCIMUser(object):
                             ISO 3166-1 2 letter country code; e.g., 'en_US'
                             specifies the language English and country US."
 
-        Since we don't have country codes (and our crowdsourced translations
-        likely contain a mix of different national dialects), we're just going
-        to pretend each language is following its most influential country.
+        Since we don't have country codes, we're just going to pretend each
+        language is following its most influential country.
         """
         country = {
             'en': 'US',
@@ -68,12 +60,9 @@ class SCIMUser(object):
             return '%s_%s' % (lc[:2], country[lc])
 
     def to_dict(self):
-        algorithm, pwhash = self.user.password.split('$', 1)
-    
         d = {
-            'schemas': ['urn:scim:schemas:core:1.0',
-                        'urn:scim:schemas:extension:atlassian:1.0'],
-            'id': str(self.user.id), # AID expects this to be of type string
+            'schemas': ['urn:scim:schemas:core:1.0'],
+            'id': str(self.user.id),
             'userName': self.user.username,
             'name': {
                 'formatted': self.display_name,
@@ -85,14 +74,6 @@ class SCIMUser(object):
                        for email, primary in self.emails.iteritems()],
             'active': self.user.is_active,
             'groups': [],
-            'urn:scim:schemas:extension:atlassian:1.0': {
-                'homepageUrl': self.user.get_profile().website,
-                'location': self.user.get_profile().location,
-                'avatarUrl': self.user.get_profile().get_avatar_url(),
-                'hashAlgorithm': algorithm,
-                'passwordHash': pwhash,
-                'validatedEmails': self.emails.keys()
-            },
             'meta': {
                 'created': to_utc(self.user.date_joined).isoformat(),
                 'lastModified': to_utc(self.user.date_joined).isoformat(),
