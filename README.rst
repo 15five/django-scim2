@@ -1,7 +1,7 @@
 Django SCIM
 ===========
 
-This is a partial provider-side implementation of the SCIM 2.0[1]_
+This is a partial provider-side implementation of the SCIM 2.0 [1]_
 specification for use in Django. It covers:
 
 - Serialization of Django ``User`` objects to SCIM documents
@@ -18,7 +18,7 @@ Installation
 
     $ pip install django_scim
 
-Then add the ``django_scim` app to ``INSTALLED_APPS`` in Django's settings
+Then add the ``django_scim`` app to ``INSTALLED_APPS`` in Django's settings
 file and the necessary url mappings::
 
     urlpatterns = patterns('',
@@ -33,7 +33,7 @@ Extensibility
 
 By default, ``django_scim`` uses the email field on the ``User`` class. However,
 if your application maintains multiple identities using custom separate
-database tables, you can override `django_scim.models.SCIMUser`` and pull that
+database tables, you can override ``django_scim.models.SCIMUser`` and pull that
 in::
 
     from django_scim.models import SCIMUser as _SCIMUser
