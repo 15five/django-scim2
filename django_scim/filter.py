@@ -121,7 +121,7 @@ class SCIMFilterTransformer(STransformer):
     def bin_string_expr(self, exp):
         field, op, literal = exp.tail
         if op == 'sw':
-            literal = '%' + literal
+            literal += '%'
         elif op == 'co':
             literal = '%' + literal + '%'
         return '%s ILIKE %%(%s)s' % (field, self._push_param(literal))
