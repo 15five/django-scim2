@@ -10,6 +10,8 @@ specification for use in Django. It covers:
 - SCIM filter query parser covering all operators and most fields
 - Limited pluggability support
 
+Note that currently the only supported database is Postgres.
+
 
 Installation
 ------------
