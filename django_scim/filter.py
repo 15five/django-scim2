@@ -8,8 +8,8 @@ from django.contrib.auth.models import User
 grammar = Grammar("""
   start: logical_or;
 
-  ?logical_or: logical_or 'or' logical_or | logical_and;
-  ?logical_and: expr | logical_or 'and' logical_or;
+  ?logical_or: logical_or 'or' logical_and | logical_and;
+  ?logical_and: logical_and 'and' expr | expr;
 
   ?expr: (un_string_expr | un_expr) | bin_expr | '\(' logical_or '\)';
 
