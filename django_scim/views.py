@@ -84,8 +84,8 @@ class SearchView(SCIMView):
                 'itermsPerPage': count,
                 'startIndex': start,
                 'schemas': ['urn:scim:schemas:core:2.0'],
-                'Resource': [self.usercls(u).to_dict() for u
-                             in qs[start-1:(start-1) + count]]
+                'Resources': [self.usercls(u).to_dict() for u
+                              in qs[start-1:(start-1) + count]]
             }
         except ValueError, e:
             raise BadRequest(e)
