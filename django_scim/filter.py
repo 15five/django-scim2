@@ -165,7 +165,7 @@ class SCIMFilterTransformer(STransformer):
         """
         try:
             sql, params = cls().transform(grammar.parse(query))
-        except PlyplusException, e:
+        except PlyplusException as e:
             raise ValueError(e)
         else:
             return User.objects.raw(sql, params)
