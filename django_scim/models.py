@@ -1,11 +1,5 @@
-import pytz
-from django.conf import settings
 from django.core.urlresolvers import reverse
-
-
-def to_utc(date):
-    local_tz = pytz.timezone(settings.TIME_ZONE)
-    return local_tz.localize(date).astimezone(pytz.utc)
+from django.utils.timezone import utc
 
 
 class SCIMUser(object):
@@ -38,8 +32,8 @@ class SCIMUser(object):
             'active': self.user.is_active,
             'groups': [],
             'meta': {
-                'created': to_utc(self.user.date_joined).isoformat(),
-                'lastModified': to_utc(self.user.date_joined).isoformat(),
+                'created': utc.localize(self.user.date_joined).isoformat(),
+                'lastModified': utc.localize(self.user.date_joined).isoformat(),
                 'location': reverse('scim-user', args=(self.user.id,))
             }
         }
