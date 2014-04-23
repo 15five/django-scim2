@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from django.utils import six
 
 from django_scim.filter import SCIMFilterTransformer
 from django_scim.models import SCIMUser
@@ -29,7 +30,7 @@ class SCIMView(View):
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
-        except Exception, e:
+        except Exception as e:
             if not isinstance(e, SCIMException):
                 e = SCIMException(str(e))
 
@@ -38,7 +39,7 @@ class SCIMView(View):
             resp.content = json.dumps({
                 'Errors': [
                     {
-                        u'description': unicode(e),
+                        'description': six.u(e),
                         'code': e.status
                     }
                 ]
@@ -52,7 +53,7 @@ class UserView(SCIMView):
     def get(self, request, uuid):
         try:
             user = self.usercls(User.objects.get(id=uuid))
-        except ObjectDoesNotExist, e:
+        except ObjectDoesNotExist as e:
             raise NotFound(e)
         else:
             return HttpResponse(json.dumps(user.to_dict(), encoding='utf-8'),
@@ -73,7 +74,7 @@ class SearchView(SCIMView):
             if count is not None:
                 count = int(count)
             return start, count
-        except ValueError, e:
+        except ValueError as e:
             raise BadRequest('Invalid pagination values: ' + str(e))
 
     def _search(self, query, start, count):
@@ -87,7 +88,7 @@ class SearchView(SCIMView):
                 'Resources': [self.usercls(u).to_dict() for u
                               in qs[start-1:(start-1) + count]]
             }
-        except ValueError, e:
+        except ValueError as e:
             raise BadRequest(e)
         else:
             return HttpResponse(json.dumps(doc, encoding='utf-8'),
