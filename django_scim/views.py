@@ -81,7 +81,7 @@ class SearchView(SCIMView):
             qs = self.parser.search(query)
             doc = {
                 'totalResults': sum((1 for _ in qs)),
-                'itermsPerPage': count,
+                'itemsPerPage': count,
                 'startIndex': start,
                 'schemas': ['urn:scim:schemas:core:2.0'],
                 'Resources': [self.usercls(u).to_dict() for u
