@@ -28,7 +28,7 @@ class SCIMUser(object):
             },
             'displayName': self.display_name,
             'emails': [{'value': email, 'primary': primary}
-                       for email, primary in self.emails.iteritems()],
+                       for email, primary in self.emails.items()],
             'active': self.user.is_active,
             'groups': [],
             'meta': {
