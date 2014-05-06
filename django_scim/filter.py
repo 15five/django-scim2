@@ -83,8 +83,33 @@ class SCIMFilterTransformer(STransformer):
     is_active = lambda *args: 'u.is_active'
 
     # expressions:
-    logical_or = lambda self, exp: '(%s OR %s)' % (exp.tail[0], exp.tail[1])
     logical_and = lambda self, exp: '(%s AND %s)' % (exp.tail[0], exp.tail[1])
+
+    def logical_or(self, exp):
+        # We're not doing a simple 'OR', as that doesn't scale when the two
+        # conditions operate on different tables and rely on indices.
+        # This is because Postgres' query planner cannot leverage indices from
+        # different tables. Instead, we'll use a UNION.
+        #
+        # http://grokbase.com/t/postgresql/pgsql-general/034qrq6me0/left-join-not-using-index
+        return """
+            u.id IN
+            (
+                SELECT DISTINCT u.id
+                FROM auth_user u
+                {join}
+                WHERE
+                {operand1}
+
+                UNION
+
+                SELECT DISTINCT u.id
+                FROM auth_user u
+                {join}
+                WHERE
+                {operand2}
+            )
+        """.format(join=self.join(), operand1=exp.tail[0], operand2=exp.tail[1])
 
     # operators:
     gt = ge = lt = le = pr = eq = co = sw = lambda self, ex: ex.tail[0].lower()
