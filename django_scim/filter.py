@@ -4,22 +4,22 @@ import itertools
 from plyplus import Grammar, STransformer, PlyplusException
 from django.contrib.auth.models import User
 
-
 grammar = Grammar("""
   start: logical_or;
 
-  ?logical_or: logical_or 'or' logical_and | logical_and;
-  ?logical_and: logical_and 'and' expr | expr;
+  ?logical_or: logical_or op_or logical_and | logical_and;
+  ?logical_and: logical_and op_and expr | expr;
 
-  ?expr: (un_string_expr | un_expr) | bin_expr | '\(' logical_or '\)';
+  ?expr: passwd_expr | un_string_expr | un_expr | bin_expr | '\(' logical_or '\)';
 
-  ?bin_expr: (bin_string_expr | bin_passwd_expr | bin_pk_expr | bin_date_expr |
+  ?bin_expr: (bin_string_expr | bin_pk_expr | bin_date_expr |
               bin_bool_expr);
 
+  passwd_expr: ((password eq t_string op_and logical_or) |
+                (logical_or op_and password eq t_string));
   un_string_expr: (string_field | password) pr;
   un_expr: (date_field | bool_field) pr;
   bin_string_expr: string_field string_op t_string;
-  bin_passwd_expr: password eq t_string;
   bin_pk_expr: pk eq t_string;
   bin_date_expr: date_field date_op t_date;
   bin_bool_expr: bool_field eq t_bool;
@@ -27,11 +27,12 @@ grammar = Grammar("""
   ?string_op: eq | co | sw;
   ?date_op: eq | gt | ge | lt | le;
 
+  ?op_or: '(?i)or';
+  ?op_and: '(?i)and';
   pr: '(?i)pr';
   eq: '(?i)eq';
   co: '(?i)co';
   sw: '(?i)sw';
-  pr: '(?i)pr';
   gt: '(?i)gt';
   ge: '(?i)ge';
   lt: '(?i)lt';
@@ -66,6 +67,10 @@ class SCIMFilterTransformer(STransformer):
     t_string = lambda self, exp: exp.tail[0][1:-1]
     t_date = lambda self, exp: dateutil.parser.parse(exp.tail[0][1:-1])
     t_bool = lambda self, exp: exp.tail[0] == 'true'
+
+    # operators
+    op_or = lambda self, exp: 'OR'
+    op_and = lambda self, exp: 'AND'
 
     # fully qualified column names:
     pk = lambda *args: 'u.id'
@@ -106,10 +111,10 @@ class SCIMFilterTransformer(STransformer):
         return """
             SELECT DISTINCT u.*
             FROM auth_user u
-                {joins}
+                {join}
             WHERE {fragment}
             ORDER BY u.id ASC
-            """.format(joins=self.join(), fragment=exp.tail[0]), self._params
+            """.format(join=self.join(), fragment=exp.tail[0]), self._params
 
     def un_expr(self, exp):
         return '%s IS NOT NULL' % exp.tail[0]
@@ -139,22 +144,32 @@ class SCIMFilterTransformer(STransformer):
         field, op, value = exp.tail
         return '%s = %%(%s)s' % (field, self._push_param(int(value)))
 
-    def bin_passwd_expr(self, exp):
+    def passwd_expr(self, exp):
         pname = self._push_param(exp.tail[2])
         return """
+            u.id IN
             (
-              CHAR_LENGTH(password) >= 51
-              AND
-              (
-                -- Check for SHA1
-                SUBSTRING(password FROM 12) = ENCODE(DIGEST(SUBSTRING(
-                    password FROM 6 FOR 5)||%%(%s)s, 'sha1'), 'hex')
-                OR
-                -- Check for BCrypt
-                SUBSTRING(password FROM 8) = CRYPT(
-                  %%(%s)s, SUBSTRING(password FROM 8))
-              )
-            )""" % (pname, pname)
+                WITH users as (
+                    SELECT u.*
+                    FROM auth_user u
+                    {join}
+                    WHERE {fragment}
+                )
+
+                SELECT DISTINCT users.id
+                FROM users
+                WHERE
+                    CHAR_LENGTH(password) >= 51
+                    AND (
+                        -- Check for SHA1
+                        SUBSTRING(password FROM 12) = ENCODE(DIGEST(SUBSTRING(
+                            password FROM 6 FOR 5)||%({pname})s, 'sha1'), 'hex')
+                        OR
+                        -- Check for BCrypt
+                        SUBSTRING(password FROM 8) = CRYPT(
+                          %({pname})s, SUBSTRING(password FROM 8))
+                    )
+            )""".format(join=self.join(), fragment=exp.tail[3], pname=pname)
 
     @classmethod
     def search(cls, query):
