@@ -120,7 +120,10 @@ class SCIMFilterTransformer(STransformer):
 
     def bin_string_expr(self, exp):
         field, op, literal = exp.tail
-        if op == 'sw':
+        if op == 'eq':
+            return 'UPPER(%s) = UPPER(%%(%s)s)' % (field,
+                                                   self._push_param(literal))
+        elif op == 'sw':
             literal += '%'
         elif op == 'co':
             literal = '%' + literal + '%'
