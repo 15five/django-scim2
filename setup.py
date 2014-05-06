@@ -30,6 +30,7 @@ setup(
     long_description=long_description(),
     name='django_scim',
     packages=['django_scim'],
+    scripts=['scim'],
     url='https://bitbucket.org/atlassian/django_scim',
     version='0.4',
 )
