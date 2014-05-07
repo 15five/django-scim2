@@ -39,7 +39,7 @@ class SCIMView(View):
             resp.content = json.dumps({
                 'Errors': [
                     {
-                        'description': six.u(e),
+                        'description': unicode(e),
                         'code': e.status
                     }
                 ]
