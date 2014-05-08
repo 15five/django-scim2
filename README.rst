@@ -47,8 +47,7 @@ in::
         def __init__(self, user):
             super(SCIMUser, self).__init__(user)
             self.identities = (Identity.objects
-                                       .filter(profile__user_id=self.user.id)
-                                       .order_by('-primary'))
+                                       .filter(profile__user_id=self.user.id))
 
         @property
         def emails(self):
@@ -74,7 +73,7 @@ the filter query parser to make sure they can be queried on::
         def join(self):
             return """
                 JOIN bb_userprofile p ON p.user_id = u.id
-                JOIN bb_identity i ON i.profile_id = p.id
+                LEFT OUTER JOIN bb_identity i ON i.profile_id = p.id
                 """
 
 And pass it on to the view::
