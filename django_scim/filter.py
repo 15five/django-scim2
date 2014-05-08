@@ -10,7 +10,7 @@ grammar = Grammar("""
   ?logical_or: logical_or op_or logical_and | logical_and;
   ?logical_and: logical_and op_and expr | expr;
 
-  ?expr: (un_string_expr | un_expr) | bin_expr | '\(' logical_or '\)';
+  ?expr: un_string_expr | un_expr | bin_expr | '\(' logical_or '\)';
 
   ?bin_expr: (bin_string_expr | bin_passwd_expr | bin_pk_expr | bin_date_expr |
               bin_bool_expr);
