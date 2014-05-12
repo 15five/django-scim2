@@ -91,21 +91,23 @@ class SCIMFilterTransformer(STransformer):
         #
         # http://grokbase.com/t/postgresql/pgsql-general/034qrq6me0/left-join-not-using-index
         return u"""
-            u.id IN
-            (
-                SELECT DISTINCT u.id
-                FROM auth_user u
-                {join}
-                WHERE
-                {operand1}
+            u.id IN (
+                WITH users AS (
+                    SELECT DISTINCT u.id
+                    FROM auth_user u
+                    {join}
+                    WHERE
+                    {operand1}
 
-                UNION
+                    UNION
 
-                SELECT DISTINCT u.id
-                FROM auth_user u
-                {join}
-                WHERE
-                {operand2}
+                    SELECT DISTINCT u.id
+                    FROM auth_user u
+                    {join}
+                    WHERE
+                    {operand2}
+                )
+                SELECT DISTINCT id FROM users
             )
         """.format(join=self.join(), operand1=exp.tail[0], operand2=exp.tail[1])
 
