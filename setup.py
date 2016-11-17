@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 # Installs django_scim.
 
-import os, sys
-from distutils.core import setup
+from setuptools import setup
+import os
+import sys
+import unittest
+
 
 def long_description():
     """Get the long description from the README"""
     return open(os.path.join(sys.path[0], 'README.rst')).read()
+
+def run_tests():
+    test_loader = unittest.TestLoader()
+    return test_loader.discover('django_scim', pattern='test_*.py')
+
 
 setup(
     author='Erik van Zijst',
@@ -33,4 +41,6 @@ setup(
     scripts=['scim'],
     url='https://bitbucket.org/atlassian/django_scim',
     version='0.4.1',
+    test_suite='setup.run_tests',
 )
+
