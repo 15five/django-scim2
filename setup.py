@@ -38,6 +38,10 @@ setup(
     long_description=long_description(),
     name='django_scim',
     packages=['django_scim'],
+    install_requires=[
+        'python-dateutil==2.6.0',
+        'PlyPlus-ff==0.7.2b1',
+    ],
     scripts=['scim'],
     url='https://bitbucket.org/atlassian/django_scim',
     version='0.4.1',

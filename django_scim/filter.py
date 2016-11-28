@@ -2,7 +2,11 @@ import dateutil.parser
 import itertools
 
 from plyplus import Grammar, STransformer, PlyplusException
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+
+AUTH_USER_DB_TABLE = get_user_model()._meta.db_table
+
 
 grammar = Grammar("""
   start: logical_or;
@@ -58,7 +62,7 @@ grammar = Grammar("""
   """)
 
 
-class SCIMFilterTransformer(STransformer):
+class SCIMUserFilterTransformer(STransformer):
     """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
     and a dict with query parameters to go with the query."""
 
@@ -94,7 +98,7 @@ class SCIMFilterTransformer(STransformer):
             u.id IN (
                 WITH users AS (
                     SELECT DISTINCT u.id
-                    FROM auth_user u
+                    FROM {auth_user_db_table} u
                     {join}
                     WHERE
                     {operand1}
@@ -102,14 +106,17 @@ class SCIMFilterTransformer(STransformer):
                     UNION
 
                     SELECT DISTINCT u.id
-                    FROM auth_user u
+                    FROM {auth_user_db_table} u
                     {join}
                     WHERE
                     {operand2}
                 )
                 SELECT DISTINCT id FROM users
             )
-        """.format(join=self.join(), operand1=exp.tail[0], operand2=exp.tail[1])
+        """.format(join=self.join(),
+                   auth_user_db_table=AUTH_USER_DB_TABLE,
+                   operand1=exp.tail[0],
+                   operand2=exp.tail[1])
 
     def logical_and(self, exp):
         op1, op2 = exp.tail
@@ -132,14 +139,16 @@ class SCIMFilterTransformer(STransformer):
             (
                 WITH users AS (
                     SELECT DISTINCT u.id, u.password
-                    FROM auth_user u
+                    FROM {auth_user_db_table} u
                     {join}
                     WHERE {fragment}
                 )
                 SELECT DISTINCT users.id
                 FROM users
                 WHERE {password}
-            )""".format(join=self.join(), **params)
+            )""".format(join=self.join(),
+                        auth_user_db_table=AUTH_USER_DB_TABLE,
+                        **params)
 
     __default__ = lambda self, exp: exp.tail[0]
 
@@ -162,11 +171,13 @@ class SCIMFilterTransformer(STransformer):
     def start(self, exp):
         return u"""
             SELECT DISTINCT u.*
-            FROM auth_user u
+            FROM {auth_user_db_table} u
                 {join}
             WHERE {fragment}
             ORDER BY u.id ASC
-            """.format(join=self.join(), fragment=exp.tail[0]), self._params
+            """.format(join=self.join(),
+                       auth_user_db_table=AUTH_USER_DB_TABLE,
+                       fragment=exp.tail[0]), self._params
 
     def un_expr(self, exp):
         return u'%s IS NOT NULL' % exp.tail[0]
@@ -219,7 +230,7 @@ class SCIMFilterTransformer(STransformer):
     @classmethod
     def search(cls, query):
         """Takes a SCIM 1.1 filter query and returns a Django `QuerySet` that
-        contains zero or more `User` instances.
+        contains zero or more user model instances.
 
         :param unicode query:   a `unicode` query string.
         """
@@ -228,7 +239,7 @@ class SCIMFilterTransformer(STransformer):
         except PlyplusException as e:
             raise ValueError(e)
         else:
-            return User.objects.raw(sql, params)
+            return get_user_model().objects.raw(sql, params)
 
     class PasswordExpression(object):
         def __init__(self, sql):
