@@ -16,5 +16,7 @@ def load_schemas():
             with open(file_) as fp:
                 schemas.append(json.load(fp))
 
+    return schemas
+
 ALL = load_schemas()
 

@@ -8,6 +8,7 @@ from django.views.generic import View
 from django.utils import six
 
 from .filter import SCIMUserFilterTransformer
+from .models import SCIMGroup
 from .models import SCIMUser
 from .exceptions import SCIMException
 from .exceptions import NotFound
@@ -90,11 +91,11 @@ class ObjView(SCIMView):
     http_method_names = ['get']
 
     scim_model_cls = None
-    model_cls = None
+    model_cls_getter = None
 
     def get(self, request, uuid):
         try:
-            obj = self.scim_model_cls(self.model_cls.objects.get(id=uuid))
+            obj = self.scim_model_cls(self.model_cls_getter().objects.get(id=uuid))
         except ObjectDoesNotExist as e:
             raise NotFound(e)
         else:
@@ -130,6 +131,10 @@ class UsersSearchView(SearchView):
 class UsersView(SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
+
+
+
 
 
 
@@ -169,9 +174,11 @@ class ResourceTypesView(SCIMView):
 
     http_method_names = ['get']
 
-    type_models = SCIMUser, SCIMGroup
-    type_dicts = [m.resource_type_dict() for m in type_models]
-    type_dict_by_type_id = {d['id'] for d in type_dicts}
+    @property
+    def type_dict_by_type_id(self):
+        type_models = SCIMUser, SCIMGroup
+        type_dicts = [m.resource_type_dict() for m in type_models]
+        return {d['id'] for d in type_dicts}
 
     def get(self, request, type_id=None, *args, **kwargs):
         if type_id:

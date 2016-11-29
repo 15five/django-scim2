@@ -5,9 +5,6 @@ from plyplus import Grammar, STransformer, PlyplusException
 from django.contrib.auth import get_user_model
 
 
-AUTH_USER_DB_TABLE = get_user_model()._meta.db_table
-
-
 grammar = Grammar("""
   start: logical_or;
 
@@ -86,6 +83,10 @@ class SCIMUserFilterTransformer(STransformer):
     date_joined = lambda *args: u'u.date_joined'
     is_active = lambda *args: u'u.is_active'
 
+    @property
+    def auth_user_db_table(self):
+        return get_user_model()._meta.db_table
+
     # expressions:
     def logical_or(self, exp):
         # We're not doing a simple 'OR', as that doesn't scale when the two
@@ -114,7 +115,7 @@ class SCIMUserFilterTransformer(STransformer):
                 SELECT DISTINCT id FROM users
             )
         """.format(join=self.join(),
-                   auth_user_db_table=AUTH_USER_DB_TABLE,
+                   auth_user_db_table=self.auth_user_db_table,
                    operand1=exp.tail[0],
                    operand2=exp.tail[1])
 
@@ -147,7 +148,7 @@ class SCIMUserFilterTransformer(STransformer):
                 FROM users
                 WHERE {password}
             )""".format(join=self.join(),
-                        auth_user_db_table=AUTH_USER_DB_TABLE,
+                        auth_user_db_table=self.auth_user_db_table,
                         **params)
 
     __default__ = lambda self, exp: exp.tail[0]
@@ -176,7 +177,7 @@ class SCIMUserFilterTransformer(STransformer):
             WHERE {fragment}
             ORDER BY u.id ASC
             """.format(join=self.join(),
-                       auth_user_db_table=AUTH_USER_DB_TABLE,
+                       auth_user_db_table=self.auth_user_db_table,
                        fragment=exp.tail[0]), self._params
 
     def un_expr(self, exp):

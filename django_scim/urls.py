@@ -6,59 +6,65 @@ from .constants import BASE_URL_REGEX
 from .models import SCIMUser
 from .models import SCIMGroup
 from .utils import get_group_model
-from .views import UserSearchView
-from .views import UserView
-from .views import ObjView
+from . import views
 
 
 class SCIMUrls(object):
     urlpatterns = [
         url(r'^.search$',
-            SearchView.as_view(),
+            views.SearchView.as_view(),
             name='search'),
 
         url(r'^Users/.search$',
-            UserSearchView.as_view(),
+            views.UsersSearchView.as_view(),
             name='users-search'),
+
         url(r'^Users$',
-            UsersView.as_view(),
+            views.UsersView.as_view(),
             name='users'),
+
         url(r'^Users/([^/]+)$',
-            ObjView.as_view(scim_model_cls=SCIMUser, model_cls=get_user_model()),
+            views.ObjView.as_view(scim_model_cls=SCIMUser, model_cls_getter=get_user_model),
             name='user'),
 
         url(r'^Groups/.search$',
-            GroupsSearchView.as_view(),
+            views.GroupsSearchView.as_view(),
             name='groups-search'),
+
         url(r'^Groups$',
-            GroupsView.as_view(),
+            views.GroupsView.as_view(),
             name='groups'),
+
         url(r'^Groups/([^/]+)$',
-            ObjView.as_view(scim_model_cls=SCIMGroup, model_cls=get_group_model()),
+            views.ObjView.as_view(scim_model_cls=SCIMGroup, model_cls_getter=get_group_model),
             name='group'),
 
         url(r'^Me$',
-            MeView.as_view(),
+            views.MeView.as_view(),
             name='me'),
 
         url(r'^ServiceProviderConfig$',
-            ServiceProviderConfigView.as_view(),
+            views.ServiceProviderConfigView.as_view(),
             name='service-provider-config'),
 
         url(r'^ResourceTypes$',
-            ResourceTypesView.as_view(),
+            views.ResourceTypesView.as_view(),
             name='resource-types'),
 
         url(r'^ResourceTypes/([^/]+)$',
-            ResourceTypesView.as_view(),
+            views.ResourceTypesView.as_view(),
             name='resource-type'),
 
         url(r'^Schemas$',
-            SchemasView.as_view(),
+            views.SchemasView.as_view(),
+            name='schemas'),
+
+        url(r'^Schemas/([^/]+)$',
+            views.SchemasView.as_view(),
             name='schemas'),
 
         url(r'^Bulk$',
-            BulkView.as_view(),
+            views.BulkView.as_view(),
             name='bulk'),
     ]
 

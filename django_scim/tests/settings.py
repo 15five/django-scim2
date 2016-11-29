@@ -5,7 +5,7 @@ DATABASES = {
         'NAME': 'test_database',
     }
 }
-ROOT_URLCONF = 'tests.urls'
+ROOT_URLCONF = 'django_scim.urls'
 
 #DJANGO_SCIM_SCHEME = 'http'  # for debugging
 DJANGO_SCIM_NETLOC = 'localhost'

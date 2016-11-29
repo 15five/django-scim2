@@ -170,8 +170,8 @@ class SCIMServiceProviderConfig(object):
     @property
     def meta(self):
         return {
-              'location': self.location,
-              'resourceType': 'ServiceProviderConfig',
+            'location': self.location,
+            'resourceType': 'ServiceProviderConfig',
         }
 
     @property
@@ -184,7 +184,7 @@ class SCIMServiceProviderConfig(object):
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
             'documentationUri': DOCUMENTATION_URI,
             'patch': {
-                'supported': True
+                'supported': True,
             },
             'bulk': {
                 'supported': False,
@@ -193,10 +193,10 @@ class SCIMServiceProviderConfig(object):
                 'supported': True,
             },
             'changePassword': {
-                'supported': True
+                'supported': True,
             },
             'sort': {
-                'supported': True
+                'supported': False,
             },
             'etag': {
                 'supported': False,
@@ -204,6 +204,4 @@ class SCIMServiceProviderConfig(object):
             'authenticationSchemes': self.authentication_schemes,
             'meta': self.meta,
         }
-
-
 
