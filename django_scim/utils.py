@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-
-DEFAULT_GROUP_MODEL_STRING = 'django.contrib.auth.models.Group'
+from .constants import DEFAULT_GROUP_MODEL_STRING
 
 
 def get_group_model():
