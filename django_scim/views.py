@@ -21,8 +21,13 @@ SCIM_CONTENT_TYPE = 'application/scim+json'
 
 class SCIMView(View):
 
+    implemented = True
+
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
+        if not self.implemented:
+            return self.status_501(request, *args, **kwargs)
+
         try:
             self.auth_request(request, *args, **kwargs)
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
@@ -58,8 +63,8 @@ class SCIMView(View):
 class SearchView(SCIMView):
     http_method_names = ['post']
 
-    def get(self, request):
-        return self._search(request.GET.get('filter'), *self._page(request))
+    parser = None
+    scim_model_cls = None
 
     def post(self, request):
         body = json.loads(request.body or '{}')
@@ -86,28 +91,6 @@ class SearchView(SCIMView):
         except ValueError as e:
             raise BadRequest('Invalid pagination values: ' + str(e))
 
-
-class ObjView(SCIMView):
-    http_method_names = ['get']
-
-    scim_model_cls = None
-    model_cls_getter = None
-
-    def get(self, request, uuid):
-        try:
-            obj = self.scim_model_cls(self.model_cls_getter().objects.get(id=uuid))
-        except ObjectDoesNotExist as e:
-            raise NotFound(e)
-        else:
-            return HttpResponse(content=json.dumps(obj.to_dict(), encoding='utf-8'),
-                                content_type=SCIM_CONTENT_TYPE)
-
-
-class UsersSearchView(SearchView):
-
-    scim_model_cls = SCIMUser
-    parser = SCIMUserFilterTransformer
-
     def _search(self, query, start, count):
         try:
             qs = self.parser.search(query)
@@ -128,21 +111,25 @@ class UsersSearchView(SearchView):
                                 content_type=SCIM_CONTENT_TYPE)
 
 
+class ObjView(SCIMView):
+    http_method_names = ['get']
+
+    scim_model_cls = None
+    model_cls_getter = None
+
+    def get(self, request, uuid):
+        try:
+            obj = self.scim_model_cls(self.model_cls_getter().objects.get(id=uuid))
+        except ObjectDoesNotExist as e:
+            raise NotFound(e)
+        else:
+            return HttpResponse(content=json.dumps(obj.to_dict(), encoding='utf-8'),
+                                content_type=SCIM_CONTENT_TYPE)
+
+
 class UsersView(SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
-
-
-
-
-
-
-
-class GroupsSearchView(SearchView):
-
-    @csrf_exempt
-    def dispatch(self, request, *args, **kwargs):
-        return super(GroupsSearchView, self).status_501(request, *args, **kwargs)
 
 
 class GroupsView(SCIMView):
@@ -150,18 +137,7 @@ class GroupsView(SCIMView):
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
 
-
-class MeView(SCIMView):
-
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
-
-    @csrf_exempt
-    def dispatch(self, request, *args, **kwargs):
-        return super(MeView, self).status_501(request, *args, **kwargs)
-
-
 class ServiceProviderConfigView(SCIMView):
-
     http_method_names = ['get']
 
     def get(self):
@@ -210,13 +186,4 @@ class SchemasView(SCIMView):
 
         return HttpResponse(content=json.dumps(doc, encoding='utf-8'),
                             content_type=SCIM_CONTENT_TYPE)
-
-
-class BulkView(SCIMView):
-
-    http_method_names = ['post']
-
-    @csrf_exempt
-    def dispatch(self, request, *args, **kwargs):
-        return super(MeView, self).status_501(request, *args, **kwargs)
 

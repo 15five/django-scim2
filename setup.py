@@ -6,12 +6,15 @@ import os
 import sys
 import unittest
 
+import django
+
 
 def long_description():
     """Get the long description from the README"""
     return open(os.path.join(sys.path[0], 'README.rst')).read()
 
 def run_tests():
+    django.setup()
     test_loader = unittest.TestLoader()
     return test_loader.discover('django_scim', pattern='test_*.py')
 
@@ -40,11 +43,12 @@ setup(
     packages=['django_scim'],
     install_requires=[
         'python-dateutil==2.6.0',
-        'PlyPlus-ff==0.7.2b1',
+        'PlyPlus==0.7.2',
     ],
     scripts=['scim'],
     url='https://bitbucket.org/atlassian/django_scim',
     version='0.4.1',
     test_suite='setup.run_tests',
+    zip_safe=False,
 )
 

@@ -46,7 +46,7 @@ class SCIMAuthBackendCollection(object):
     @classmethod
     def backends(cls):
         if cls._backends is None:
-            cls_strings = settings.get('DJANGO_SCIM_AUTH_BACKENDS', [])
+            cls_strings = getattr(settings, 'DJANGO_SCIM_AUTH_BACKENDS', [])
             cls._backends = []
             for string in cls_strings:
                cls._backends.append(import_string(string))

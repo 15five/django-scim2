@@ -190,8 +190,7 @@ class SCIMUserFilterTransformer(STransformer):
     def bin_string_expr(self, exp):
         field, op, literal = exp.tail
         if op == u'eq':
-            return u'UPPER(%s) = UPPER(%%(%s)s)' % (field,
-                                                    self._push_param(literal))
+            return u'UPPER(%s) = UPPER(%%(%s)s)' % (field, self._push_param(literal))
         elif op == u'sw':
             literal += u'%'
         elif op == u'co':
@@ -200,9 +199,8 @@ class SCIMUserFilterTransformer(STransformer):
 
     def bin_date_expr(self, exp):
         field, op, literal = exp.tail
-        return u'%s %s %%(%s)s' % (
-            field, {u'gt': u'>', u'ge': u'>=', u'lt': u'<', u'le': u'<='}[op],
-            self._push_param(literal))
+        op = {u'gt': u'>', u'ge': u'>=', u'lt': u'<', u'le': u'<='}[op]
+        return u'%s %s %%(%s)s' % (field, op, self._push_param(literal))
 
     def bin_bool_expr(self, exp):
         return u'%s = %%(%s)s' % (exp.tail[0], self._push_param(exp.tail[2]))
@@ -229,14 +227,22 @@ class SCIMUserFilterTransformer(STransformer):
             )""" % (pname, pname))
 
     @classmethod
+    def condition_params(cls, params):
+        for key in params:
+            if params[key] == '':
+                params[key] = "''"
+        return params
+
+    @classmethod
     def search(cls, query):
         """Takes a SCIM 1.1 filter query and returns a Django `QuerySet` that
         contains zero or more user model instances.
 
-        :param unicode query:   a `unicode` query string.
+        :param unicode query: a `unicode` query string.
         """
         try:
             sql, params = cls().transform(grammar.parse(query))
+            #params = cls.condition_params(params)
         except PlyplusException as e:
             raise ValueError(e)
         else:
@@ -252,3 +258,4 @@ class SCIMUserFilterTransformer(STransformer):
 
         def __unicode__(self):
             return self.sql
+

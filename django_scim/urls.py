@@ -3,6 +3,7 @@ from django.conf.urls import include
 from django.contrib.auth import get_user_model
 
 from .constants import BASE_URL_REGEX
+from .filter import SCIMUserFilterTransformer
 from .models import SCIMUser
 from .models import SCIMGroup
 from .utils import get_group_model
@@ -12,11 +13,11 @@ from . import views
 class SCIMUrls(object):
     urlpatterns = [
         url(r'^.search$',
-            views.SearchView.as_view(),
+            views.SearchView.as_view(implemented=False),
             name='search'),
 
         url(r'^Users/.search$',
-            views.UsersSearchView.as_view(),
+            views.SearchView.as_view(scim_model_cls=SCIMUser, parser=SCIMUserFilterTransformer),
             name='users-search'),
 
         url(r'^Users$',
@@ -28,7 +29,7 @@ class SCIMUrls(object):
             name='user'),
 
         url(r'^Groups/.search$',
-            views.GroupsSearchView.as_view(),
+            views.SearchView.as_view(implemented=False),
             name='groups-search'),
 
         url(r'^Groups$',
@@ -40,7 +41,7 @@ class SCIMUrls(object):
             name='group'),
 
         url(r'^Me$',
-            views.MeView.as_view(),
+            views.SCIMView.as_view(implemented=False),
             name='me'),
 
         url(r'^ServiceProviderConfig$',
@@ -64,7 +65,7 @@ class SCIMUrls(object):
             name='schemas'),
 
         url(r'^Bulk$',
-            views.BulkView.as_view(),
+            views.SCIMView.as_view(implemented=False),
             name='bulk'),
     ]
 
