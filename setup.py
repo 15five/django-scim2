@@ -5,6 +5,7 @@ from setuptools import setup
 import os
 import sys
 import unittest
+import sys
 
 import django
 
@@ -15,8 +16,16 @@ def long_description():
 
 def run_tests():
     django.setup()
-    test_loader = unittest.TestLoader()
-    return test_loader.discover('django_scim', pattern='test_*.py')
+    from django.test.utils import get_runner
+    from django.conf import settings
+
+    test_runner = get_runner(settings)
+    failures = test_runner(
+        pattern='test_*.py',
+        verbosity=1,
+        interactive=True
+    ).run_tests('')
+    sys.exit(failures)
 
 
 setup(

@@ -7,16 +7,20 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils import six
 
+from .auth import SCIMRequest
 from .filter import SCIMUserFilterTransformer
-from .models import SCIMGroup
-from .models import SCIMUser
 from .exceptions import SCIMException
 from .exceptions import NotFound
-from .auth import SCIMRequest
+from .exceptions import BadRequest
 from .schemas import ALL as ALL_SCHEMAS
+from .utils import get_group_adapter
+from .utils import get_group_model
+from .utils import get_user_adapter
 
 
 SCIM_CONTENT_TYPE = 'application/scim+json'
+
+SCHEMA_URI_SERACH_REQUEST = 'urn:ietf:params:scim:api:messages:2.0:SearchRequest'
 
 
 class SCIMView(View):
@@ -60,19 +64,10 @@ class SCIMView(View):
         SCIMRequest(request, *args, **kwargs).raise_auth_execptions()
 
 
-class SearchView(SCIMView):
-    http_method_names = ['post']
+class FilterMixin(object):
 
     parser = None
-    scim_model_cls = None
-
-    def post(self, request):
-        body = json.loads(request.body or '{}')
-        query = body.get('filter', request.GET.get('filter'))
-        if not query:
-            raise BadRequest('No filter query specified')
-        else:
-            return self._search(query, *self._page(request))
+    scim_adapter = None
 
     def _page(self, request):
         try:
@@ -92,11 +87,14 @@ class SearchView(SCIMView):
             raise BadRequest('Invalid pagination values: ' + str(e))
 
     def _search(self, query, start, count):
+        qs = self.parser.search(query)
+        return self._build_response(qs, start, count)
+
+    def _build_response(self, qs, start, count):
         try:
-            qs = self.parser.search(query)
             total_count = sum(1 for _ in qs)
             qs = qs[start-1:(start-1) + count]
-            resources = [self.scim_model_cls(u).to_dict() for u in qs]
+            resources = [self.scim_adapter(u).to_dict() for u in qs]
             doc = {
                 'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
                 'totalResults': total_count,
@@ -111,30 +109,60 @@ class SearchView(SCIMView):
                                 content_type=SCIM_CONTENT_TYPE)
 
 
-class ObjView(SCIMView):
-    http_method_names = ['get']
+class SearchView(FilterMixin, SCIMView):
+    http_method_names = ['post']
 
-    scim_model_cls = None
-    model_cls_getter = None
+    def post(self, request):
+        body = json.loads(request.body or '{}')
+        if body.get('schemas') != [SCHEMA_URI_SERACH_REQUEST]:
+            raise BadRequest('Invalid schema uri. Must be SearchRequest.')
 
-    def get(self, request, uuid):
+        query = body.get('filter', request.GET.get('filter'))
+
+        if not query:
+            raise BadRequest('No filter query specified')
+        else:
+            return self._search(query, *self._page(request))
+
+
+class UsersView(FilterMixin, SCIMView):
+
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
+    scim_adapter = get_user_adapter()
+    model_cls = get_user_model()
+    parser = SCIMUserFilterTransformer
+
+    def get(self, request, uuid=None):
+        if uuid:
+            return self.get_single(request, uuid)
+
+        return self.get_many(request)
+
+    def get_single(self, request, uuid):
         try:
-            obj = self.scim_model_cls(self.model_cls_getter().objects.get(id=uuid))
+            obj = self.scim_adapter(self.model_cls.objects.get(id=uuid))
         except ObjectDoesNotExist as e:
             raise NotFound(e)
         else:
             return HttpResponse(content=json.dumps(obj.to_dict(), encoding='utf-8'),
                                 content_type=SCIM_CONTENT_TYPE)
 
+    def get_many(self, request):
+        query = request.GET.get('filter')
+        if query:
+            return self._search(query, *self._page(request))
 
-class UsersView(SCIMView):
-
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+        qs = self.model_cls.objects.all().order_by('id')
+        return self._build_response(qs, *self._page(request))
 
 
 class GroupsView(SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
+    scim_adapter = get_group_adapter()
+    model_cls = get_group_model()
 
 
 class ServiceProviderConfigView(SCIMView):
@@ -152,13 +180,13 @@ class ResourceTypesView(SCIMView):
 
     @property
     def type_dict_by_type_id(self):
-        type_models = SCIMUser, SCIMGroup
-        type_dicts = [m.resource_type_dict() for m in type_models]
+        type_adapters = get_user_adapter(), get_group_adapter()
+        type_dicts = [m.resource_type_dict() for m in type_adapters]
         return {d['id'] for d in type_dicts}
 
-    def get(self, request, type_id=None, *args, **kwargs):
+    def get(self, request, uuid=None, *args, **kwargs):
         if type_id:
-            doc = self.type_dict_by_type_id.get(type_id)
+            doc = self.type_dict_by_type_id.get(uuid)
             if not doc:
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
@@ -175,9 +203,9 @@ class SchemasView(SCIMView):
 
     schemas_by_uri = {s['id']: s for s in ALL_SCHEMAS}
 
-    def get(self, type_id=None, *args, **kwargs):
+    def get(self, uuid=None, *args, **kwargs):
         if type_id:
-            doc = self.schemas_by_uri.get(type_id)
+            doc = self.schemas_by_uri.get(uuid)
             if not doc:
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)

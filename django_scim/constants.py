@@ -13,7 +13,10 @@ BASE_SCIM_LOCATION_PARTS = (
 
 BASE_SCIM_LOCATION = urlunparse(BASE_SCIM_LOCATION_PARTS)
 
+DEFAULT_USER_ADAPTER_STRING = 'django_scim.models.SCIMUser'
+
 DEFAULT_GROUP_MODEL_STRING = 'django.contrib.auth.models.Group'
+DEFAULT_GROUP_ADAPTER_STRING = 'django_scim.models.SCIMGroup'
 
 BASE_URL = getattr(settings, 'DJANGO_SCIM_BASE_URL', '/scim/v2/')
 BASE_URL_REGEX = getattr(settings, 'DJANGO_SCIM_BASE_URL_REGEX', None)

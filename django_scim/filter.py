@@ -1,8 +1,12 @@
 import dateutil.parser
 import itertools
+import re
 
 from plyplus import Grammar, STransformer, PlyplusException
 from django.contrib.auth import get_user_model
+
+
+STRING_REPLACEMENT_RE_PAT = re.compile(r'\%\([^).]+\)s', re.MULTILINE)
 
 
 grammar = Grammar("""
@@ -227,11 +231,18 @@ class SCIMUserFilterTransformer(STransformer):
             )""" % (pname, pname))
 
     @classmethod
-    def condition_params(cls, params):
-        for key in params:
-            if params[key] == '':
-                params[key] = "''"
-        return params
+    def condition_sql_and_params(cls, sql, params):
+        # replace %(id)s with %s and update params accordingly
+        replacements = STRING_REPLACEMENT_RE_PAT.findall(sql)
+        new_sql = STRING_REPLACEMENT_RE_PAT.sub('%s', sql, count=len(replacements))
+
+        new_params = []
+        for replacement in replacements:
+            # strip '%(' adn ')s' from replacement arg
+            replacement = replacement[2:-2]
+            new_params.append(params.get(replacement))
+
+        return new_sql, new_params
 
     @classmethod
     def search(cls, query):
@@ -242,7 +253,7 @@ class SCIMUserFilterTransformer(STransformer):
         """
         try:
             sql, params = cls().transform(grammar.parse(query))
-            #params = cls.condition_params(params)
+            sql, params = cls.condition_sql_and_params(sql, params)
         except PlyplusException as e:
             raise ValueError(e)
         else:

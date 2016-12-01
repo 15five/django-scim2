@@ -1,5 +1,4 @@
 from django.core.urlresolvers import reverse
-from django.utils.timezone import utc
 from six.moves.urllib.parse import urljoin
 
 from .auth import SCIMAuthBackendCollection
@@ -17,7 +16,7 @@ class SCIMMixin(object):
 
     @property
     def path(self):
-        return reverse(self.url_name, args=(self.obj.id,))
+        return reverse(self.url_name, kwargs={'uuid': self.obj.id})
 
     @property
     def location(self):
@@ -26,7 +25,7 @@ class SCIMMixin(object):
 
 class SCIMUser(SCIMMixin):
     # not great, could be more decoupled. But \__( )__/ whatevs.
-    url_name = 'scim:user'
+    url_name = 'scim:users'
 
     @property
     def display_name(self):
@@ -51,14 +50,14 @@ class SCIMUser(SCIMMixin):
             }
             dicts.append(d)
 
-        return d
+        return dicts
 
     @property
     def meta(self):
         d = {
             'resourceType': 'User',
-            'created': utc.localize(self.obj.date_joined).isoformat(),
-            'lastModified': utc.localize(self.obj.date_joined).isoformat(),
+            'created': self.obj.date_joined.isoformat(),
+            'lastModified': self.obj.date_joined.isoformat(),
             'location': self.location,
         }
 
@@ -84,7 +83,7 @@ class SCIMUser(SCIMMixin):
     @classmethod
     def resource_type_dict(self):
         id_ = 'User'
-        path = reverse('resource-type', args=(id_,))
+        path = reverse('resource-type', kwargs={'uuid': id_})
         location = urljoin(BASE_SCIM_LOCATION, path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
@@ -102,7 +101,7 @@ class SCIMUser(SCIMMixin):
 
 class SCIMGroup(SCIMMixin):
     # not great, could be more decoupled. But \__( )__/ whatevs.
-    url_name = 'scim:group'
+    url_name = 'scim:groups'
 
     @property
     def display_name(self):
@@ -122,7 +121,7 @@ class SCIMGroup(SCIMMixin):
             }
             dicts.append(d)
 
-        return d
+        return dicts
 
     @property
     def meta(self):
@@ -145,7 +144,7 @@ class SCIMGroup(SCIMMixin):
     @classmethod
     def resource_type_dict(self):
         id_ = 'Group'
-        path = reverse('resource-type', args=(id_,))
+        path = reverse('resource-type', kwargs={'uuid': id_})
         location = urljoin(BASE_SCIM_LOCATION, path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],

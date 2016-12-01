@@ -1,12 +1,9 @@
 from django.conf.urls import url
 from django.conf.urls import include
-from django.contrib.auth import get_user_model
 
 from .constants import BASE_URL_REGEX
 from .filter import SCIMUserFilterTransformer
-from .models import SCIMUser
-from .models import SCIMGroup
-from .utils import get_group_model
+from .utils import get_user_adapter
 from . import views
 
 
@@ -17,28 +14,20 @@ class SCIMUrls(object):
             name='search'),
 
         url(r'^Users/.search$',
-            views.SearchView.as_view(scim_model_cls=SCIMUser, parser=SCIMUserFilterTransformer),
+            views.SearchView.as_view(scim_adapter=get_user_adapter(), parser=SCIMUserFilterTransformer),
             name='users-search'),
 
-        url(r'^Users$',
+        url(r'^Users(?:/(?P<uuid>[^/]+))?$',
             views.UsersView.as_view(),
             name='users'),
-
-        url(r'^Users/([^/]+)$',
-            views.ObjView.as_view(scim_model_cls=SCIMUser, model_cls_getter=get_user_model),
-            name='user'),
 
         url(r'^Groups/.search$',
             views.SearchView.as_view(implemented=False),
             name='groups-search'),
 
-        url(r'^Groups$',
+        url(r'^Groups(?:/(?P<uuid>[^/]+))?$',
             views.GroupsView.as_view(),
             name='groups'),
-
-        url(r'^Groups/([^/]+)$',
-            views.ObjView.as_view(scim_model_cls=SCIMGroup, model_cls_getter=get_group_model),
-            name='group'),
 
         url(r'^Me$',
             views.SCIMView.as_view(implemented=False),
@@ -48,19 +37,11 @@ class SCIMUrls(object):
             views.ServiceProviderConfigView.as_view(),
             name='service-provider-config'),
 
-        url(r'^ResourceTypes$',
+        url(r'^ResourceTypes(?:/(?P<uuid>[^/]+))?$',
             views.ResourceTypesView.as_view(),
             name='resource-types'),
 
-        url(r'^ResourceTypes/([^/]+)$',
-            views.ResourceTypesView.as_view(),
-            name='resource-type'),
-
-        url(r'^Schemas$',
-            views.SchemasView.as_view(),
-            name='schemas'),
-
-        url(r'^Schemas/([^/]+)$',
+        url(r'^Schemas(?:/(?P<uuid>[^/]+))?$',
             views.SchemasView.as_view(),
             name='schemas'),
 
