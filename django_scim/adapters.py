@@ -20,10 +20,14 @@ class SCIMMixin(object):
     def location(self):
         return urljoin(BASE_SCIM_LOCATION, self.path)
 
+    def save(self):
+        self.obj.save()
+
 
 class SCIMUser(SCIMMixin):
     # not great, could be more decoupled. But \__( )__/ whatevs.
     url_name = 'scim:users'
+    resource_type = 'User'
 
     @property
     def display_name(self):
@@ -53,7 +57,7 @@ class SCIMUser(SCIMMixin):
     @property
     def meta(self):
         d = {
-            'resourceType': 'User',
+            'resourceType': self.resource_type,
             'created': self.obj.date_joined.isoformat(),
             'lastModified': self.obj.date_joined.isoformat(),
             'location': self.location,
@@ -78,9 +82,33 @@ class SCIMUser(SCIMMixin):
 
         return d
 
+    def from_dict(self, d):
+        username = d.get('userName')
+        self.obj.username = username or ''
+
+        first_name = d.get('name', {}).get('givenName')
+        self.obj.first_name = first_name or ''
+
+        last_name = d.get('name', {}).get('familyName')
+        self.obj.last_name = last_name or ''
+
+        emails = d.get('emails', [])
+        primary_emails = [e['value'] for e in emails if e.get('primary')]
+        emails = primary_emails + emails
+        email = emails[0] if emails else None
+        self.obj.email = email
+
+        password = d.get('password')
+        if password:
+            self.obj.password = password
+
+        active = d.get('active')
+        if active is not None:
+            self.obj.is_active = active
+
     @classmethod
     def resource_type_dict(self):
-        id_ = 'User'
+        id_ = self.resource_type
         path = reverse('resource-type', kwargs={'uuid': id_})
         location = urljoin(BASE_SCIM_LOCATION, path)
         return {
@@ -100,6 +128,7 @@ class SCIMUser(SCIMMixin):
 class SCIMGroup(SCIMMixin):
     # not great, could be more decoupled. But \__( )__/ whatevs.
     url_name = 'scim:groups'
+    resource_type = 'Group'
 
     @property
     def display_name(self):
@@ -124,7 +153,7 @@ class SCIMGroup(SCIMMixin):
     @property
     def meta(self):
         d = {
-            'resourceType': 'Group',
+            'resourceType': self.resource_type,
             'location': self.location,
         }
 
@@ -139,9 +168,13 @@ class SCIMGroup(SCIMMixin):
             'meta': self.meta,
         }
 
+    def from_dict(self, d):
+        name = d.get('displayName')
+        self.obj.name = name or ''
+
     @classmethod
     def resource_type_dict(self):
-        id_ = 'Group'
+        id_ = self.resource_type
         path = reverse('resource-type', kwargs={'uuid': id_})
         location = urljoin(BASE_SCIM_LOCATION, path)
         return {

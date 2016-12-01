@@ -19,7 +19,8 @@ def run_tests():
     from django.test.utils import get_runner
     from django.conf import settings
 
-    test_labels = ''
+    test_filter = os.environ.get('TEST_FILTER')
+    test_labels = [test_filter] if test_filter else []
 
     test_runner = get_runner(settings)
     failures = test_runner(

@@ -1,5 +1,5 @@
 from django.conf import settings
-from six.moves.urllib.parse import urlunparse
+from django.utils.six import moves
 
 
 BASE_SCIM_LOCATION_PARTS = (
@@ -11,7 +11,7 @@ BASE_SCIM_LOCATION_PARTS = (
     ''   # fragment
 )
 
-BASE_SCIM_LOCATION = urlunparse(BASE_SCIM_LOCATION_PARTS)
+BASE_SCIM_LOCATION = moves.urllib.parse.urlunparse(BASE_SCIM_LOCATION_PARTS)
 
 DEFAULT_USER_ADAPTER_STRING = 'django_scim.adapters.SCIMUser'
 
@@ -26,4 +26,6 @@ if BASE_URL_REGEX is None:
     BASE_URL_REGEX = '^' + BASE_URL.lstrip('/')
 
 DOCUMENTATION_URI = getattr(settings, 'DJANGO_SCIM_SP_DOC_URL', None)
+
+SCHEMA_URI_ERROR = 'urn:ietf:params:scim:api:messages:2.0:Error'
 

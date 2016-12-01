@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.test import Client
 from django.test import RequestFactory
+from django.utils.six.moves.urllib.parse import urljoin
 
 try:
     from django.urls import reverse
@@ -13,6 +14,8 @@ except ImportError:
 
 from django_scim import views
 from django_scim.utils import get_user_adapter
+from django_scim.constants import BASE_SCIM_LOCATION
+from django_scim.constants import BASE_URL
 
 
 class SCIMTestCase(TestCase):
@@ -102,12 +105,9 @@ class SearchTestCase(TestCase):
 
         result = json.loads(resp.content)
         expected = {
-            "Errors": [
-                {
-                    "code": 400,
-                    "description": "Invalid schema uri. Must be SearchRequest."
-                }
-            ]
+            'detail': u'Invalid schema uri. Must be SearchRequest.',
+            'schemas': [u'urn:ietf:params:scim:api:messages:2.0:Error'],
+            'status': 400
         }
         self.assertEqual(expected, result)
 
@@ -123,6 +123,9 @@ class SearchTestCase(TestCase):
         })
         resp = c.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content)
+        location = urljoin(BASE_SCIM_LOCATION, BASE_URL)
+        location = urljoin(location, 'Users/.search')
+        self.assertEqual(resp['Location'], location)
 
         result = json.loads(resp.content)
         expected = {
@@ -172,6 +175,7 @@ class UserTestCase(TestCase):
         url = reverse('scim:users', kwargs={'uuid': ford.id})
         resp = c.get(url, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(resp['Location'], ford.location)
 
         result = json.loads(resp.content)
         expected = ford.to_dict()
@@ -213,16 +217,83 @@ class UserTestCase(TestCase):
         self.assertEqual(expected, result)
 
     def test_post(self):
-        self.fail('TODO')
+        c = Client()
+        url = reverse('scim:users')
+        data = {
+            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
+            'userName': 'ehughes',
+            'name': {
+                'givenName': 'Elsie',
+                'familyName': 'Hughes',
+            },
+            'password': 'notTooSecret',
+            'emails': [{'value': 'ehughes@westworld.com', 'primary': True}],
+        }
+        body = json.dumps(data)
+        resp = c.post(url, body, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 201, resp.content)
+
+        # test object
+        elsie = get_user_model().objects.get(username='ehughes')
+        self.assertEqual(elsie.first_name, 'Elsie')
+        self.assertEqual(elsie.last_name, 'Hughes')
+        self.assertEqual(elsie.email, 'ehughes@westworld.com')
+
+        # test response
+        elsie = get_user_adapter()(elsie)
+        result = json.loads(resp.content)
+        self.assertEqual(result, elsie.to_dict())
+        self.assertEqual(resp['Location'], elsie.location)
 
     def test_put(self):
-        self.fail('TODO')
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
 
+        c = Client()
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        data = get_user_adapter()(ford).to_dict()
+        data['userName'] = 'updatedrford'
+        data['name'] = {'givenName': 'Bobby'}
+        data['emails'] = [{'value': 'rford@westworld.com', 'primary': True}]
+        body = json.dumps(data)
+        resp = c.put(url, body, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        # test object
+        ford.refresh_from_db()
+        self.assertEqual(ford.first_name, 'Bobby')
+        self.assertEqual(ford.last_name, '')
+        self.assertEqual(ford.username, 'updatedrford')
+        self.assertEqual(ford.email, 'rford@westworld.com')
+
+        # test response
+        result = json.loads(resp.content)
+        ford = get_user_adapter()(ford)
+        self.assertEqual(result, ford.to_dict())
+
+    @skip('')
     def test_patch(self):
         self.fail('TODO')
 
     def test_delete(self):
-        self.fail('TODO')
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        c = Client()
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = c.delete(url)
+        self.assertEqual(resp.status_code, 204, resp.content)
+
+        ford = get_user_model().objects.filter(id=ford.id).first()
+        self.assertIsNone(ford)
 
 
 class GroupTestCase(TestCase):

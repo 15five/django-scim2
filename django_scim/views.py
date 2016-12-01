@@ -6,7 +6,14 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils import six
+from django.utils.six.moves.urllib.parse import urljoin
 
+try:
+    from django.urls import reverse
+except ImportError:
+    from django.core.urlresolvers import reverse
+
+from . import constants
 from .auth import SCIMRequest
 from .filter import SCIMUserFilterTransformer
 from .exceptions import SCIMException
@@ -39,17 +46,10 @@ class SCIMView(View):
             if not isinstance(e, SCIMException):
                 e = SCIMException(six.text_type(e))
 
-            resp = HttpResponse(content_type=SCIM_CONTENT_TYPE,
+            content = json.dumps(e.to_dict(), encoding='utf-8')
+            return HttpResponse(content=content,
+                                content_type=SCIM_CONTENT_TYPE,
                                 status=e.status)
-            resp.content = json.dumps({
-                'Errors': [
-                    {
-                        'description': six.text_type(e),
-                        'code': e.status
-                    }
-                ]
-            }, encoding='utf-8')
-            return resp
 
     def status_501(self, request, *args, **kwargs):
         """
@@ -102,14 +102,17 @@ class FilterMixin(object):
                 'Resources': resources,
             }
         except ValueError as e:
-            raise BadRequest(e)
+            raise BadRequest(six.text_type(e))
         else:
-            return HttpResponse(content=json.dumps(doc, encoding='utf-8'),
+            content = json.dumps(doc, encoding='utf-8')
+            return HttpResponse(content=content,
                                 content_type=SCIM_CONTENT_TYPE)
 
 
 class SearchView(FilterMixin, SCIMView):
     http_method_names = ['post']
+
+    scim_adapter = None
 
     def post(self, request):
         body = json.loads(request.body or '{}')
@@ -121,17 +124,14 @@ class SearchView(FilterMixin, SCIMView):
         if not query:
             raise BadRequest('No filter query specified')
         else:
-            return self._search(query, *self._page(request))
+            response = self._search(query, *self._page(request))
+            path = reverse(self.scim_adapter.url_name)
+            url = urljoin(constants.BASE_SCIM_LOCATION, path).rstrip('/')
+            response['Location'] = url + '/.search'
+            return response
 
 
-class UsersView(FilterMixin, SCIMView):
-
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
-
-    scim_adapter = get_user_adapter()
-    model_cls = get_user_model()
-    parser = SCIMUserFilterTransformer
-
+class GetView(object):
     def get(self, request, uuid=None):
         if uuid:
             return self.get_single(request, uuid)
@@ -140,12 +140,15 @@ class UsersView(FilterMixin, SCIMView):
 
     def get_single(self, request, uuid):
         try:
-            obj = self.scim_adapter(self.model_cls.objects.get(id=uuid))
-        except ObjectDoesNotExist as e:
-            raise NotFound(e)
+            scim_obj = self.scim_adapter(self.model_cls.objects.get(id=uuid))
+        except ObjectDoesNotExist as _e:
+            raise NotFound(uuid)
         else:
-            return HttpResponse(content=json.dumps(obj.to_dict(), encoding='utf-8'),
-                                content_type=SCIM_CONTENT_TYPE)
+            content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+            response = HttpResponse(content=content,
+                                    content_type=SCIM_CONTENT_TYPE)
+            response['Location'] = scim_obj.location
+            return response
 
     def get_many(self, request):
         query = request.GET.get('filter')
@@ -156,12 +159,78 @@ class UsersView(FilterMixin, SCIMView):
         return self._build_response(qs, *self._page(request))
 
 
-class GroupsView(SCIMView):
+class DeleteView(object):
+    def delete(self, request, uuid):
+        obj_qs = self.model_cls.objects.filter(id=uuid)
+
+        if obj_qs.exists():
+            obj_qs.delete()
+            return HttpResponse(status=204)
+        else:
+            raise NotFound(uuid)
+
+
+class PostView(object):
+    def post(self, request, **kwargs):
+        obj = self.model_cls()
+        scim_obj = self.scim_adapter(obj)
+
+        body = json.loads(request.body)
+
+        scim_obj.from_dict(body)
+        scim_obj.save()
+
+        content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+        response = HttpResponse(content=content,
+                                content_type=SCIM_CONTENT_TYPE,
+                                status=201)
+        response['Location'] = scim_obj.location
+        return response
+
+
+class PutView(object):
+    def put(self, request, uuid):
+        try:
+            obj = self.model_cls.objects.get(id=uuid)
+        except ObjectDoesNotExist:
+            raise NotFound(uuid)
+
+        scim_obj = self.scim_adapter(obj)
+
+        body = json.loads(request.body)
+
+        scim_obj.from_dict(body)
+        scim_obj.save()
+
+        content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+        response = HttpResponse(content=content,
+                                content_type=SCIM_CONTENT_TYPE)
+        response['Location'] = scim_obj.location
+        return response
+
+
+class UsersView(FilterMixin, GetView, PostView, PutView, DeleteView, SCIMView):
+
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
+    scim_adapter = get_user_adapter()
+    model_cls = get_user_model()
+    parser = SCIMUserFilterTransformer
+
+    def patch(self, request, uuid):
+        return self.status_501(request)
+
+
+class GroupsView(FilterMixin, GetView, PostView, PutView, DeleteView, SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
     scim_adapter = get_group_adapter()
     model_cls = get_group_model()
+    parser = None
+
+    def patch(self, request, uuid):
+        return HttpResponse()
 
 
 class ServiceProviderConfigView(SCIMView):
