@@ -56,8 +56,7 @@ class SCIMView(View):
         A service provider that does NOT support a feature SHOULD
         respond with HTTP status code 501 (Not Implemented).
         """
-        return HttpResponse(content=json.dumps({}, encoding='utf-8'),
-                            content_type=SCIM_CONTENT_TYPE,
+        return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                             status=501)
 
     def auth_request(self, request, *args, **kwargs):

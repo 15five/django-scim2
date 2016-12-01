@@ -19,12 +19,14 @@ def run_tests():
     from django.test.utils import get_runner
     from django.conf import settings
 
+    test_labels = ''
+
     test_runner = get_runner(settings)
     failures = test_runner(
         pattern='test_*.py',
         verbosity=1,
         interactive=True
-    ).run_tests('')
+    ).run_tests(test_labels)
     sys.exit(failures)
 
 
