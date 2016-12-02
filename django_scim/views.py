@@ -19,6 +19,7 @@ from .filter import SCIMUserFilterTransformer
 from .exceptions import SCIMException
 from .exceptions import NotFound
 from .exceptions import BadRequest
+from .models import SCIMServiceProviderConfig
 from .schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
 from .utils import get_group_model
@@ -236,9 +237,10 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, DeleteView, SCIMView):
 class ServiceProviderConfigView(SCIMView):
     http_method_names = ['get']
 
-    def get(self):
-        config = ServiceProviderConfig()
-        return HttpResponse(content=json.dumps(config.to_dict(), encoding='utf-8'),
+    def get(self, request):
+        config = SCIMServiceProviderConfig()
+        content = json.dumps(config.to_dict(), encoding='utf-8')
+        return HttpResponse(content=content,
                             content_type=SCIM_CONTENT_TYPE)
 
 
@@ -250,16 +252,16 @@ class ResourceTypesView(SCIMView):
     def type_dict_by_type_id(self):
         type_adapters = get_user_adapter(), get_group_adapter()
         type_dicts = [m.resource_type_dict() for m in type_adapters]
-        return {d['id'] for d in type_dicts}
+        return {d['id']: d for d in type_dicts}
 
     def get(self, request, uuid=None, *args, **kwargs):
-        if type_id:
+        if uuid:
             doc = self.type_dict_by_type_id.get(uuid)
             if not doc:
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
         else:
-            doc = self.type_dicts
+            doc = list(sorted(self.type_dict_by_type_id.values()))
 
         return HttpResponse(content=json.dumps(doc, encoding='utf-8'),
                             content_type=SCIM_CONTENT_TYPE)
@@ -271,15 +273,16 @@ class SchemasView(SCIMView):
 
     schemas_by_uri = {s['id']: s for s in ALL_SCHEMAS}
 
-    def get(self, uuid=None, *args, **kwargs):
-        if type_id:
+    def get(self, request, uuid=None, *args, **kwargs):
+        if uuid:
             doc = self.schemas_by_uri.get(uuid)
             if not doc:
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
         else:
-            doc = self.type_dicts
+            doc = list(sorted(self.schemas_by_uri.values()))
 
-        return HttpResponse(content=json.dumps(doc, encoding='utf-8'),
+        content = json.dumps(doc, encoding='utf-8')
+        return HttpResponse(content=content,
                             content_type=SCIM_CONTENT_TYPE)
 

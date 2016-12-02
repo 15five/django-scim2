@@ -109,7 +109,7 @@ class SCIMUser(SCIMMixin):
     @classmethod
     def resource_type_dict(self):
         id_ = self.resource_type
-        path = reverse('resource-type', kwargs={'uuid': id_})
+        path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(BASE_SCIM_LOCATION, path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
@@ -175,7 +175,7 @@ class SCIMGroup(SCIMMixin):
     @classmethod
     def resource_type_dict(self):
         id_ = self.resource_type
-        path = reverse('resource-type', kwargs={'uuid': id_})
+        path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(BASE_SCIM_LOCATION, path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],

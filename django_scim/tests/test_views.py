@@ -13,9 +13,13 @@ except ImportError:
     from django.core.urlresolvers import reverse
 
 from django_scim import views
-from django_scim.utils import get_user_adapter
 from django_scim.constants import BASE_SCIM_LOCATION
 from django_scim.constants import BASE_URL
+from django_scim.models import SCIMServiceProviderConfig
+from django_scim.schemas import ALL as ALL_SCHEMAS
+from django_scim.utils import get_group_adapter
+from django_scim.utils import get_group_model
+from django_scim.utils import get_user_adapter
 
 
 class SCIMTestCase(TestCase):
@@ -299,39 +303,191 @@ class UserTestCase(TestCase):
 class GroupTestCase(TestCase):
     maxDiff = None
 
-    def test_get(self):
-        self.fail('TODO')
+    def test_get_group_by_id(self):
+        """
+        Test GET /Group/{id}
+        """
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford'
+        )
+        ford.groups.add(behavior)
+
+        behavior = get_group_adapter()(behavior)
+
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        resp = c.get(url, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(resp['Location'], behavior.location)
+
+        result = json.loads(resp.content)
+        expected = behavior.to_dict()
+        self.assertEqual(expected, result)
+
+    def test_get_all_groups(self):
+        """
+        Test GET /Groups
+        """
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        ford.groups.add(behavior)
+        behavior = get_group_adapter()(behavior)
+
+        security = get_group_model().objects.create(
+            name='Security Group',
+        )
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+        )
+        abernathy.groups.add(security)
+        security = get_group_adapter()(security)
+
+        c = Client()
+        url = reverse('scim:groups')
+        resp = c.get(url, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        result = json.loads(resp.content)
+        expected = {
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+            "totalResults": 2,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
+                behavior.to_dict(),
+                security.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
 
     def test_post(self):
-        self.fail('TODO')
+        c = Client()
+        url = reverse('scim:groups')
+        data = {
+            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+            'displayName': 'Behavior Group',
+        }
+        body = json.dumps(data)
+        resp = c.post(url, body, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 201, resp.content)
+
+        # test object exists
+        behavior = get_group_model().objects.get(name='Behavior Group')
+
+        # test response
+        behavior = get_group_adapter()(behavior)
+        result = json.loads(resp.content)
+        self.assertEqual(result, behavior.to_dict())
+        self.assertEqual(resp['Location'], behavior.location)
 
     def test_put(self):
-        self.fail('TODO')
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        data = get_group_adapter()(behavior).to_dict()
+        data['displayName'] = 'Better Behavior Group'
+        body = json.dumps(data)
+        resp = c.put(url, body, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        # test object
+        behavior.refresh_from_db()
+        self.assertEqual(behavior.name, 'Better Behavior Group')
+
+        # test response
+        result = json.loads(resp.content)
+        behavior = get_group_adapter()(behavior)
+        self.assertEqual(result, behavior.to_dict())
 
     def test_patch(self):
         self.fail('TODO')
 
     def test_delete(self):
-        self.fail('TODO')
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        resp = c.delete(url)
+        self.assertEqual(resp.status_code, 204, resp.content)
+
+        behavior = get_group_model().objects.filter(id=behavior.id).first()
+        self.assertIsNone(behavior)
 
 
 class ServiceProviderConfigTestCase(TestCase):
     maxDiff = None
 
     def test_get(self):
-        self.fail('TODO')
+        c = Client()
+        url = reverse('scim:service-provider-config')
+        resp = c.get(url)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        config = SCIMServiceProviderConfig()
+        self.assertEqual(config.to_dict(), json.loads(resp.content))
 
 
 class ResourceTypesTestCase(TestCase):
     maxDiff = None
 
-    def test_get(self):
-        self.fail('TODO')
+    def test_get_all(self):
+        c = Client()
+        url = reverse('scim:resource-types')
+        resp = c.get(url)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        user_type = get_user_adapter().resource_type_dict()
+        group_type = get_group_adapter().resource_type_dict()
+        expected = list(sorted((user_type, group_type)))
+        result = json.loads(resp.content)
+        self.assertEqual(expected, result)
+
+    def test_get_single(self):
+        c = Client()
+        url = reverse('scim:resource-types', kwargs={'uuid': 'User'})
+        resp = c.get(url)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        expected = get_user_adapter().resource_type_dict()
+        result = json.loads(resp.content)
+        self.assertEqual(expected, result)
 
 
 class SchemasTestCase(TestCase):
     maxDiff = None
 
-    def test_get(self):
-        self.fail('TODO')
+    def test_get_all(self):
+        c = Client()
+        url = reverse('scim:schemas')
+        resp = c.get(url)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        expected = list(sorted(ALL_SCHEMAS))
+        result = json.loads(resp.content)
+        self.assertEqual(expected, result)
+
+    def test_get_single(self):
+        schemas_by_uri = {s['id']: s for s in ALL_SCHEMAS}
+
+        c = Client()
+        uuid = 'urn:ietf:params:scim:schemas:core:2.0:User'
+        url = reverse('scim:schemas', kwargs={'uuid': uuid})
+        resp = c.get(url)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        expected = schemas_by_uri[uuid]
+        result = json.loads(resp.content)
+        self.assertEqual(expected, result)
 
