@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -210,7 +211,30 @@ class PutView(object):
         return response
 
 
-class UsersView(FilterMixin, GetView, PostView, PutView, DeleteView, SCIMView):
+class PatchView(object):
+    def patch(self, request, uuid):
+
+        try:
+            obj = self.model_cls.objects.get(id=uuid)
+        except ObjectDoesNotExist:
+            raise NotFound(uuid)
+
+        scim_obj = self.scim_adapter(obj)
+        body = json.loads(request.body)
+
+        operations = body.get('Operations')
+
+        with transaction.atomic():
+            scim_obj.handle_operations(operations)
+
+        content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+        response = HttpResponse(content=content,
+                                content_type=SCIM_CONTENT_TYPE)
+        response['Location'] = scim_obj.location
+        return response
+
+
+class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
@@ -218,20 +242,14 @@ class UsersView(FilterMixin, GetView, PostView, PutView, DeleteView, SCIMView):
     model_cls = get_user_model()
     parser = SCIMUserFilterTransformer
 
-    def patch(self, request, uuid):
-        return self.status_501(request)
 
-
-class GroupsView(FilterMixin, GetView, PostView, PutView, DeleteView, SCIMView):
+class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
     scim_adapter = get_group_adapter()
     model_cls = get_group_model()
     parser = None
-
-    def patch(self, request, uuid):
-        return HttpResponse()
 
 
 class ServiceProviderConfigView(SCIMView):

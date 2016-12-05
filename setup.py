@@ -15,6 +15,9 @@ def long_description():
     return open(os.path.join(sys.path[0], 'README.rst')).read()
 
 def run_tests():
+    settings_mod = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
+    os.environ['DJANGO_SETTINGS_MODULE'] = settings_mod
+
     django.setup()
     from django.test.utils import get_runner
     from django.conf import settings

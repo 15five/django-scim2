@@ -1,7 +1,10 @@
+from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from six.moves.urllib.parse import urljoin
 
 from .constants import BASE_SCIM_LOCATION
+from .exceptions import PatchError
+from .utils import get_group_model
 
 
 class SCIMMixin(object):
@@ -22,6 +25,13 @@ class SCIMMixin(object):
 
     def save(self):
         self.obj.save()
+
+    def handle_operations(self, operations):
+        for operation in operations:
+            op_code = operation.get('op')
+            op_code = 'handle_' + op_code
+            handler = getattr(self, op_code)
+            handler(operation)
 
 
 class SCIMUser(SCIMMixin):
@@ -163,7 +173,7 @@ class SCIMGroup(SCIMMixin):
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:Group'],
             'id': self.id,
-            'displayName': self.obj.name,
+            'displayName': self.display_name,
             'members': self.members,
             'meta': self.meta,
         }
@@ -189,4 +199,43 @@ class SCIMGroup(SCIMMixin):
                 'resourceType': 'ResourceType'
             }
         }
+
+    def handle_add(self, operation):
+        if operation.get('path') == 'members':
+            members = operation.get('value', [])
+            ids = [int(member.get('value')) for member in members]
+            users = get_user_model().objects.filter(id__in=ids)
+
+            if len(ids) != users.count():
+                raise PatchError('Can not add a non-existent user to group')
+
+            for user in users:
+                self.obj.user_set.add(user)
+
+        else:
+            raise NotImplemented
+
+    def handle_remove(self, operation):
+        if operation.get('path') == 'members':
+            members = operation.get('value', [])
+            ids = [int(member.get('value')) for member in members]
+            users = get_user_model().objects.filter(id__in=ids)
+
+            if len(ids) != users.count():
+                raise PatchError('Can not remove a non-existent user from group')
+
+            for user in users:
+                self.obj.user_set.remove(user)
+
+        else:
+            raise NotImplemented
+
+    def handle_replace(self, operation):
+        if operation.get('path') == 'name':
+            name = operation.get('value')[0].get('value')
+            self.obj.name = name
+            self.obj.save()
+
+        else:
+            raise NotImplemented
 

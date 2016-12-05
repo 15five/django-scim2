@@ -37,3 +37,6 @@ class BadRequest(SCIMException):
     status = 400
 
 
+class PatchError(SCIMException):
+    status = 400
+

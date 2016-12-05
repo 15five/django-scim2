@@ -414,8 +414,172 @@ class GroupTestCase(TestCase):
         behavior = get_group_adapter()(behavior)
         self.assertEqual(result, behavior.to_dict())
 
-    def test_patch(self):
-        self.fail('TODO')
+    def test_patch_add(self):
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        ford.groups.add(behavior)
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+        )
+        scim_abernathy = get_user_adapter()(abernathy)
+
+        data = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+            'Operations': [
+                {
+                    'op': 'add',
+                    'path': 'members',
+                    'value': [
+                        {
+                            'value': scim_abernathy.id
+                        }
+                    ]
+                }
+            ]
+        }
+        data = json.dumps(data)
+
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        resp = c.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        result = json.loads(resp.content)
+        expected = get_group_adapter()(behavior).to_dict()
+        self.assertEqual(expected, result)
+
+        self.assertEqual(behavior.user_set.count(), 2)
+
+    def test_patch_remove(self):
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        ford.groups.add(behavior)
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+        )
+        abernathy.groups.add(behavior)
+        scim_abernathy = get_user_adapter()(abernathy)
+
+        data = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+            'Operations': [
+                {
+                    'op': 'remove',
+                    'path': 'members',
+                    'value': [
+                        {
+                            'value': ford.id
+                        },
+                        {
+                            'value': abernathy.id
+                        },
+                    ]
+                }
+            ]
+        }
+        data = json.dumps(data)
+
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        resp = c.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        result = json.loads(resp.content)
+        expected = get_group_adapter()(behavior).to_dict()
+        self.assertEqual(expected, result)
+
+        self.assertEqual(behavior.user_set.count(), 0)
+
+    def test_patch_replace(self):
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+
+        data = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+            'Operations': [
+                {
+                    'op': 'replace',
+                    'path': 'name',
+                    'value': [
+                        {
+                            'value': 'Way better Behavior Group Name'
+                        }
+                    ]
+                }
+            ]
+        }
+        data = json.dumps(data)
+
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        resp = c.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        behavior.refresh_from_db()
+
+        result = json.loads(resp.content)
+        expected = get_group_adapter()(behavior).to_dict()
+        self.assertEqual(expected, result)
+
+        self.assertEqual(behavior.name, 'Way better Behavior Group Name')
+
+    def test_patch_atomic(self):
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+        ids = list(get_user_model().objects.all().values_list('id', flat=True)) or [0]
+        max_id = max(ids)
+
+        data = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+            'Operations': [
+                {
+                    'op': 'replace',
+                    'path': 'name',
+                    'value': [
+                        {
+                            'value': 'Way better Behavior Group Name'
+                        }
+                    ]
+                },
+                # Adding a non-existent user should cause this PATCH to fail
+                {
+                    'op': 'add',
+                    'path': 'members',
+                    'value': [
+                        {
+                            'value': max_id + 1
+                        }
+                    ]
+                }
+            ]
+        }
+        data = json.dumps(data)
+
+        c = Client()
+        url = reverse('scim:groups', kwargs={'uuid': behavior.id})
+        resp = c.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+        behavior.refresh_from_db()
+        self.assertEqual(behavior.name, 'Behavior Group')
 
     def test_delete(self):
         behavior = get_group_model().objects.create(
