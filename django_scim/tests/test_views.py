@@ -249,6 +249,25 @@ class UserTestCase(TestCase):
         self.assertEqual(result, elsie.to_dict())
         self.assertEqual(resp['Location'], elsie.location)
 
+    def test_post_duplicate(self):
+        get_user_model().objects.create(username='ehughes')
+
+        c = Client()
+        url = reverse('scim:users')
+        data = {
+            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
+            'userName': 'ehughes',
+            'name': {
+                'givenName': 'Elsie',
+                'familyName': 'Hughes',
+            },
+            'password': 'notTooSecret',
+            'emails': [{'value': 'ehughes@westworld.com', 'primary': True}],
+        }
+        body = json.dumps(data)
+        resp = c.post(url, body, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 409, resp.content)
+
     def test_put(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -617,7 +636,10 @@ class ResourceTypesTestCase(TestCase):
         self.assertEqual(resp.status_code, 200, resp.content)
         user_type = get_user_adapter().resource_type_dict()
         group_type = get_group_adapter().resource_type_dict()
-        expected = list(sorted((user_type, group_type)))
+        expected = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+            'Resources': list(sorted((user_type, group_type))),
+        }
         result = json.loads(resp.content)
         self.assertEqual(expected, result)
 
@@ -639,7 +661,10 @@ class SchemasTestCase(TestCase):
         url = reverse('scim:schemas')
         resp = c.get(url)
         self.assertEqual(resp.status_code, 200, resp.content)
-        expected = list(sorted(ALL_SCHEMAS))
+        expected = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+            'Resources': list(sorted(ALL_SCHEMAS)),
+        }
         result = json.loads(resp.content)
         self.assertEqual(expected, result)
 

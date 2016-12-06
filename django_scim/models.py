@@ -33,9 +33,12 @@ class SCIMServiceProviderConfig(object):
             },
             'bulk': {
                 'supported': False,
+                'maxOperations': 1000,
+                'maxPayloadSize': 1048576,
             },
             'filter': {
                 'supported': True,
+                'maxResults': 50,
             },
             'changePassword': {
                 'supported': True,

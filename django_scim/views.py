@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django import db
 from django.db import transaction
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -20,6 +21,7 @@ from .filter import SCIMUserFilterTransformer
 from .exceptions import SCIMException
 from .exceptions import NotFound
 from .exceptions import BadRequest
+from .exceptions import IntegrityError
 from .models import SCIMServiceProviderConfig
 from .schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
@@ -180,7 +182,10 @@ class PostView(object):
         body = json.loads(request.body)
 
         scim_obj.from_dict(body)
-        scim_obj.save()
+        try:
+            scim_obj.save()
+        except db.utils.IntegrityError as e:
+            raise IntegrityError(str(e))
 
         content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
         response = HttpResponse(content=content,
@@ -279,7 +284,11 @@ class ResourceTypesView(SCIMView):
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
         else:
-            doc = list(sorted(self.type_dict_by_type_id.values()))
+            types = list(sorted(self.type_dict_by_type_id.values()))
+            doc = {
+                'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+                'Resources': types,
+            }
 
         return HttpResponse(content=json.dumps(doc, encoding='utf-8'),
                             content_type=SCIM_CONTENT_TYPE)
@@ -298,7 +307,13 @@ class SchemasView(SCIMView):
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
         else:
-            doc = list(sorted(self.schemas_by_uri.values()))
+            schemas = list(sorted(self.schemas_by_uri.values()))
+            doc = {
+                'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+                'Resources': schemas,
+            }
+
+
 
         content = json.dumps(doc, encoding='utf-8')
         return HttpResponse(content=content,

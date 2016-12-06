@@ -82,6 +82,7 @@ class SCIMUser(SCIMMixin):
             'userName': self.obj.username,
             'name': {
                 'givenName': self.obj.first_name,
+                'familyName': self.obj.last_name,
             },
             'displayName': self.display_name,
             'emails': self.emails,

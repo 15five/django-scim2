@@ -40,3 +40,7 @@ class BadRequest(SCIMException):
 class PatchError(SCIMException):
     status = 400
 
+
+class IntegrityError(SCIMException):
+    status = 409
+

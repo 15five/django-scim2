@@ -33,11 +33,18 @@ class SCIMServiceProviderConfigTestCase(TestCase):
         config = SCIMServiceProviderConfig()
         expected ={
             'authenticationSchemes': [],
-            'bulk': {'supported': False},
+            'bulk': {
+                'supported': False,
+                'maxPayloadSize': 1048576,
+                'maxOperations': 1000,
+            },
             'changePassword': {'supported': True},
             'documentationUri': None,
             'etag': {'supported': False},
-            'filter': {'supported': True},
+            'filter': {
+                'supported': True,
+                'maxResults': 50
+            },
             'meta': {
                 'location': u'https://localhost/scim/v2/ServiceProviderConfig',
                 'resourceType': 'ServiceProviderConfig'

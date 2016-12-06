@@ -9,6 +9,8 @@ from django_scim.utils import get_group_model
 
 
 class SCIMUserTestCase(TestCase):
+    maxDiff = None
+
     def test_display_name(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -96,7 +98,8 @@ class SCIMUserTestCase(TestCase):
             },
             'displayName': u'Robert Ford',
             'name': {
-                'givenName': 'Robert'
+                'givenName': 'Robert',
+                'familyName': 'Ford',
             },
             'groups': [
                 {
