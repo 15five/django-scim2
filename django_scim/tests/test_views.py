@@ -298,9 +298,73 @@ class UserTestCase(TestCase):
         ford = get_user_adapter()(ford)
         self.assertEqual(result, ford.to_dict())
 
-    @skip('')
-    def test_patch(self):
-        self.fail('TODO')
+    def test_patch_replace(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        data = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+            'Operations': [
+                {
+                    'op': 'replace',
+                    'value': {
+                        'familyName': 'Updated Ford'
+                    }
+                },
+            ]
+        }
+        data = json.dumps(data)
+
+        c = Client()
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = c.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        ford.refresh_from_db()
+        self.assertEqual(ford.last_name, 'Updated Ford')
+
+    def test_patch_atomic(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        data = {
+            'schemas': ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+            'Operations': [
+                {
+                    'op': 'replace',
+                    'value': {
+                        'familyName': 'Updated Ford'
+                    }
+                },
+                # Adding a non-existent user should cause this PATCH to fail
+                {
+                    'op': 'replace',
+                    'value': {
+                        'emails': [
+                            {
+                                'value': 'not a valid email'
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        data = json.dumps(data)
+
+        c = Client()
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = c.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+        ford.refresh_from_db()
+        self.assertEqual(ford.last_name, 'Ford')
+        self.assertEqual(ford.email, 'rford@ww.com')
 
     def test_delete(self):
         ford = get_user_model().objects.create(

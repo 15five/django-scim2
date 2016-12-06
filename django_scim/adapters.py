@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
+from django import core
 from six.moves.urllib.parse import urljoin
 
 from .constants import BASE_SCIM_LOCATION
@@ -134,6 +135,41 @@ class SCIMUser(SCIMMixin):
                 'resourceType': 'ResourceType'
             }
         }
+
+    def handle_replace(self, operation):
+        attr_map = {
+            'familyName': 'last_name',
+            'givenName': 'first_name',
+            'userName': 'username',
+            'active': 'is_active',
+        }
+
+        attrs = operation.get('value', {})
+
+        for attr, attr_value in attrs.items():
+            if attr in attr_map:
+                setattr(self.obj, attr_map.get(attr), attr_value)
+            elif attr == 'emails':
+                primary_emails = [e for e in attr_value if e.get('primary')]
+                if primary_emails:
+                    email = primary_emails[0].get('value')
+                elif attr_value:
+                    email = attr_value[0].get('value')
+                else:
+                    raise PatchError('Invalid email value')
+
+                try:
+                    validator = core.validators.EmailValidator()
+                    validator(email)
+                except core.exceptions.ValidationError:
+                    raise PatchError('Invalid email value')
+
+                self.obj.email = email
+
+            else:
+                raise NotImplementedError('Not Implemented')
+
+        self.obj.save()
 
 
 class SCIMGroup(SCIMMixin):
