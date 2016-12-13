@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Installs django_scim.
+# Installs django-scim2
 
 from setuptools import setup
 import os
@@ -8,6 +8,7 @@ import unittest
 import sys
 
 import django
+import django_scim
 
 
 def long_description():
@@ -35,8 +36,26 @@ def run_tests():
 
 
 setup(
+    name='django-scim2',
+    version=django_scim.__version__,
+    description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
+    url='https://github.com/15five/django-scim2',
+    download_url='https://github.com/15five/django-scim2/archive/master.zip',
+    maintainer='Paul Logston',
+    maintainer_email='paul@15five.com',
     author='Erik van Zijst',
     author_email='erik.van.zijst@gmail.com',
+    keywords='django scim 2.0',
+    license='MIT',
+    long_description=long_description(),
+    packages=['django_scim'],
+    install_requires=[
+        'python-dateutil==2.6.0',
+        'PlyPlus==0.7.2',
+    ],
+    scripts=['scim'],
+    test_suite='setup.run_tests',
+    zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
@@ -48,22 +67,6 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        ],
-    description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
-    download_url='https://bitbucket.org/atlassian/django_scim/downloads/django_scim-0.4.1.tar.gz',
-    keywords='django scim',
-    license='MIT',
-    long_description=long_description(),
-    name='django_scim',
-    packages=['django_scim'],
-    install_requires=[
-        'python-dateutil==2.6.0',
-        'PlyPlus==0.7.2',
     ],
-    scripts=['scim'],
-    url='https://bitbucket.org/atlassian/django_scim',
-    version='0.4.1',
-    test_suite='setup.run_tests',
-    zip_safe=False,
 )
 

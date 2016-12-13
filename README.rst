@@ -2,7 +2,9 @@ Django SCIM
 ===========
 
 This is a partial provider-side implementation of the SCIM 2.0 [1]_
-specification for use in Django. It covers:
+specification for use in Django.
+
+It covers:
 
 - Serialization of Django ``User`` objects to SCIM documents
 - REST view for ``<prefix>/Users/uid``
@@ -81,6 +83,11 @@ And pass it on to the view::
         url(r'^/scim/v2/Users/([^/]+)$',
             UserView.as_view(usercls=SCIMUser, parser=AcmeSCIMTransformer),
             name='scim-user'),
+
+Credits
+-------
+
+This project was forked from https://bitbucket.org/atlassian/django_scim
 
 
 .. [1] http://www.simplecloud.info/
