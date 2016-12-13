@@ -14,7 +14,6 @@ except ImportError:
 
 from django_scim import views
 from django_scim.constants import BASE_SCIM_LOCATION
-from django_scim.constants import BASE_URL
 from django_scim.models import SCIMServiceProviderConfig
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from django_scim.utils import get_group_adapter
@@ -127,7 +126,7 @@ class SearchTestCase(TestCase):
         })
         resp = c.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content)
-        location = urljoin(BASE_SCIM_LOCATION, BASE_URL)
+        location = urljoin(BASE_SCIM_LOCATION, '/scim/v2/')
         location = urljoin(location, 'Users/.search')
         self.assertEqual(resp['Location'], location)
 

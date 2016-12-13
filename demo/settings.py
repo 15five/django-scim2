@@ -102,5 +102,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-DJANGO_SCIM_NETLOC = 'dev.15fiveit.com'
+
+
+DJANGO_SCIM_NETLOC = 'localhost'
 
