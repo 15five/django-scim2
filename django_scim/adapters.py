@@ -3,8 +3,8 @@ from django.core.urlresolvers import reverse
 from django import core
 from six.moves.urllib.parse import urljoin
 
-from .constants import BASE_SCIM_LOCATION
 from .exceptions import PatchError
+from .utils import get_base_scim_location_getter
 from .utils import get_group_model
 
 
@@ -22,7 +22,7 @@ class SCIMMixin(object):
 
     @property
     def location(self):
-        return urljoin(BASE_SCIM_LOCATION, self.path)
+        return urljoin(get_base_scim_location_getter()(), self.path)
 
     def save(self):
         self.obj.save()
@@ -122,7 +122,7 @@ class SCIMUser(SCIMMixin):
     def resource_type_dict(self):
         id_ = self.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
-        location = urljoin(BASE_SCIM_LOCATION, path)
+        location = urljoin(get_base_scim_location_getter()(), path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
             'id': id_,
@@ -223,7 +223,7 @@ class SCIMGroup(SCIMMixin):
     def resource_type_dict(self):
         id_ = self.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
-        location = urljoin(BASE_SCIM_LOCATION, path)
+        location = urljoin(get_base_scim_location_getter()(), path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
             'id': id_,

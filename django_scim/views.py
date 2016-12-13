@@ -15,7 +15,6 @@ try:
 except ImportError:
     from django.core.urlresolvers import reverse
 
-from . import constants
 from .auth import SCIMRequest
 from .filter import SCIMUserFilterTransformer
 from .exceptions import SCIMException
@@ -27,6 +26,7 @@ from .schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
 from .utils import get_group_model
 from .utils import get_user_adapter
+from .utils import get_base_scim_location_getter
 
 
 SCIM_CONTENT_TYPE = 'application/scim+json'
@@ -130,7 +130,7 @@ class SearchView(FilterMixin, SCIMView):
         else:
             response = self._search(query, *self._page(request))
             path = reverse(self.scim_adapter.url_name)
-            url = urljoin(constants.BASE_SCIM_LOCATION, path).rstrip('/')
+            url = urljoin(get_base_scim_location_getter()(), path).rstrip('/')
             response['Location'] = url + '/.search'
             return response
 

@@ -13,12 +13,12 @@ except ImportError:
     from django.core.urlresolvers import reverse
 
 from django_scim import views
-from django_scim.constants import BASE_SCIM_LOCATION
 from django_scim.models import SCIMServiceProviderConfig
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from django_scim.utils import get_group_adapter
 from django_scim.utils import get_group_model
 from django_scim.utils import get_user_adapter
+from django_scim.utils import get_base_scim_location_getter
 
 
 class SCIMTestCase(TestCase):
@@ -126,7 +126,7 @@ class SearchTestCase(TestCase):
         })
         resp = c.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content)
-        location = urljoin(BASE_SCIM_LOCATION, '/scim/v2/')
+        location = urljoin(get_base_scim_location_getter()(), '/scim/v2/')
         location = urljoin(location, 'Users/.search')
         self.assertEqual(resp['Location'], location)
 

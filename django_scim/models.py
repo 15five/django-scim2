@@ -2,8 +2,8 @@ from django.core.urlresolvers import reverse
 from six.moves.urllib.parse import urljoin
 
 from .auth import SCIMAuthBackendCollection
-from .constants import BASE_SCIM_LOCATION
 from .constants import DOCUMENTATION_URI
+from .utils import get_base_scim_location_getter
 
 
 class SCIMServiceProviderConfig(object):
@@ -22,7 +22,7 @@ class SCIMServiceProviderConfig(object):
     @property
     def location(self):
         path = reverse('scim:service-provider-config')
-        return urljoin(BASE_SCIM_LOCATION, path)
+        return urljoin(get_base_scim_location_getter()(), path)
 
     def to_dict(self):
         return {

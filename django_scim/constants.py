@@ -2,16 +2,7 @@ from django.conf import settings
 from django.utils.six import moves
 
 
-BASE_SCIM_LOCATION_PARTS = (
-    getattr(settings, 'DJANGO_SCIM_SCHEME', 'https'),
-    settings.DJANGO_SCIM_NETLOC,
-    '',  # path
-    '',  # params
-    '',  # query
-    ''   # fragment
-)
-
-BASE_SCIM_LOCATION = moves.urllib.parse.urlunparse(BASE_SCIM_LOCATION_PARTS)
+DJANGO_SCIM_BASE_LOCATION_GETTER = 'django_scim.utils.default_base_scim_location_getter'
 
 DEFAULT_USER_ADAPTER_STRING = 'django_scim.adapters.SCIMUser'
 
