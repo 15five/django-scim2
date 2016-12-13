@@ -1,6 +1,7 @@
 The MIT License (MIT)
 
-Copyright (c) 2014 Erik van Zijst <erik.van.zijst@gmail.com>, Atlassian
+Original work Copyright (c) 2014 Erik van Zijst <erik.van.zijst@gmail.com>, Atlassian
+Modified work Copyright (c) 2016 Paul Logston <paul@15five.com>, 15Five, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

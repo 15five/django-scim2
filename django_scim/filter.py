@@ -1,8 +1,13 @@
 import dateutil.parser
 import itertools
+import re
 
 from plyplus import Grammar, STransformer, PlyplusException
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+
+STRING_REPLACEMENT_RE_PAT = re.compile(r'\%\([^).]+\)s', re.MULTILINE)
+
 
 grammar = Grammar("""
   start: logical_or;
@@ -58,7 +63,7 @@ grammar = Grammar("""
   """)
 
 
-class SCIMFilterTransformer(STransformer):
+class SCIMUserFilterTransformer(STransformer):
     """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
     and a dict with query parameters to go with the query."""
 
@@ -82,6 +87,10 @@ class SCIMFilterTransformer(STransformer):
     date_joined = lambda *args: u'u.date_joined'
     is_active = lambda *args: u'u.is_active'
 
+    @property
+    def auth_user_db_table(self):
+        return get_user_model()._meta.db_table
+
     # expressions:
     def logical_or(self, exp):
         # We're not doing a simple 'OR', as that doesn't scale when the two
@@ -94,7 +103,7 @@ class SCIMFilterTransformer(STransformer):
             u.id IN (
                 WITH users AS (
                     SELECT DISTINCT u.id
-                    FROM auth_user u
+                    FROM {auth_user_db_table} u
                     {join}
                     WHERE
                     {operand1}
@@ -102,14 +111,17 @@ class SCIMFilterTransformer(STransformer):
                     UNION
 
                     SELECT DISTINCT u.id
-                    FROM auth_user u
+                    FROM {auth_user_db_table} u
                     {join}
                     WHERE
                     {operand2}
                 )
                 SELECT DISTINCT id FROM users
             )
-        """.format(join=self.join(), operand1=exp.tail[0], operand2=exp.tail[1])
+        """.format(join=self.join(),
+                   auth_user_db_table=self.auth_user_db_table,
+                   operand1=exp.tail[0],
+                   operand2=exp.tail[1])
 
     def logical_and(self, exp):
         op1, op2 = exp.tail
@@ -132,14 +144,16 @@ class SCIMFilterTransformer(STransformer):
             (
                 WITH users AS (
                     SELECT DISTINCT u.id, u.password
-                    FROM auth_user u
+                    FROM {auth_user_db_table} u
                     {join}
                     WHERE {fragment}
                 )
                 SELECT DISTINCT users.id
                 FROM users
                 WHERE {password}
-            )""".format(join=self.join(), **params)
+            )""".format(join=self.join(),
+                        auth_user_db_table=self.auth_user_db_table,
+                        **params)
 
     __default__ = lambda self, exp: exp.tail[0]
 
@@ -162,11 +176,13 @@ class SCIMFilterTransformer(STransformer):
     def start(self, exp):
         return u"""
             SELECT DISTINCT u.*
-            FROM auth_user u
+            FROM {auth_user_db_table} u
                 {join}
             WHERE {fragment}
             ORDER BY u.id ASC
-            """.format(join=self.join(), fragment=exp.tail[0]), self._params
+            """.format(join=self.join(),
+                       auth_user_db_table=self.auth_user_db_table,
+                       fragment=exp.tail[0]), self._params
 
     def un_expr(self, exp):
         return u'%s IS NOT NULL' % exp.tail[0]
@@ -178,8 +194,7 @@ class SCIMFilterTransformer(STransformer):
     def bin_string_expr(self, exp):
         field, op, literal = exp.tail
         if op == u'eq':
-            return u'UPPER(%s) = UPPER(%%(%s)s)' % (field,
-                                                    self._push_param(literal))
+            return u'UPPER(%s) = UPPER(%%(%s)s)' % (field, self._push_param(literal))
         elif op == u'sw':
             literal += u'%'
         elif op == u'co':
@@ -188,9 +203,8 @@ class SCIMFilterTransformer(STransformer):
 
     def bin_date_expr(self, exp):
         field, op, literal = exp.tail
-        return u'%s %s %%(%s)s' % (
-            field, {u'gt': u'>', u'ge': u'>=', u'lt': u'<', u'le': u'<='}[op],
-            self._push_param(literal))
+        op = {u'gt': u'>', u'ge': u'>=', u'lt': u'<', u'le': u'<='}[op]
+        return u'%s %s %%(%s)s' % (field, op, self._push_param(literal))
 
     def bin_bool_expr(self, exp):
         return u'%s = %%(%s)s' % (exp.tail[0], self._push_param(exp.tail[2]))
@@ -217,18 +231,33 @@ class SCIMFilterTransformer(STransformer):
             )""" % (pname, pname))
 
     @classmethod
+    def condition_sql_and_params(cls, sql, params):
+        # replace %(id)s with %s and update params accordingly
+        replacements = STRING_REPLACEMENT_RE_PAT.findall(sql)
+        new_sql = STRING_REPLACEMENT_RE_PAT.sub('%s', sql, count=len(replacements))
+
+        new_params = []
+        for replacement in replacements:
+            # strip '%(' adn ')s' from replacement arg
+            replacement = replacement[2:-2]
+            new_params.append(params.get(replacement))
+
+        return new_sql, new_params
+
+    @classmethod
     def search(cls, query):
         """Takes a SCIM 1.1 filter query and returns a Django `QuerySet` that
-        contains zero or more `User` instances.
+        contains zero or more user model instances.
 
-        :param unicode query:   a `unicode` query string.
+        :param unicode query: a `unicode` query string.
         """
         try:
             sql, params = cls().transform(grammar.parse(query))
+            sql, params = cls.condition_sql_and_params(sql, params)
         except PlyplusException as e:
             raise ValueError(e)
         else:
-            return User.objects.raw(sql, params)
+            return get_user_model().objects.raw(sql, params)
 
     class PasswordExpression(object):
         def __init__(self, sql):
@@ -240,3 +269,4 @@ class SCIMFilterTransformer(STransformer):
 
         def __unicode__(self):
             return self.sql
+

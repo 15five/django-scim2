@@ -3,3 +3,8 @@ build/
 **/*.pyc
 dist
 MANIFEST
+.tox/
+*.egg-info/
+*.swp
+test_database
+.eggs/

@@ -1,41 +1,55 @@
 from django.core.urlresolvers import reverse
-from django.utils.timezone import utc
+from six.moves.urllib.parse import urljoin
+
+from .auth import SCIMAuthBackendCollection
+from .constants import DOCUMENTATION_URI
+from .utils import get_base_scim_location_getter
 
 
-class SCIMUser(object):
-    def __init__(self, user):
-        self.user = user
+class SCIMServiceProviderConfig(object):
+    @property
+    def authentication_schemes(self):
+        backends = SCIMAuthBackendCollection.backends()
+        return [backend.scheme_dict() for backend in backends]
 
     @property
-    def display_name(self):
-        if self.user.first_name and self.user.last_name:
-            return u'{0.first_name} {0.last_name}'.format(self.user)
-        return self.user.username
-
-    @property
-    def emails(self):
-        return {self.user.email: True}
-
-    def to_dict(self):
-        d = {
-            'schemas': ['urn:scim:schemas:core:1.0'],
-            'id': str(self.user.id),
-            'userName': self.user.username,
-            'name': {
-                'formatted': self.display_name,
-                'familyName': self.user.last_name,
-                'givenName': self.user.first_name,
-            },
-            'displayName': self.display_name,
-            'emails': [{'value': email, 'primary': primary}
-                       for email, primary in self.emails.items()],
-            'active': self.user.is_active,
-            'groups': [],
-            'meta': {
-                'created': utc.localize(self.user.date_joined).isoformat(),
-                'lastModified': utc.localize(self.user.date_joined).isoformat(),
-                'location': reverse('scim-user', args=(self.user.id,))
-            }
+    def meta(self):
+        return {
+            'location': self.location,
+            'resourceType': 'ServiceProviderConfig',
         }
 
-        return d
+    @property
+    def location(self):
+        path = reverse('scim:service-provider-config')
+        return urljoin(get_base_scim_location_getter()(), path)
+
+    def to_dict(self):
+        return {
+            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
+            'documentationUri': DOCUMENTATION_URI,
+            'patch': {
+                'supported': True,
+            },
+            'bulk': {
+                'supported': False,
+                'maxOperations': 1000,
+                'maxPayloadSize': 1048576,
+            },
+            'filter': {
+                'supported': True,
+                'maxResults': 50,
+            },
+            'changePassword': {
+                'supported': True,
+            },
+            'sort': {
+                'supported': False,
+            },
+            'etag': {
+                'supported': False,
+            },
+            'authenticationSchemes': self.authentication_schemes,
+            'meta': self.meta,
+        }
+
