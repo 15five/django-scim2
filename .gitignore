@@ -8,3 +8,4 @@ MANIFEST
 *.swp
 test_database
 .eggs/
+docs/_build
