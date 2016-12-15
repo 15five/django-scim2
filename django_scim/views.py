@@ -50,7 +50,7 @@ class SCIMView(View):
             if not isinstance(e, SCIMException):
                 e = SCIMException(six.text_type(e))
 
-            content = json.dumps(e.to_dict(), encoding='utf-8')
+            content = json.dumps(e.to_dict())
             return HttpResponse(content=content,
                                 content_type=SCIM_CONTENT_TYPE,
                                 status=e.status)
@@ -108,7 +108,7 @@ class FilterMixin(object):
         except ValueError as e:
             raise BadRequest(six.text_type(e))
         else:
-            content = json.dumps(doc, encoding='utf-8')
+            content = json.dumps(doc)
             return HttpResponse(content=content,
                                 content_type=SCIM_CONTENT_TYPE)
 
@@ -119,7 +119,7 @@ class SearchView(FilterMixin, SCIMView):
     scim_adapter = None
 
     def post(self, request):
-        body = json.loads(request.body or '{}')
+        body = json.loads(request.body.decode() or '{}')
         if body.get('schemas') != [SCHEMA_URI_SERACH_REQUEST]:
             raise BadRequest('Invalid schema uri. Must be SearchRequest.')
 
@@ -148,7 +148,7 @@ class GetView(object):
         except ObjectDoesNotExist as _e:
             raise NotFound(uuid)
         else:
-            content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+            content = json.dumps(scim_obj.to_dict())
             response = HttpResponse(content=content,
                                     content_type=SCIM_CONTENT_TYPE)
             response['Location'] = scim_obj.location
@@ -179,7 +179,7 @@ class PostView(object):
         obj = self.model_cls()
         scim_obj = self.scim_adapter(obj)
 
-        body = json.loads(request.body)
+        body = json.loads(request.body.decode())
 
         scim_obj.from_dict(body)
         try:
@@ -187,7 +187,7 @@ class PostView(object):
         except db.utils.IntegrityError as e:
             raise IntegrityError(str(e))
 
-        content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+        content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
                                 content_type=SCIM_CONTENT_TYPE,
                                 status=201)
@@ -204,12 +204,12 @@ class PutView(object):
 
         scim_obj = self.scim_adapter(obj)
 
-        body = json.loads(request.body)
+        body = json.loads(request.body.decode())
 
         scim_obj.from_dict(body)
         scim_obj.save()
 
-        content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+        content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
                                 content_type=SCIM_CONTENT_TYPE)
         response['Location'] = scim_obj.location
@@ -225,14 +225,14 @@ class PatchView(object):
             raise NotFound(uuid)
 
         scim_obj = self.scim_adapter(obj)
-        body = json.loads(request.body)
+        body = json.loads(request.body.decode())
 
         operations = body.get('Operations')
 
         with transaction.atomic():
             scim_obj.handle_operations(operations)
 
-        content = json.dumps(scim_obj.to_dict(), encoding='utf-8')
+        content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
                                 content_type=SCIM_CONTENT_TYPE)
         response['Location'] = scim_obj.location
@@ -262,7 +262,7 @@ class ServiceProviderConfigView(SCIMView):
 
     def get(self, request):
         config = SCIMServiceProviderConfig()
-        content = json.dumps(config.to_dict(), encoding='utf-8')
+        content = json.dumps(config.to_dict())
         return HttpResponse(content=content,
                             content_type=SCIM_CONTENT_TYPE)
 
@@ -290,7 +290,7 @@ class ResourceTypesView(SCIMView):
                 'Resources': types,
             }
 
-        return HttpResponse(content=json.dumps(doc, encoding='utf-8'),
+        return HttpResponse(content=json.dumps(doc),
                             content_type=SCIM_CONTENT_TYPE)
 
 
@@ -315,7 +315,7 @@ class SchemasView(SCIMView):
 
 
 
-        content = json.dumps(doc, encoding='utf-8')
+        content = json.dumps(doc)
         return HttpResponse(content=content,
                             content_type=SCIM_CONTENT_TYPE)
 
