@@ -3,17 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to django-scim2's documentation!
-========================================
+
+.. include:: ../README.rst
+
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Modules
 
-
-
-Indices and tables
-==================
+   adapters
+   exceptions
+   filter
+   models
+   utils
+   views
 
 * :ref:`genindex`
 * :ref:`modindex`

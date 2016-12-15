@@ -1,5 +1,5 @@
-Django SCIM
-===========
+django-scim2
+============
 
 This is a partial provider-side implementation of the SCIM 2.0 [1]_
 specification for use in Django.
@@ -33,8 +33,11 @@ namespace is mandatory and must be named `scim`::
 Documentation
 -------------
 
-Coming soon.
+.. image:: https://readthedocs.org/projects/django-scim2/badge/?version=latest
+  :target: http://django-scim2.readthedocs.io/en/latest/?badge=latest
+  :alt: Documentation Status
 
+http://django-scim2.readthedocs.io/
 
 License
 -------
