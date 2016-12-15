@@ -39,6 +39,14 @@ Documentation
 
 http://django-scim2.readthedocs.io/
 
+Tests
+-----
+
+.. image:: https://travis-ci.org/15five/django-scim2.svg?branch=master
+   :target: https://travis-ci.org/15five/django-scim2
+
+https://travis-ci.org/15five/django-scim2
+
 License
 -------
 

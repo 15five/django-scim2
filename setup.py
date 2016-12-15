@@ -22,7 +22,8 @@ def get_version():
     if not version_line:
         raise ValueError('Unable to find version line in __init__.py')
 
-    return version_line.split('=')[1].strip()
+    version = version_line.split('=')[1].strip().strip("'")
+    return version
 
 
 def long_description():
