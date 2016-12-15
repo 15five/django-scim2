@@ -284,7 +284,8 @@ class ResourceTypesView(SCIMView):
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
         else:
-            types = list(sorted(self.type_dict_by_type_id.values()))
+            key_func = lambda o: o.get('id')
+            types = list(sorted(self.type_dict_by_type_id.values(), key=key_func))
             doc = {
                 'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
                 'Resources': types,
@@ -307,7 +308,8 @@ class SchemasView(SCIMView):
                 return HttpResponse(content_type=SCIM_CONTENT_TYPE,
                                     status=404)
         else:
-            schemas = list(sorted(self.schemas_by_uri.values()))
+            key_func = lambda o: o.get('id')
+            schemas = list(sorted(self.schemas_by_uri.values(), key=key_func))
             doc = {
                 'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
                 'Resources': schemas,

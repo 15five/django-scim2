@@ -699,9 +699,10 @@ class ResourceTypesTestCase(TestCase):
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         user_type = get_user_adapter().resource_type_dict()
         group_type = get_group_adapter().resource_type_dict()
+        key = lambda o: o.get('id')
         expected = {
             'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
-            'Resources': list(sorted((user_type, group_type))),
+            'Resources': list(sorted((user_type, group_type), key=key)),
         }
         result = json.loads(resp.content.decode())
         self.assertEqual(expected, result)
@@ -724,9 +725,10 @@ class SchemasTestCase(TestCase):
         url = reverse('scim:schemas')
         resp = c.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
+        key = lambda o: o.get('id')
         expected = {
             'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
-            'Resources': list(sorted(ALL_SCHEMAS)),
+            'Resources': list(sorted(ALL_SCHEMAS, key=key)),
         }
         result = json.loads(resp.content.decode())
         self.assertEqual(expected, result)
