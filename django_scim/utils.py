@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.utils.module_loading import import_string
+import six
 
 from .constants import DEFAULT_USER_ADAPTER_STRING
 from .constants import DEFAULT_GROUP_MODEL_STRING
 from .constants import DEFAULT_GROUP_ADAPTER_STRING
+from .constants import DEFAULT_BASE_LOCATION_GETTER_STRING
 
 
 def get_user_adapter():
@@ -44,7 +46,7 @@ def default_base_scim_location_getter():
         ''   # fragment
     )
 
-    base_scim_location = moves.urllib.parse.urlunparse(base_scim_location_parts)
+    base_scim_location = six.moves.urllib.parse.urlunparse(base_scim_location_parts)
 
     return base_scim_location
 

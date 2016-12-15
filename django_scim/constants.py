@@ -2,7 +2,7 @@ from django.conf import settings
 from django.utils.six import moves
 
 
-DJANGO_SCIM_BASE_LOCATION_GETTER = 'django_scim.utils.default_base_scim_location_getter'
+DEFAULT_BASE_LOCATION_GETTER_STRING = 'django_scim.utils.default_base_scim_location_getter'
 
 DEFAULT_USER_ADAPTER_STRING = 'django_scim.adapters.SCIMUser'
 

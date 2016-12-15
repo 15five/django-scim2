@@ -7,18 +7,33 @@ import sys
 import unittest
 import sys
 
-import django
-import django_scim
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_version():
+    path = os.path.join(BASE_DIR, 'django_scim', '__init__.py')
+    version_line = None
+    with open(path) as fp:
+        for line in fp:
+            if line.startswith('__version__'):
+                version_line = line
+                break
+    if not version_line:
+        raise ValueError('Unable to find version line in __init__.py')
+
+    return version_line.split('=')[1].strip()
 
 
 def long_description():
     """Get the long description from the README"""
-    return open(os.path.join(sys.path[0], 'README.rst')).read()
+    return open(os.path.join(BASE_DIR, 'README.rst')).read()
 
 def run_tests():
     settings_mod = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
     os.environ['DJANGO_SETTINGS_MODULE'] = settings_mod
 
+    import django
     django.setup()
     from django.test.utils import get_runner
     from django.conf import settings
@@ -37,7 +52,7 @@ def run_tests():
 
 setup(
     name='django-scim2',
-    version=django_scim.__version__,
+    version=get_version(),
     description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
     url='https://github.com/15five/django-scim2',
     download_url='https://github.com/15five/django-scim2/archive/master.zip',

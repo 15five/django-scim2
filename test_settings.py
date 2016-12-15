@@ -34,7 +34,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 )
 
-ROOT_URLCONF = 'django_scim.urls'
+ROOT_URLCONF = 'django_scim.tests.urls'
 
 TEMPLATES = [
     {
@@ -87,9 +87,5 @@ STATIC_URL = '/static/'
 
 # -- Django SCIM specific settings --
 
-#DJANGO_SCIM_SCHEME = 'http'  # for debugging
 DJANGO_SCIM_NETLOC = 'localhost'
-#DJANGO_SCIM_AUTH_BACKENDS = []
-#DJANGO_SCIM_GROUP_ADAPTER = ''
-#DJANGO_SCIM_USER_ADAPTER = ''
 
