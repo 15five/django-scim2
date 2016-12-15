@@ -66,8 +66,8 @@ setup(
     long_description=long_description(),
     packages=['django_scim'],
     install_requires=[
-        'python-dateutil==2.6.0',
-        'PlyPlus==0.7.2',
+        'python-dateutil>=2.6.0',
+        'PlyPlus>=0.7.2',
     ],
     scripts=['scim'],
     test_suite='setup.run_tests',
