@@ -14,8 +14,7 @@ Contents
    :caption: Modules
 
    adapters
-   exceptions
-   filter
+   filters
    models
    utils
    views

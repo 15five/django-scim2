@@ -24,6 +24,8 @@ from six.moves.urllib.parse import urljoin
 from .exceptions import PatchError
 from .utils import get_base_scim_location_getter
 from .utils import get_group_model
+from .utils import get_group_adapter
+from .utils import get_user_adapter
 
 
 class SCIMMixin(object):
@@ -93,7 +95,7 @@ class SCIMUser(SCIMMixin):
         """
         Return the groups of the user per the SCIM spec.
         """
-        scim_groups = [SCIMGroup(group) for group in self.obj.groups.all()]
+        scim_groups = [get_group_adapter()(group) for group in self.obj.groups.all()]
 
         dicts = []
         for group in scim_groups:
@@ -264,7 +266,7 @@ class SCIMGroup(SCIMMixin):
         :rtype: list
         """
         users = self.obj.user_set.all()
-        scim_users = [SCIMUser(user) for user in users]
+        scim_users = [get_user_adapter()(user) for user in users]
 
         dicts = []
         for user in scim_users:

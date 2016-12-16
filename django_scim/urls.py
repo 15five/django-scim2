@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from django.conf.urls import include
 
-from .filter import SCIMUserFilterTransformer
+from .filters import SCIMUserFilterTransformer
 from .utils import get_user_adapter
 from . import views
 
