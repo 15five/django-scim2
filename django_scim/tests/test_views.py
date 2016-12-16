@@ -13,12 +13,12 @@ except ImportError:
     from django.core.urlresolvers import reverse
 
 from django_scim import views
-from django_scim.models import SCIMServiceProviderConfig
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from django_scim.utils import get_group_adapter
 from django_scim.utils import get_group_model
 from django_scim.utils import get_user_adapter
 from django_scim.utils import get_base_scim_location_getter
+from django_scim.utils import get_service_provider_config_model
 
 
 class SCIMTestCase(TestCase):
@@ -685,7 +685,7 @@ class ServiceProviderConfigTestCase(TestCase):
         url = reverse('scim:service-provider-config')
         resp = c.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
-        config = SCIMServiceProviderConfig()
+        config = get_service_provider_config_model()()
         self.assertEqual(config.to_dict(), json.loads(resp.content.decode()))
 
 

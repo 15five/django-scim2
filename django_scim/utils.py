@@ -6,7 +6,7 @@ from .constants import DEFAULT_USER_ADAPTER_STRING
 from .constants import DEFAULT_GROUP_MODEL_STRING
 from .constants import DEFAULT_GROUP_ADAPTER_STRING
 from .constants import DEFAULT_BASE_LOCATION_GETTER_STRING
-
+from .constants import DEFAULT_SERVICE_PROVIDER_CONFIG_MODEL_STRING
 
 def get_user_adapter():
     model_str = getattr(settings, 'DJANGO_SCIM_USER_ADAPTER', DEFAULT_USER_ADAPTER_STRING)
@@ -20,6 +20,15 @@ def get_group_model():
 
 def get_group_adapter():
     model_str = getattr(settings, 'DJANGO_SCIM_GROUP_ADAPTER', DEFAULT_GROUP_ADAPTER_STRING)
+    return import_string(model_str)
+
+
+def get_service_provider_config_model():
+    model_str = getattr(
+        settings,
+        'DJANGO_SCIM_SERVICE_PROVIDER_CONFIG_MODEL',
+        DEFAULT_SERVICE_PROVIDER_CONFIG_MODEL_STRING
+    )
     return import_string(model_str)
 
 

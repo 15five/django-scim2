@@ -1,3 +1,7 @@
+"""
+Filter transformers are used to convert the SCIM query and filter syntax into
+valid SQL queries.
+"""
 import dateutil.parser
 import itertools
 import re
@@ -9,7 +13,7 @@ from django.contrib.auth import get_user_model
 STRING_REPLACEMENT_RE_PAT = re.compile(r'\%\([^).]+\)s', re.MULTILINE)
 
 
-grammar = Grammar("""
+user_grammar = Grammar("""
   start: logical_or;
 
   ?logical_or: logical_or op_or logical_and | logical_and;
@@ -252,7 +256,7 @@ class SCIMUserFilterTransformer(STransformer):
         :param unicode query: a `unicode` query string.
         """
         try:
-            sql, params = cls().transform(grammar.parse(query))
+            sql, params = cls().transform(user_grammar.parse(query))
             sql, params = cls.condition_sql_and_params(sql, params)
         except PlyplusException as e:
             raise ValueError(e)

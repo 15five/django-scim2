@@ -16,22 +16,19 @@ except ImportError:
     from django.core.urlresolvers import reverse
 
 from .auth import SCIMRequest
+from .constants import SCIM_CONTENT_TYPE
+from .constants import SCHEMA_URI_SERACH_REQUEST
 from .filters import SCIMUserFilterTransformer
 from .exceptions import SCIMException
 from .exceptions import NotFound
 from .exceptions import BadRequest
 from .exceptions import IntegrityError
-from .models import SCIMServiceProviderConfig
 from .schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
 from .utils import get_group_model
 from .utils import get_user_adapter
 from .utils import get_base_scim_location_getter
-
-
-SCIM_CONTENT_TYPE = 'application/scim+json'
-
-SCHEMA_URI_SERACH_REQUEST = 'urn:ietf:params:scim:api:messages:2.0:SearchRequest'
+from .utils import get_service_provider_config_model
 
 
 class SCIMView(View):
@@ -261,7 +258,7 @@ class ServiceProviderConfigView(SCIMView):
     http_method_names = ['get']
 
     def get(self, request):
-        config = SCIMServiceProviderConfig()
+        config = get_service_provider_config_model()()
         content = json.dumps(config.to_dict())
         return HttpResponse(content=content,
                             content_type=SCIM_CONTENT_TYPE)

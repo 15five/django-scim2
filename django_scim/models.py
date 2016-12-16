@@ -7,6 +7,10 @@ from .utils import get_base_scim_location_getter
 
 
 class SCIMServiceProviderConfig(object):
+    """
+    A ServiceProviderConfig for reference. This should be overridden to
+    describe those authentication_schemes and features that are implemented.
+    """
     @property
     def authentication_schemes(self):
         backends = SCIMAuthBackendCollection.backends()

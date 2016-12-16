@@ -5,19 +5,18 @@ from django.test import TestCase
 
 from django_scim.utils import get_user_adapter
 from django_scim.utils import get_group_adapter
-
-from django_scim.models import SCIMServiceProviderConfig
+from django_scim.utils import get_service_provider_config_model
 
 
 class SCIMServiceProviderConfigTestCase(TestCase):
     maxDiff = None
 
     def test_authentication_schemes(self):
-        config = SCIMServiceProviderConfig()
+        config = get_service_provider_config_model()()
         self.assertEqual(config.authentication_schemes, [])
 
     def test_meta(self):
-        config = SCIMServiceProviderConfig()
+        config = get_service_provider_config_model()()
         expected = {
             'resourceType': 'ServiceProviderConfig',
             'location': u'https://localhost/scim/v2/ServiceProviderConfig',
@@ -25,12 +24,12 @@ class SCIMServiceProviderConfigTestCase(TestCase):
         self.assertEqual(config.meta, expected)
 
     def test_location(self):
-        config = SCIMServiceProviderConfig()
+        config = get_service_provider_config_model()()
         location = 'https://localhost/scim/v2/ServiceProviderConfig'
         self.assertEqual(config.location, location)
 
     def test_to_dict(self):
-        config = SCIMServiceProviderConfig()
+        config = get_service_provider_config_model()()
         expected ={
             'authenticationSchemes': [],
             'bulk': {
