@@ -1,3 +1,21 @@
+"""
+Adapters are used to convert the data model described by the SCIM 2.0
+specification to a data model that fits the data provided by the application
+implementing a SCIM api.
+
+For example, in a Django app, there are User and Group models that do
+not have the same attributes/fields that are defined by the SCIM 2.0
+specification. The Django User model has both ``first_name`` and ``last_name``
+attributes but the SCIM speicifcation requires this same data be sent under
+the names ``givenName`` and ``familyName`` respectively.
+
+An adapter is instantiated with a model instance. Eg::
+
+    user = get_user_model().objects.get(id=1)
+    scim_user = SCIMUser(user)
+    ...
+
+"""
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django import core
@@ -28,6 +46,14 @@ class SCIMMixin(object):
         self.obj.save()
 
     def handle_operations(self, operations):
+        """
+        The SCIM specification allows for making changes to specific attributes
+        of a model. These changes are sent in PUT requests and are batched into
+        operations to be performed on a object.Operations could be 'add',
+        'remove', 'replace', etc. This method iterates through all of the
+        operations in ``operations`` and calls the appropriate handler (defined
+        on the appropriate adapter) for each.
+        """
         for operation in operations:
             op_code = operation.get('op')
             op_code = 'handle_' + op_code
@@ -36,22 +62,37 @@ class SCIMMixin(object):
 
 
 class SCIMUser(SCIMMixin):
+    """
+    Adapter for adding SCIM functionality to a Django User object.
+
+    This adapter can be overriden; see the ``DJANGO_SCIM_USER_ADAPTER`` setting
+    for details.
+    """
     # not great, could be more decoupled. But \__( )__/ whatevs.
     url_name = 'scim:users'
     resource_type = 'User'
 
     @property
     def display_name(self):
+        """
+        Return the displayName of the user per the SCIM spec.
+        """
         if self.obj.first_name and self.obj.last_name:
             return u'{0.first_name} {0.last_name}'.format(self.obj)
         return self.obj.username
 
     @property
     def emails(self):
+        """
+        Return the email of the user per the SCIM spec.
+        """
         return [{'value': self.obj.email, 'primary': True}]
 
     @property
     def groups(self):
+        """
+        Return the groups of the user per the SCIM spec.
+        """
         scim_groups = [SCIMGroup(group) for group in self.obj.groups.all()]
 
         dicts = []
@@ -67,6 +108,9 @@ class SCIMUser(SCIMMixin):
 
     @property
     def meta(self):
+        """
+        Return the meta object of the user per the SCIM spec.
+        """
         d = {
             'resourceType': self.resource_type,
             'created': self.obj.date_joined.isoformat(),
@@ -77,6 +121,10 @@ class SCIMUser(SCIMMixin):
         return d
 
     def to_dict(self):
+        """
+        Return a ``dict`` conforming to the SCIM User Schema,
+        ready for conversion to a JSON object.
+        """
         d = {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
             'id': self.id,
@@ -95,6 +143,17 @@ class SCIMUser(SCIMMixin):
         return d
 
     def from_dict(self, d):
+        """
+        Consume a ``dict`` conforming to the SCIM User Schema, updating the
+        internal user object with data from the ``dict``.
+
+        Please note, the user object is not saved within this method. To
+        persist the changes made by this method, please call ``.save()`` on the
+        adapter. Eg::
+
+            scim_user.from_dict(d)
+            scim_user.save()
+        """
         username = d.get('userName')
         self.obj.username = username or ''
 
@@ -120,6 +179,9 @@ class SCIMUser(SCIMMixin):
 
     @classmethod
     def resource_type_dict(self):
+        """
+        Return a ``dict`` containing ResourceType metadata for the user object.
+        """
         id_ = self.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(get_base_scim_location_getter()(), path)
@@ -137,6 +199,9 @@ class SCIMUser(SCIMMixin):
         }
 
     def handle_replace(self, operation):
+        """
+        Handle the replace operations.
+        """
         attr_map = {
             'familyName': 'last_name',
             'givenName': 'first_name',
@@ -173,16 +238,31 @@ class SCIMUser(SCIMMixin):
 
 
 class SCIMGroup(SCIMMixin):
+    """
+    Adapter for adding SCIM functionality to a Django Group object.
+
+    This adapter can be overriden; see the ``DJANGO_SCIM_GROUP_ADAPTER``
+    setting for details.
+    """
     # not great, could be more decoupled. But \__( )__/ whatevs.
     url_name = 'scim:groups'
     resource_type = 'Group'
 
     @property
     def display_name(self):
+        """
+        Return the displayName of the user per the SCIM spec.
+        """
         return self.obj.name
 
     @property
     def members(self):
+        """
+        Return a list of user dicts (ready for serialization) for the members
+        of the group.
+
+        :rtype: list
+        """
         users = self.obj.user_set.all()
         scim_users = [SCIMUser(user) for user in users]
 
@@ -199,6 +279,9 @@ class SCIMGroup(SCIMMixin):
 
     @property
     def meta(self):
+        """
+        Return the meta object of the user per the SCIM spec.
+        """
         d = {
             'resourceType': self.resource_type,
             'location': self.location,
@@ -207,6 +290,10 @@ class SCIMGroup(SCIMMixin):
         return d
 
     def to_dict(self):
+        """
+        Return a ``dict`` conforming to the SCIM User Schema,
+        ready for conversion to a JSON object.
+        """
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:Group'],
             'id': self.id,
@@ -216,11 +303,25 @@ class SCIMGroup(SCIMMixin):
         }
 
     def from_dict(self, d):
+        """
+        Consume a ``dict`` conforming to the SCIM Group Schema, updating the
+        internal group object with data from the ``dict``.
+
+        Please note, the group object is not saved within this method. To
+        persist the changes made by this method, please call ``.save()`` on the
+        adapter. Eg::
+
+            scim_group.from_dict(d)
+            scim_group.save()
+        """
         name = d.get('displayName')
         self.obj.name = name or ''
 
     @classmethod
     def resource_type_dict(self):
+        """
+        Return a ``dict`` containing ResourceType metadata for the group object.
+        """
         id_ = self.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(get_base_scim_location_getter()(), path)
@@ -238,6 +339,9 @@ class SCIMGroup(SCIMMixin):
         }
 
     def handle_add(self, operation):
+        """
+        Handle add operations.
+        """
         if operation.get('path') == 'members':
             members = operation.get('value', [])
             ids = [int(member.get('value')) for member in members]
@@ -253,6 +357,9 @@ class SCIMGroup(SCIMMixin):
             raise NotImplemented
 
     def handle_remove(self, operation):
+        """
+        Handle remove operations.
+        """
         if operation.get('path') == 'members':
             members = operation.get('value', [])
             ids = [int(member.get('value')) for member in members]
@@ -268,6 +375,9 @@ class SCIMGroup(SCIMMixin):
             raise NotImplemented
 
     def handle_replace(self, operation):
+        """
+        Handle the replace operations.
+        """
         if operation.get('path') == 'name':
             name = operation.get('value')[0].get('value')
             self.obj.name = name
