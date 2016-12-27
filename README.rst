@@ -44,6 +44,10 @@ Finally, add settings appropriate for you app to your settings.py file::
 
 Other SCIM settings can be provided but those listed above are required.
 
+Source
+------
+
+https://github.com/15five/django-scim2
 
 Documentation
 -------------
