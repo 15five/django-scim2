@@ -84,6 +84,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Speed up tests with noop password hasher
+PASSWORD_HASHERS = ('django_scim.tests.hashers.NoopPasswordHasher',)
+
 
 # -- Django SCIM specific settings --
 
