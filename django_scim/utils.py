@@ -2,53 +2,52 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 import six
 
-from .constants import DEFAULT_USER_ADAPTER_STRING
-from .constants import DEFAULT_GROUP_MODEL_STRING
-from .constants import DEFAULT_GROUP_ADAPTER_STRING
-from .constants import DEFAULT_BASE_LOCATION_GETTER_STRING
-from .constants import DEFAULT_SERVICE_PROVIDER_CONFIG_MODEL_STRING
+from .settings import scim_settings
+
 
 def get_user_adapter():
-    model_str = getattr(settings, 'DJANGO_SCIM_USER_ADAPTER', DEFAULT_USER_ADAPTER_STRING)
-    return import_string(model_str)
+    """
+    Return the user model adapter.
+    """
+    return scim_settings.USER_ADAPTER
 
 
 def get_group_model():
-    model_str = getattr(settings, 'DJANGO_SCIM_GROUP_MODEL', DEFAULT_GROUP_MODEL_STRING)
-    return import_string(model_str)
+    """
+    Return the group model.
+    """
+    return scim_settings.GROUP_MODEL
 
 
 def get_group_adapter():
-    model_str = getattr(settings, 'DJANGO_SCIM_GROUP_ADAPTER', DEFAULT_GROUP_ADAPTER_STRING)
-    return import_string(model_str)
+    """
+    Return the group model adapter.
+    """
+    return scim_settings.GROUP_ADAPTER
 
 
 def get_service_provider_config_model():
-    model_str = getattr(
-        settings,
-        'DJANGO_SCIM_SERVICE_PROVIDER_CONFIG_MODEL',
-        DEFAULT_SERVICE_PROVIDER_CONFIG_MODEL_STRING
-    )
-    return import_string(model_str)
+    """
+    Return the Service Provider Config model.
+    """
+    return scim_settings.SERVICE_PROVIDER_CONFIG_MODEL
 
 
 def get_base_scim_location_getter():
     """
-    Return a function that will, when called, return the base
+    Return a function that will, when called, returns the base
     location of scim app.
     """
-    import_str = getattr(
-        settings,
-        'DJANGO_SCIM_BASE_LOCATION_GETTER',
-        DEFAULT_BASE_LOCATION_GETTER_STRING
-    )
-    return import_string(import_str)
+    return scim_settings.BASE_LOCATION_GETTER
 
 
-def default_base_scim_location_getter():
+def default_base_scim_location_getter(*args, **kwargs):
+    """
+    Return the default location of the app implementing the SCIM api.
+    """
     base_scim_location_parts = (
-        getattr(settings, 'DJANGO_SCIM_SCHEME', 'https'),
-        settings.DJANGO_SCIM_NETLOC,
+        scim_settings.SCHEME,
+        scim_settings.NETLOC,
         '',  # path
         '',  # params
         '',  # query

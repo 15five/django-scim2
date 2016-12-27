@@ -41,8 +41,8 @@ class SCIMMixin(object):
         return reverse(self.url_name, kwargs={'uuid': self.obj.id})
 
     @property
-    def location(self):
-        return urljoin(get_base_scim_location_getter()(), self.path)
+    def location(self, request=None):
+        return urljoin(get_base_scim_location_getter()(request), self.path)
 
     def save(self):
         self.obj.save()

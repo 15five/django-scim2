@@ -2,14 +2,15 @@ from django.core.urlresolvers import reverse
 from six.moves.urllib.parse import urljoin
 
 from .auth import SCIMAuthBackendCollection
-from .constants import DOCUMENTATION_URI
+from .settings import scim_settings
 from .utils import get_base_scim_location_getter
 
 
 class SCIMServiceProviderConfig(object):
     """
-    A ServiceProviderConfig for reference. This should be overridden to
-    describe those authentication_schemes and features that are implemented.
+    A reference ServiceProviderConfig. This should be overridden to
+    describe those authentication_schemes and features that are implemented by
+    your app.
     """
     @property
     def authentication_schemes(self):
@@ -31,7 +32,7 @@ class SCIMServiceProviderConfig(object):
     def to_dict(self):
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
-            'documentationUri': DOCUMENTATION_URI,
+            'documentationUri': scim_settings.DOCUMENTATION_URI,
             'patch': {
                 'supported': True,
             },

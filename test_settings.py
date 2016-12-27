@@ -87,5 +87,7 @@ STATIC_URL = '/static/'
 
 # -- Django SCIM specific settings --
 
-DJANGO_SCIM_NETLOC = 'localhost'
+SCIM_SERVICE_PROVIDER = {
+    'NETLOC': 'localhost',
+}
 

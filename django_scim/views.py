@@ -40,6 +40,9 @@ class SCIMView(View):
         if not self.implemented:
             return self.status_501(request, *args, **kwargs)
 
+        # (Pdb) request.META['HTTP_AUTHORIZATION']
+        #'Bearer 1234567890'
+
         try:
             self.auth_request(request, *args, **kwargs)
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
@@ -127,7 +130,7 @@ class SearchView(FilterMixin, SCIMView):
         else:
             response = self._search(query, *self._page(request))
             path = reverse(self.scim_adapter.url_name)
-            url = urljoin(get_base_scim_location_getter()(), path).rstrip('/')
+            url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
             response['Location'] = url + '/.search'
             return response
 
