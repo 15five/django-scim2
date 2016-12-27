@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django import db
 from django.db import transaction
@@ -8,6 +9,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils import six
+from django.utils.decorators import method_decorator
 from django.utils.six.moves.urllib.parse import urljoin
 
 try:
@@ -34,7 +36,8 @@ class SCIMView(View):
 
     implemented = True
 
-    @csrf_exempt
+    @method_decorator(csrf_exempt)
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not self.implemented:
             return self.status_501(request, *args, **kwargs)

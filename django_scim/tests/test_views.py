@@ -2,6 +2,8 @@ import json
 from unittest import skip
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.test import Client
 from django.test import RequestFactory
@@ -21,6 +23,19 @@ from django_scim.utils import get_base_scim_location_getter
 from django_scim.utils import get_service_provider_config_model
 
 
+class LoginMixin(object):
+    def setUp(self):
+        self.user = get_user_model().objects.create(
+            first_name='Super',
+            last_name='Admin',
+            username='superuser',
+            password=make_password('password1'),
+        )
+
+        self.client = Client()
+        self.client.login(username='superuser', password='password1')
+
+
 class SCIMTestCase(TestCase):
     maxDiff = None
     factory = RequestFactory()
@@ -30,7 +45,15 @@ class SCIMTestCase(TestCase):
         self.fail('TODO')
 
     def test_status_501(self):
+        user = get_user_model().objects.create(
+            first_name='Super',
+            last_name='Admin',
+            username='superuser',
+            password='',
+        )
+
         request = self.factory.get('/noop')
+        request.user = user
 
         class Status501View(views.SCIMView):
             implemented = False
@@ -91,19 +114,18 @@ class FilterMixinTestCase(TestCase):
         self.assertEqual(expected, result)
 
 
-class SearchTestCase(TestCase):
+class SearchTestCase(LoginMixin, TestCase):
     maxDiff = None
 
     def test_search_without_schema(self):
         """
         Test POST /Users/.search/?filter=userName eq ""
         """
-        c = Client()
         url = reverse('scim:users-search')
         body = json.dumps({
             'schemas': ['urn:ietf:params:scim:api:messages:2.0:NotSearchRequest'],
         })
-        resp = c.post(url, body, content_type='application/scim+json')
+        resp = self.client.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 400, resp.content.decode())
 
         result = json.loads(resp.content.decode())
@@ -118,13 +140,12 @@ class SearchTestCase(TestCase):
         """
         Test POST /Users/.search/?filter=userName eq ""
         """
-        c = Client()
         url = reverse('scim:users-search')
         body = json.dumps({
             'schemas': ['urn:ietf:params:scim:api:messages:2.0:SearchRequest'],
             'filter': 'userName eq ""',
         })
-        resp = c.post(url, body, content_type='application/scim+json')
+        resp = self.client.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         location = urljoin(get_base_scim_location_getter()(), '/scim/v2/')
         location = urljoin(location, 'Users/.search')
@@ -141,16 +162,15 @@ class SearchTestCase(TestCase):
         self.assertEqual(expected, result)
 
 
-class UserTestCase(TestCase):
+class UserTestCase(LoginMixin, TestCase):
     maxDiff = None
 
     def test_get_user_with_username_filter(self):
         """
         Test GET /Users?filter=userName eq ""
         """
-        c = Client()
         url = reverse('scim:users') + '?filter=userName eq ""'
-        resp = c.get(url, content_type='application/scim+json')
+        resp = self.client.get(url, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         result = json.loads(resp.content.decode())
@@ -174,9 +194,8 @@ class UserTestCase(TestCase):
         )
         ford = get_user_adapter()(ford)
 
-        c = Client()
         url = reverse('scim:users', kwargs={'uuid': ford.id})
-        resp = c.get(url, content_type='application/scim+json')
+        resp = self.client.get(url, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         self.assertEqual(resp['Location'], ford.location)
 
@@ -201,18 +220,18 @@ class UserTestCase(TestCase):
         )
         abernathy = get_user_adapter()(abernathy)
 
-        c = Client()
         url = reverse('scim:users')
-        resp = c.get(url, content_type='application/scim+json')
+        resp = self.client.get(url, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         result = json.loads(resp.content.decode())
         expected = {
             "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-            "totalResults": 2,
+            "totalResults": 3,
             "itemsPerPage": 50,
             "startIndex": 1,
             'Resources': [
+                get_user_adapter()(self.user).to_dict(),
                 ford.to_dict(),
                 abernathy.to_dict(),
             ],
@@ -220,7 +239,6 @@ class UserTestCase(TestCase):
         self.assertEqual(expected, result)
 
     def test_post(self):
-        c = Client()
         url = reverse('scim:users')
         data = {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
@@ -233,7 +251,7 @@ class UserTestCase(TestCase):
             'emails': [{'value': 'ehughes@westworld.com', 'primary': True}],
         }
         body = json.dumps(data)
-        resp = c.post(url, body, content_type='application/scim+json')
+        resp = self.client.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 201, resp.content.decode())
 
         # test object
@@ -251,7 +269,6 @@ class UserTestCase(TestCase):
     def test_post_duplicate(self):
         get_user_model().objects.create(username='ehughes')
 
-        c = Client()
         url = reverse('scim:users')
         data = {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
@@ -264,7 +281,7 @@ class UserTestCase(TestCase):
             'emails': [{'value': 'ehughes@westworld.com', 'primary': True}],
         }
         body = json.dumps(data)
-        resp = c.post(url, body, content_type='application/scim+json')
+        resp = self.client.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 409, resp.content.decode())
 
     def test_put(self):
@@ -275,14 +292,13 @@ class UserTestCase(TestCase):
             email='rford@ww.com',
         )
 
-        c = Client()
         url = reverse('scim:users', kwargs={'uuid': ford.id})
         data = get_user_adapter()(ford).to_dict()
         data['userName'] = 'updatedrford'
         data['name'] = {'givenName': 'Bobby'}
         data['emails'] = [{'value': 'rford@westworld.com', 'primary': True}]
         body = json.dumps(data)
-        resp = c.put(url, body, content_type='application/scim+json')
+        resp = self.client.put(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         # test object
@@ -317,9 +333,8 @@ class UserTestCase(TestCase):
         }
         data = json.dumps(data)
 
-        c = Client()
         url = reverse('scim:users', kwargs={'uuid': ford.id})
-        resp = c.patch(url, data=data, content_type='application/scim+json')
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         ford.refresh_from_db()
@@ -356,9 +371,8 @@ class UserTestCase(TestCase):
         }
         data = json.dumps(data)
 
-        c = Client()
         url = reverse('scim:users', kwargs={'uuid': ford.id})
-        resp = c.patch(url, data=data, content_type='application/scim+json')
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 400, resp.content.decode())
 
         ford.refresh_from_db()
@@ -373,16 +387,15 @@ class UserTestCase(TestCase):
             email='rford@ww.com',
         )
 
-        c = Client()
         url = reverse('scim:users', kwargs={'uuid': ford.id})
-        resp = c.delete(url)
+        resp = self.client.delete(url)
         self.assertEqual(resp.status_code, 204, resp.content.decode())
 
         ford = get_user_model().objects.filter(id=ford.id).first()
         self.assertIsNone(ford)
 
 
-class GroupTestCase(TestCase):
+class GroupTestCase(LoginMixin, TestCase):
     maxDiff = None
 
     def test_get_group_by_id(self):
@@ -401,9 +414,8 @@ class GroupTestCase(TestCase):
 
         behavior = get_group_adapter()(behavior)
 
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
-        resp = c.get(url, content_type='application/scim+json')
+        resp = self.client.get(url, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         self.assertEqual(resp['Location'], behavior.location)
 
@@ -437,9 +449,8 @@ class GroupTestCase(TestCase):
         abernathy.groups.add(security)
         security = get_group_adapter()(security)
 
-        c = Client()
         url = reverse('scim:groups')
-        resp = c.get(url, content_type='application/scim+json')
+        resp = self.client.get(url, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         result = json.loads(resp.content.decode())
@@ -456,14 +467,13 @@ class GroupTestCase(TestCase):
         self.assertEqual(expected, result)
 
     def test_post(self):
-        c = Client()
         url = reverse('scim:groups')
         data = {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:Group'],
             'displayName': 'Behavior Group',
         }
         body = json.dumps(data)
-        resp = c.post(url, body, content_type='application/scim+json')
+        resp = self.client.post(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 201, resp.content.decode())
 
         # test object exists
@@ -479,12 +489,11 @@ class GroupTestCase(TestCase):
         behavior = get_group_model().objects.create(
             name='Behavior Group',
         )
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
         data = get_group_adapter()(behavior).to_dict()
         data['displayName'] = 'Better Behavior Group'
         body = json.dumps(data)
-        resp = c.put(url, body, content_type='application/scim+json')
+        resp = self.client.put(url, body, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         # test object
@@ -529,9 +538,8 @@ class GroupTestCase(TestCase):
         }
         data = json.dumps(data)
 
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
-        resp = c.patch(url, data=data, content_type='application/scim+json')
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         result = json.loads(resp.content.decode())
@@ -577,9 +585,8 @@ class GroupTestCase(TestCase):
         }
         data = json.dumps(data)
 
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
-        resp = c.patch(url, data=data, content_type='application/scim+json')
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         result = json.loads(resp.content.decode())
@@ -609,9 +616,8 @@ class GroupTestCase(TestCase):
         }
         data = json.dumps(data)
 
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
-        resp = c.patch(url, data=data, content_type='application/scim+json')
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
         behavior.refresh_from_db()
@@ -655,9 +661,8 @@ class GroupTestCase(TestCase):
         }
         data = json.dumps(data)
 
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
-        resp = c.patch(url, data=data, content_type='application/scim+json')
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
         self.assertEqual(resp.status_code, 400, resp.content.decode())
 
         behavior.refresh_from_db()
@@ -668,34 +673,31 @@ class GroupTestCase(TestCase):
             name='Behavior Group',
         )
 
-        c = Client()
         url = reverse('scim:groups', kwargs={'uuid': behavior.id})
-        resp = c.delete(url)
+        resp = self.client.delete(url)
         self.assertEqual(resp.status_code, 204, resp.content.decode())
 
         behavior = get_group_model().objects.filter(id=behavior.id).first()
         self.assertIsNone(behavior)
 
 
-class ServiceProviderConfigTestCase(TestCase):
+class ServiceProviderConfigTestCase(LoginMixin, TestCase):
     maxDiff = None
 
     def test_get(self):
-        c = Client()
         url = reverse('scim:service-provider-config')
-        resp = c.get(url)
+        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         config = get_service_provider_config_model()()
         self.assertEqual(config.to_dict(), json.loads(resp.content.decode()))
 
 
-class ResourceTypesTestCase(TestCase):
+class ResourceTypesTestCase(LoginMixin, TestCase):
     maxDiff = None
 
     def test_get_all(self):
-        c = Client()
         url = reverse('scim:resource-types')
-        resp = c.get(url)
+        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         user_type = get_user_adapter().resource_type_dict()
         group_type = get_group_adapter().resource_type_dict()
@@ -708,22 +710,20 @@ class ResourceTypesTestCase(TestCase):
         self.assertEqual(expected, result)
 
     def test_get_single(self):
-        c = Client()
         url = reverse('scim:resource-types', kwargs={'uuid': 'User'})
-        resp = c.get(url)
+        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         expected = get_user_adapter().resource_type_dict()
         result = json.loads(resp.content.decode())
         self.assertEqual(expected, result)
 
 
-class SchemasTestCase(TestCase):
+class SchemasTestCase(LoginMixin, TestCase):
     maxDiff = None
 
     def test_get_all(self):
-        c = Client()
         url = reverse('scim:schemas')
-        resp = c.get(url)
+        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         key = lambda o: o.get('id')
         expected = {
@@ -736,10 +736,9 @@ class SchemasTestCase(TestCase):
     def test_get_single(self):
         schemas_by_uri = {s['id']: s for s in ALL_SCHEMAS}
 
-        c = Client()
         uuid = 'urn:ietf:params:scim:schemas:core:2.0:User'
         url = reverse('scim:schemas', kwargs={'uuid': uuid})
-        resp = c.get(url)
+        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         expected = schemas_by_uri[uuid]
         result = json.loads(resp.content.decode())
