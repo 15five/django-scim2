@@ -12,7 +12,7 @@ Installation
 
 Install with pip::
 
-    $ pip install django-scim2
+$ pip install django-scim2
 
 Then add the ``django_scim`` app to ``INSTALLED_APPS`` in your Django's settings::
 
