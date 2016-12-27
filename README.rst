@@ -21,7 +21,6 @@ Then add the ``django_scim`` app to ``INSTALLED_APPS`` in your Django's settings
         'django_scim',
     )
 
-
 Add the necessary url patterns to your root urls.py file. Please note that the
 namespace is mandatory and must be named `scim`::
 
@@ -29,6 +28,12 @@ namespace is mandatory and must be named `scim`::
         ...
         url(r'^scim/v2/', include('django_scim.urls', namespace='scim')),
     ]
+
+Finally, add settings appropriate for you app to your settings.py file::
+
+    SCIM_SERVICE_PROVIDER = {
+       'NETLOC': 'example.com',
+    }
 
 Documentation
 -------------
