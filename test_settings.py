@@ -92,5 +92,14 @@ PASSWORD_HASHERS = ('django_scim.tests.hashers.NoopPasswordHasher',)
 
 SCIM_SERVICE_PROVIDER = {
     'NETLOC': 'localhost',
+    'AUTHENTICATION_SCHEMES': [
+        {
+            'type': 'oauth2',
+            'name': 'OAuth 2',
+            'description': 'Oauth 2 implemented with bearer token',
+            'specUri': '',
+            'documentationUri': '',
+        },
+    ],
 }
 

@@ -35,11 +35,13 @@ DEFAULTS = {
     'DOCUMENTATION_URI': None,
     'SCHEME': 'https',
     'NETLOC': None,
+    'AUTHENTICATION_SCHEMES': [],
 }
 
 # List of settings that cannot be empty
 MANDATORY = (
     'NETLOC',
+    'AUTHENTICATION_SCHEMES',
 )
 
 # List of settings that may be in string import notation.

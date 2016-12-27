@@ -11,10 +11,6 @@ from django_scim.utils import get_service_provider_config_model
 class SCIMServiceProviderConfigTestCase(TestCase):
     maxDiff = None
 
-    def test_authentication_schemes(self):
-        config = get_service_provider_config_model()()
-        self.assertEqual(config.authentication_schemes, [])
-
     def test_meta(self):
         config = get_service_provider_config_model()()
         expected = {
@@ -31,7 +27,15 @@ class SCIMServiceProviderConfigTestCase(TestCase):
     def test_to_dict(self):
         config = get_service_provider_config_model()()
         expected ={
-            'authenticationSchemes': [],
+            'authenticationSchemes': [
+                {
+                    'description': 'Oauth 2 implemented with bearer token',
+                    'documentationUri': '',
+                    'name': 'OAuth 2',
+                    'specUri': '',
+                    'type': 'oauth2'
+                }
+            ],
             'bulk': {
                 'supported': False,
                 'maxPayloadSize': 1048576,

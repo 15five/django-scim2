@@ -1,7 +1,6 @@
 from django.core.urlresolvers import reverse
 from six.moves.urllib.parse import urljoin
 
-from .auth import SCIMAuthBackendCollection
 from .settings import scim_settings
 from .utils import get_base_scim_location_getter
 
@@ -12,11 +11,6 @@ class SCIMServiceProviderConfig(object):
     describe those authentication_schemes and features that are implemented by
     your app.
     """
-    @property
-    def authentication_schemes(self):
-        backends = SCIMAuthBackendCollection.backends()
-        return [backend.scheme_dict() for backend in backends]
-
     @property
     def meta(self):
         return {
@@ -54,7 +48,7 @@ class SCIMServiceProviderConfig(object):
             'etag': {
                 'supported': False,
             },
-            'authenticationSchemes': self.authentication_schemes,
+            'authenticationSchemes': scim_settings.AUTHENTICATION_SCHEMES,
             'meta': self.meta,
         }
 
