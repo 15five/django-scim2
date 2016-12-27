@@ -15,7 +15,6 @@ try:
 except ImportError:
     from django.core.urlresolvers import reverse
 
-from .auth import SCIMRequest
 from .constants import SCIM_CONTENT_TYPE
 from .constants import SCHEMA_URI_SERACH_REQUEST
 from .filters import SCIMUserFilterTransformer
@@ -40,11 +39,7 @@ class SCIMView(View):
         if not self.implemented:
             return self.status_501(request, *args, **kwargs)
 
-        # (Pdb) request.META['HTTP_AUTHORIZATION']
-        #'Bearer 1234567890'
-
         try:
-            self.auth_request(request, *args, **kwargs)
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
             if not isinstance(e, SCIMException):
@@ -60,11 +55,7 @@ class SCIMView(View):
         A service provider that does NOT support a feature SHOULD
         respond with HTTP status code 501 (Not Implemented).
         """
-        return HttpResponse(content_type=SCIM_CONTENT_TYPE,
-                            status=501)
-
-    def auth_request(self, request, *args, **kwargs):
-        SCIMRequest(request, *args, **kwargs).raise_auth_execptions()
+        return HttpResponse(content_type=SCIM_CONTENT_TYPE, status=501)
 
 
 class FilterMixin(object):
