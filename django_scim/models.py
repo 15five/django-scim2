@@ -11,6 +11,9 @@ class SCIMServiceProviderConfig(object):
     describe those authentication_schemes and features that are implemented by
     your app.
     """
+    def __init__(self, request=None):
+        self.request = request
+
     @property
     def meta(self):
         return {
@@ -21,7 +24,7 @@ class SCIMServiceProviderConfig(object):
     @property
     def location(self):
         path = reverse('scim:service-provider-config')
-        return urljoin(get_base_scim_location_getter()(), path)
+        return urljoin(get_base_scim_location_getter()(self.request), path)
 
     def to_dict(self):
         return {

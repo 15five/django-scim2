@@ -29,8 +29,9 @@ from .utils import get_user_adapter
 
 
 class SCIMMixin(object):
-    def __init__(self, obj):
+    def __init__(self, obj, request=None):
         self.obj = obj
+        self.request = request
 
     @property
     def id(self):
@@ -41,8 +42,8 @@ class SCIMMixin(object):
         return reverse(self.url_name, kwargs={'uuid': self.obj.id})
 
     @property
-    def location(self, request=None):
-        return urljoin(get_base_scim_location_getter()(request), self.path)
+    def location(self):
+        return urljoin(get_base_scim_location_getter()(self.request), self.path)
 
     def save(self):
         self.obj.save()
@@ -95,7 +96,8 @@ class SCIMUser(SCIMMixin):
         """
         Return the groups of the user per the SCIM spec.
         """
-        scim_groups = [get_group_adapter()(group) for group in self.obj.groups.all()]
+        group_qs = self.obj.groups.all()
+        scim_groups = [get_group_adapter()(g, self.request) for g in group_qs]
 
         dicts = []
         for group in scim_groups:
@@ -180,13 +182,13 @@ class SCIMUser(SCIMMixin):
             self.obj.is_active = active
 
     @classmethod
-    def resource_type_dict(self):
+    def resource_type_dict(self, request=None):
         """
         Return a ``dict`` containing ResourceType metadata for the user object.
         """
         id_ = self.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
-        location = urljoin(get_base_scim_location_getter()(), path)
+        location = urljoin(get_base_scim_location_getter()(request), path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
             'id': id_,
@@ -266,7 +268,7 @@ class SCIMGroup(SCIMMixin):
         :rtype: list
         """
         users = self.obj.user_set.all()
-        scim_users = [get_user_adapter()(user) for user in users]
+        scim_users = [get_user_adapter()(user, self.request) for user in users]
 
         dicts = []
         for user in scim_users:
@@ -320,13 +322,13 @@ class SCIMGroup(SCIMMixin):
         self.obj.name = name or ''
 
     @classmethod
-    def resource_type_dict(self):
+    def resource_type_dict(self, request=None):
         """
         Return a ``dict`` containing ResourceType metadata for the group object.
         """
         id_ = self.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
-        location = urljoin(get_base_scim_location_getter()(), path)
+        location = urljoin(get_base_scim_location_getter()(request), path)
         return {
             'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
             'id': id_,

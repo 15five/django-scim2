@@ -83,15 +83,15 @@ class FilterMixin(object):
         except ValueError as e:
             raise BadRequest('Invalid pagination values: ' + str(e))
 
-    def _search(self, query, start, count):
+    def _search(self, request, query, start, count):
         qs = self.parser.search(query)
-        return self._build_response(qs, start, count)
+        return self._build_response(request, qs, start, count)
 
-    def _build_response(self, qs, start, count):
+    def _build_response(self, request, qs, start, count):
         try:
             total_count = sum(1 for _ in qs)
             qs = qs[start-1:(start-1) + count]
-            resources = [self.scim_adapter(u).to_dict() for u in qs]
+            resources = [self.scim_adapter(o, request=request).to_dict() for o in qs]
             doc = {
                 'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
                 'totalResults': total_count,
@@ -122,7 +122,7 @@ class SearchView(FilterMixin, SCIMView):
         if not query:
             raise BadRequest('No filter query specified')
         else:
-            response = self._search(query, *self._page(request))
+            response = self._search(request, query, *self._page(request))
             path = reverse(self.scim_adapter.url_name)
             url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
             response['Location'] = url + '/.search'
@@ -138,7 +138,10 @@ class GetView(object):
 
     def get_single(self, request, uuid):
         try:
-            scim_obj = self.scim_adapter(self.model_cls.objects.get(id=uuid))
+            scim_obj = self.scim_adapter(
+                obj=self.model_cls.objects.get(id=uuid),
+                request=request,
+            )
         except ObjectDoesNotExist as _e:
             raise NotFound(uuid)
         else:
@@ -151,10 +154,10 @@ class GetView(object):
     def get_many(self, request):
         query = request.GET.get('filter')
         if query:
-            return self._search(query, *self._page(request))
+            return self._search(request, query, *self._page(request))
 
         qs = self.model_cls.objects.all().order_by('id')
-        return self._build_response(qs, *self._page(request))
+        return self._build_response(request, qs, *self._page(request))
 
 
 class DeleteView(object):
@@ -171,7 +174,7 @@ class DeleteView(object):
 class PostView(object):
     def post(self, request, **kwargs):
         obj = self.model_cls()
-        scim_obj = self.scim_adapter(obj)
+        scim_obj = self.scim_adapter(obj, request=request)
 
         body = json.loads(request.body.decode())
 
@@ -196,7 +199,7 @@ class PutView(object):
         except ObjectDoesNotExist:
             raise NotFound(uuid)
 
-        scim_obj = self.scim_adapter(obj)
+        scim_obj = self.scim_adapter(obj, request=request)
 
         body = json.loads(request.body.decode())
 
@@ -218,7 +221,7 @@ class PatchView(object):
         except ObjectDoesNotExist:
             raise NotFound(uuid)
 
-        scim_obj = self.scim_adapter(obj)
+        scim_obj = self.scim_adapter(obj, request=request)
         body = json.loads(request.body.decode())
 
         operations = body.get('Operations')
@@ -255,7 +258,7 @@ class ServiceProviderConfigView(SCIMView):
     http_method_names = ['get']
 
     def get(self, request):
-        config = get_service_provider_config_model()()
+        config = get_service_provider_config_model()(request=request)
         content = json.dumps(config.to_dict())
         return HttpResponse(content=content,
                             content_type=SCIM_CONTENT_TYPE)
@@ -265,21 +268,21 @@ class ResourceTypesView(SCIMView):
 
     http_method_names = ['get']
 
-    @property
-    def type_dict_by_type_id(self):
+    def type_dict_by_type_id(self, request):
         type_adapters = get_user_adapter(), get_group_adapter()
-        type_dicts = [m.resource_type_dict() for m in type_adapters]
+        type_dicts = [m.resource_type_dict(request) for m in type_adapters]
         return {d['id']: d for d in type_dicts}
 
     def get(self, request, uuid=None, *args, **kwargs):
         if uuid:
-            doc = self.type_dict_by_type_id.get(uuid)
+            doc = self.type_dict_by_type_id(request).get(uuid)
             if not doc:
-                return HttpResponse(content_type=SCIM_CONTENT_TYPE,
-                                    status=404)
+                return HttpResponse(content_type=SCIM_CONTENT_TYPE, status=404)
+
         else:
             key_func = lambda o: o.get('id')
-            types = list(sorted(self.type_dict_by_type_id.values(), key=key_func))
+            type_dicts = self.type_dict_by_type_id(request).values()
+            types = list(sorted(type_dicts, key=key_func))
             doc = {
                 'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
                 'Resources': types,
@@ -299,8 +302,8 @@ class SchemasView(SCIMView):
         if uuid:
             doc = self.schemas_by_uri.get(uuid)
             if not doc:
-                return HttpResponse(content_type=SCIM_CONTENT_TYPE,
-                                    status=404)
+                return HttpResponse(content_type=SCIM_CONTENT_TYPE, status=404)
+
         else:
             key_func = lambda o: o.get('id')
             schemas = list(sorted(self.schemas_by_uri.values(), key=key_func))
@@ -308,8 +311,6 @@ class SchemasView(SCIMView):
                 'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
                 'Resources': schemas,
             }
-
-
 
         content = json.dumps(doc)
         return HttpResponse(content=content,

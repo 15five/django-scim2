@@ -41,7 +41,7 @@ def get_base_scim_location_getter():
     return scim_settings.BASE_LOCATION_GETTER
 
 
-def default_base_scim_location_getter(*args, **kwargs):
+def default_base_scim_location_getter(request=None, *args, **kwargs):
     """
     Return the default location of the app implementing the SCIM api.
     """

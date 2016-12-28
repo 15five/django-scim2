@@ -98,7 +98,7 @@ class FilterMixinTestCase(TestCase):
         qs = get_user_model().objects.all()
         mixin = views.FilterMixin()
         mixin.scim_adapter = get_user_adapter()
-        resp = mixin._build_response(qs, 1, 5)
+        resp = mixin._build_response(None, qs, 1, 5)
 
         result = json.loads(resp.content.decode())
         expected = {
