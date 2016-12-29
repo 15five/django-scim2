@@ -23,7 +23,6 @@ from six.moves.urllib.parse import urljoin
 
 from .exceptions import PatchError
 from .utils import get_base_scim_location_getter
-from .utils import get_group_model
 from .utils import get_group_adapter
 from .utils import get_user_adapter
 
@@ -68,7 +67,7 @@ class SCIMUser(SCIMMixin):
     """
     Adapter for adding SCIM functionality to a Django User object.
 
-    This adapter can be overriden; see the ``DJANGO_SCIM_USER_ADAPTER`` setting
+    This adapter can be overriden; see the ``USER_ADAPTER`` setting
     for details.
     """
     # not great, could be more decoupled. But \__( )__/ whatevs.
@@ -245,7 +244,7 @@ class SCIMGroup(SCIMMixin):
     """
     Adapter for adding SCIM functionality to a Django Group object.
 
-    This adapter can be overriden; see the ``DJANGO_SCIM_GROUP_ADAPTER``
+    This adapter can be overriden; see the ``GROUP_ADAPTER``
     setting for details.
     """
     # not great, could be more decoupled. But \__( )__/ whatevs.
