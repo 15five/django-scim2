@@ -1,1 +1,10 @@
-include *.txt *.rst
+include *.txt
+include *.rst
+include MANIFEST.in
+include tox.ini
+exclude requirements.txt
+recursive-include django_scim *.py *.json *.rst
+recursive-exclude . *.pyc
+prune demo
+prune docs
+prune dist
