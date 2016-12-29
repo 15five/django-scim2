@@ -84,7 +84,11 @@ class FilterMixin(object):
             raise BadRequest('Invalid pagination values: ' + str(e))
 
     def _search(self, request, query, start, count):
-        qs = self.parser.search(query)
+        try:
+            qs = self.parser.search(query)
+        except ValueError as e:
+            raise BadRequest('Invalid filter/search query: ' + str(e))
+
         return self._build_response(request, qs, start, count)
 
     def _build_response(self, request, qs, start, count):
