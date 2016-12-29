@@ -24,7 +24,7 @@ from .exceptions import SCIMException
 from .exceptions import NotFound
 from .exceptions import BadRequest
 from .exceptions import IntegrityError
-from .schemas import ALL as ALL_SCHEMAS
+from django_scim.schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
 from .utils import get_group_model
 from .utils import get_user_adapter
