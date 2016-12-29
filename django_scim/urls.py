@@ -7,6 +7,11 @@ from . import views
 
 
 urlpatterns = [
+    # This endpoint is used soley for middleware url purposes.
+    url(r'^$',
+        views.SCIMView.as_view(implemented=False),
+        name='root'),
+
     url(r'^.search$',
         views.SearchView.as_view(implemented=False),
         name='search'),

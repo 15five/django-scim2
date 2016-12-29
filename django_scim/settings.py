@@ -36,6 +36,7 @@ DEFAULTS = {
     'SCHEME': 'https',
     'NETLOC': None,
     'AUTHENTICATION_SCHEMES': [],
+    'WWW_AUTHENTICATE_HEADER': 'Basic realm="django-scim2"',
 }
 
 # List of settings that cannot be empty
