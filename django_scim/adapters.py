@@ -47,6 +47,9 @@ class SCIMMixin(object):
     def save(self):
         self.obj.save()
 
+    def delete(self):
+        self.obj.__class__.objects.filter(id=self.obj.id).delete()
+
     def handle_operations(self, operations):
         """
         The SCIM specification allows for making changes to specific attributes

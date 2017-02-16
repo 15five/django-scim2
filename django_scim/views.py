@@ -166,13 +166,17 @@ class GetView(object):
 
 class DeleteView(object):
     def delete(self, request, uuid):
-        obj_qs = self.model_cls.objects.filter(id=uuid)
-
-        if obj_qs.exists():
-            obj_qs.delete()
-            return HttpResponse(status=204)
-        else:
+        try:
+            scim_obj = self.scim_adapter(
+                obj=self.model_cls.objects.get(id=uuid),
+                request=request,
+            )
+        except ObjectDoesNotExist as _e:
             raise NotFound(uuid)
+
+        scim_obj.delete()
+
+        return HttpResponse(status=204)
 
 
 class PostView(object):
