@@ -21,8 +21,8 @@ from .constants import SCIM_CONTENT_TYPE
 from .constants import SCHEMA_URI_SERACH_REQUEST
 from .filters import SCIMUserFilterTransformer
 from .exceptions import SCIMException
-from .exceptions import NotFound
-from .exceptions import BadRequest
+from .exceptions import NotFoundError
+from .exceptions import BadRequestError
 from .exceptions import IntegrityError
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
@@ -72,7 +72,7 @@ class FilterMixin(object):
             if start is not None:
                 start = int(start)
                 if start < 1:
-                    raise BadRequest('Invalid startIndex (must be >= 1)')
+                    raise BadRequestError('Invalid startIndex (must be >= 1)')
 
             count = request.GET.get('count', 50)
             if count is not None:
@@ -81,13 +81,13 @@ class FilterMixin(object):
             return start, count
 
         except ValueError as e:
-            raise BadRequest('Invalid pagination values: ' + str(e))
+            raise BadRequestError('Invalid pagination values: ' + str(e))
 
     def _search(self, request, query, start, count):
         try:
             qs = self.parser.search(query)
         except ValueError as e:
-            raise BadRequest('Invalid filter/search query: ' + str(e))
+            raise BadRequestError('Invalid filter/search query: ' + str(e))
 
         return self._build_response(request, qs, start, count)
 
@@ -104,7 +104,7 @@ class FilterMixin(object):
                 'Resources': resources,
             }
         except ValueError as e:
-            raise BadRequest(six.text_type(e))
+            raise BadRequestError(six.text_type(e))
         else:
             content = json.dumps(doc)
             return HttpResponse(content=content,
@@ -119,12 +119,12 @@ class SearchView(FilterMixin, SCIMView):
     def post(self, request):
         body = json.loads(request.body.decode() or '{}')
         if body.get('schemas') != [SCHEMA_URI_SERACH_REQUEST]:
-            raise BadRequest('Invalid schema uri. Must be SearchRequest.')
+            raise BadRequestError('Invalid schema uri. Must be SearchRequest.')
 
         query = body.get('filter', request.GET.get('filter'))
 
         if not query:
-            raise BadRequest('No filter query specified')
+            raise BadRequestError('No filter query specified')
         else:
             response = self._search(request, query, *self._page(request))
             path = reverse(self.scim_adapter.url_name)
@@ -147,7 +147,7 @@ class GetView(object):
                 request=request,
             )
         except ObjectDoesNotExist as _e:
-            raise NotFound(uuid)
+            raise NotFoundError(uuid)
         else:
             content = json.dumps(scim_obj.to_dict())
             response = HttpResponse(content=content,
@@ -172,7 +172,7 @@ class DeleteView(object):
                 request=request,
             )
         except ObjectDoesNotExist as _e:
-            raise NotFound(uuid)
+            raise NotFoundError(uuid)
 
         scim_obj.delete()
 
@@ -206,7 +206,7 @@ class PutView(object):
         try:
             obj = self.model_cls.objects.get(id=uuid)
         except ObjectDoesNotExist:
-            raise NotFound(uuid)
+            raise NotFoundError(uuid)
 
         scim_obj = self.scim_adapter(obj, request=request)
 
@@ -228,7 +228,7 @@ class PatchView(object):
         try:
             obj = self.model_cls.objects.get(id=uuid)
         except ObjectDoesNotExist:
-            raise NotFound(uuid)
+            raise NotFoundError(uuid)
 
         scim_obj = self.scim_adapter(obj, request=request)
         body = json.loads(request.body.decode())

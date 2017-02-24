@@ -9,6 +9,7 @@ class SCIMException(Exception):
     def __init__(self, detail=None, **kwargs):
         super(SCIMException, self).__init__()
         self.detail = detail or ''
+        self.status = kwargs.get('status') or self.status
         self.schemas = kwargs.get('schemas') or [self.schema]
         self.scim_type = kwargs.get('scim_type') or self.scim_type
 
@@ -24,16 +25,16 @@ class SCIMException(Exception):
         return d
 
 
-class NotFound(SCIMException):
+class NotFoundError(SCIMException):
     status = 404
 
     def __init__(self, uuid, **kwargs):
         detail_template = u'Resource {} not found'
         detail = detail_template.format(uuid)
-        super(NotFound, self).__init__(detail, **kwargs)
+        super(NotFoundError, self).__init__(detail, **kwargs)
 
 
-class BadRequest(SCIMException):
+class BadRequestError(SCIMException):
     status = 400
 
 
@@ -43,4 +44,3 @@ class PatchError(SCIMException):
 
 class IntegrityError(SCIMException):
     status = 409
-
