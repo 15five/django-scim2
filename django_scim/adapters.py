@@ -30,7 +30,19 @@ from .utils import get_user_adapter
 class SCIMMixin(object):
     def __init__(self, obj, request=None):
         self.obj = obj
-        self.request = request
+        self._request = request
+
+    @property
+    def request(self):
+        if self._request:
+            return self._request
+
+        raise RuntimeError('Adapter is not associated with a request object. '
+                           'Set object.request to avoid this error.')
+
+    @request.setter
+    def request(self, value):
+        self._request = value
 
     @property
     def id(self):

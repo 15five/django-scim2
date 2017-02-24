@@ -187,6 +187,7 @@ class PostView(object):
         body = json.loads(request.body.decode())
 
         scim_obj.from_dict(body)
+
         try:
             scim_obj.save()
         except db.utils.IntegrityError as e:
