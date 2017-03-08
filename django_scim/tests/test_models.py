@@ -1,10 +1,6 @@
-import json
-
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from django_scim.utils import get_user_adapter
-from django_scim.utils import get_group_adapter
+from django_scim import constants
 from django_scim.utils import get_service_provider_config_model
 
 
@@ -53,7 +49,7 @@ class SCIMServiceProviderConfigTestCase(TestCase):
                 'resourceType': 'ServiceProviderConfig'
             },
             'patch': {'supported': True},
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
+            'schemas': [constants.SchemaURI.SERVICE_PROVIDER_CONFIG],
             'sort': {'supported': False}
         }
         self.assertEqual(config.to_dict(), expected)

@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from six.moves.urllib.parse import urljoin
 
+from django_scim import constants
 from .settings import scim_settings
 from .utils import get_base_scim_location_getter
 
@@ -28,7 +29,7 @@ class SCIMServiceProviderConfig(object):
 
     def to_dict(self):
         return {
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
+            'schemas': [constants.SchemaURI.SERVICE_PROVIDER_CONFIG],
             'documentationUri': scim_settings.DOCUMENTATION_URI,
             'patch': {
                 'supported': True,

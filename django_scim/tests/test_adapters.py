@@ -1,8 +1,7 @@
-import json
-
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 
+from django_scim import constants
 from django_scim.utils import get_user_adapter
 from django_scim.utils import get_group_adapter
 from django_scim.utils import get_group_model
@@ -10,6 +9,7 @@ from django_scim.utils import get_group_model
 
 class SCIMUserTestCase(TestCase):
     maxDiff = None
+    request = RequestFactory().get('/fake/request')
 
     def test_display_name(self):
         ford = get_user_model().objects.create(
@@ -17,7 +17,7 @@ class SCIMUserTestCase(TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford = get_user_adapter()(ford)
+        ford = get_user_adapter()(ford, self.request)
 
         self.assertEqual(ford.display_name, 'Robert Ford')
 
@@ -28,7 +28,7 @@ class SCIMUserTestCase(TestCase):
             username='rford',
             email='rford@ww.com',
         )
-        ford = get_user_adapter()(ford)
+        ford = get_user_adapter()(ford, self.request)
 
         self.assertEqual(
             ford.emails,
@@ -45,7 +45,7 @@ class SCIMUserTestCase(TestCase):
             username='rford',
         )
         ford.groups.add(behavior)
-        ford = get_user_adapter()(ford)
+        ford = get_user_adapter()(ford, self.request)
 
         expected = [
             {
@@ -72,7 +72,7 @@ class SCIMUserTestCase(TestCase):
             'created': ford.date_joined.isoformat(),
         }
 
-        ford = get_user_adapter()(ford)
+        ford = get_user_adapter()(ford, self.request)
         self.assertEqual(ford.meta, expected)
 
     def test_to_dict(self):
@@ -88,7 +88,7 @@ class SCIMUserTestCase(TestCase):
         ford.groups.add(behavior)
 
         expected = {
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
+            'schemas': [constants.SchemaURI.USER],
             'userName': 'rford',
             'meta': {
                 'resourceType': 'User',
@@ -113,7 +113,7 @@ class SCIMUserTestCase(TestCase):
             'emails': [{'primary': True, 'value': 'rford@ww.com'}],
         }
 
-        ford = get_user_adapter()(ford)
+        ford = get_user_adapter()(ford, self.request)
         self.assertEqual(ford.to_dict(), expected)
 
     def test_resource_type_dict(self):
@@ -123,7 +123,7 @@ class SCIMUserTestCase(TestCase):
             username='rford',
             email='rford@ww.com',
         )
-        ford = get_user_adapter()(ford)
+        ford = get_user_adapter()(ford, self.request)
 
         expected = {
             'endpoint': u'/scim/v2/Users',
@@ -133,20 +133,22 @@ class SCIMUserTestCase(TestCase):
                 'resourceType': 'ResourceType',
                 'location': u'https://localhost/scim/v2/ResourceTypes/User'
             },
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+            'schemas': [constants.SchemaURI.RESOURCE_TYPE],
             'id': 'User',
-            'schema': 'urn:ietf:params:scim:schemas:core:2.0:User'
+            'schema': constants.SchemaURI.USER,
         }
 
         self.assertEqual(ford.resource_type_dict(), expected)
 
 
 class SCIMGroupTestCase(TestCase):
+    request = RequestFactory().get('/fake/request')
+
     def test_display_name(self):
         behavior = get_group_model().objects.create(
             name='Behavior Group',
         )
-        behavior = get_group_adapter()(behavior)
+        behavior = get_group_adapter()(behavior, self.request)
         self.assertEqual(behavior.display_name, 'Behavior Group')
 
     def test_members(self):
@@ -161,7 +163,8 @@ class SCIMGroupTestCase(TestCase):
         )
         ford.groups.add(behavior)
 
-        behavior = get_group_adapter()(behavior)
+        RequestFactory()
+        behavior = get_group_adapter()(behavior, self.request)
 
         expected =  [
             {
@@ -177,7 +180,7 @@ class SCIMGroupTestCase(TestCase):
         behavior = get_group_model().objects.create(
             name='Behavior Group',
         )
-        behavior = get_group_adapter()(behavior)
+        behavior = get_group_adapter()(behavior, self.request)
 
         expected = {
             'resourceType': 'Group',
@@ -212,17 +215,17 @@ class SCIMGroupTestCase(TestCase):
                     '$ref': u'https://localhost/scim/v2/Users/1'
                 }
             ],
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:Group']
+            'schemas': [constants.SchemaURI.GROUP]
         }
 
-        behavior = get_group_adapter()(behavior)
+        behavior = get_group_adapter()(behavior, self.request)
         self.assertEqual(behavior.to_dict(), expected)
 
     def test_resource_type_dict(self):
         behavior = get_group_model().objects.create(
             name='Behavior Group',
         )
-        behavior = get_group_adapter()(behavior)
+        behavior = get_group_adapter()(behavior, self.request)
 
         expected = {
             'endpoint': u'/scim/v2/Groups',
@@ -232,10 +235,9 @@ class SCIMGroupTestCase(TestCase):
                 'resourceType': 'ResourceType',
                 'location': u'https://localhost/scim/v2/ResourceTypes/Group'
             },
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+            'schemas': [constants.SchemaURI.RESOURCE_TYPE],
             'id': 'Group',
-            'schema': 'urn:ietf:params:scim:schemas:core:2.0:Group'
+            'schema': constants.SchemaURI.GROUP
         }
 
         self.assertEqual(behavior.resource_type_dict(), expected)
-

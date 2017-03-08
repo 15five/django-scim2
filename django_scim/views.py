@@ -17,14 +17,13 @@ try:
 except ImportError:
     from django.core.urlresolvers import reverse
 
-from .constants import SCIM_CONTENT_TYPE
-from .constants import SCHEMA_URI_SERACH_REQUEST
+from . import constants
 from .filters import SCIMUserFilterTransformer
 from .exceptions import SCIMException
 from .exceptions import NotFoundError
 from .exceptions import BadRequestError
 from .exceptions import IntegrityError
-from django_scim.schemas import ALL as ALL_SCHEMAS
+from .schemas import ALL as ALL_SCHEMAS
 from .utils import get_group_adapter
 from .utils import get_group_model
 from .utils import get_user_adapter
@@ -50,7 +49,7 @@ class SCIMView(View):
 
             content = json.dumps(e.to_dict())
             return HttpResponse(content=content,
-                                content_type=SCIM_CONTENT_TYPE,
+                                content_type=constants.SCIM_CONTENT_TYPE,
                                 status=e.status)
 
     def status_501(self, request, *args, **kwargs):
@@ -58,7 +57,7 @@ class SCIMView(View):
         A service provider that does NOT support a feature SHOULD
         respond with HTTP status code 501 (Not Implemented).
         """
-        return HttpResponse(content_type=SCIM_CONTENT_TYPE, status=501)
+        return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=501)
 
 
 class FilterMixin(object):
@@ -97,7 +96,7 @@ class FilterMixin(object):
             qs = qs[start-1:(start-1) + count]
             resources = [self.scim_adapter(o, request=request).to_dict() for o in qs]
             doc = {
-                'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+                'schemas': [constants.SchemaURI.LIST_RESPONSE],
                 'totalResults': total_count,
                 'itemsPerPage': count,
                 'startIndex': start,
@@ -108,7 +107,7 @@ class FilterMixin(object):
         else:
             content = json.dumps(doc)
             return HttpResponse(content=content,
-                                content_type=SCIM_CONTENT_TYPE)
+                                content_type=constants.SCIM_CONTENT_TYPE)
 
 
 class SearchView(FilterMixin, SCIMView):
@@ -118,7 +117,7 @@ class SearchView(FilterMixin, SCIMView):
 
     def post(self, request):
         body = json.loads(request.body.decode() or '{}')
-        if body.get('schemas') != [SCHEMA_URI_SERACH_REQUEST]:
+        if body.get('schemas') != [constants.SchemaURI.SERACH_REQUEST]:
             raise BadRequestError('Invalid schema uri. Must be SearchRequest.')
 
         query = body.get('filter', request.GET.get('filter'))
@@ -151,7 +150,7 @@ class GetView(object):
         else:
             content = json.dumps(scim_obj.to_dict())
             response = HttpResponse(content=content,
-                                    content_type=SCIM_CONTENT_TYPE)
+                                    content_type=constants.SCIM_CONTENT_TYPE)
             response['Location'] = scim_obj.location
             return response
 
@@ -195,7 +194,7 @@ class PostView(object):
 
         content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
-                                content_type=SCIM_CONTENT_TYPE,
+                                content_type=constants.SCIM_CONTENT_TYPE,
                                 status=201)
         response['Location'] = scim_obj.location
         return response
@@ -217,7 +216,7 @@ class PutView(object):
 
         content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
-                                content_type=SCIM_CONTENT_TYPE)
+                                content_type=constants.SCIM_CONTENT_TYPE)
         response['Location'] = scim_obj.location
         return response
 
@@ -240,7 +239,7 @@ class PatchView(object):
 
         content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
-                                content_type=SCIM_CONTENT_TYPE)
+                                content_type=constants.SCIM_CONTENT_TYPE)
         response['Location'] = scim_obj.location
         return response
 
@@ -270,7 +269,7 @@ class ServiceProviderConfigView(SCIMView):
         config = get_service_provider_config_model()(request=request)
         content = json.dumps(config.to_dict())
         return HttpResponse(content=content,
-                            content_type=SCIM_CONTENT_TYPE)
+                            content_type=constants.SCIM_CONTENT_TYPE)
 
 
 class ResourceTypesView(SCIMView):
@@ -286,19 +285,19 @@ class ResourceTypesView(SCIMView):
         if uuid:
             doc = self.type_dict_by_type_id(request).get(uuid)
             if not doc:
-                return HttpResponse(content_type=SCIM_CONTENT_TYPE, status=404)
+                return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=404)
 
         else:
             key_func = lambda o: o.get('id')
             type_dicts = self.type_dict_by_type_id(request).values()
             types = list(sorted(type_dicts, key=key_func))
             doc = {
-                'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+                'schemas': [constants.SchemaURI.LIST_RESPONSE],
                 'Resources': types,
             }
 
         return HttpResponse(content=json.dumps(doc),
-                            content_type=SCIM_CONTENT_TYPE)
+                            content_type=constants.SCIM_CONTENT_TYPE)
 
 
 class SchemasView(SCIMView):
@@ -311,17 +310,17 @@ class SchemasView(SCIMView):
         if uuid:
             doc = self.schemas_by_uri.get(uuid)
             if not doc:
-                return HttpResponse(content_type=SCIM_CONTENT_TYPE, status=404)
+                return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=404)
 
         else:
             key_func = lambda o: o.get('id')
             schemas = list(sorted(self.schemas_by_uri.values(), key=key_func))
             doc = {
-                'schemas': ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+                'schemas': [constants.SchemaURI.LIST_RESPONSE],
                 'Resources': schemas,
             }
 
         content = json.dumps(doc)
         return HttpResponse(content=content,
-                            content_type=SCIM_CONTENT_TYPE)
+                            content_type=constants.SCIM_CONTENT_TYPE)
 

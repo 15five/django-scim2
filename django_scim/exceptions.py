@@ -1,9 +1,9 @@
 
-from .constants import SCHEMA_URI_ERROR
+from .constants import SchemaURI
 
 class SCIMException(Exception):
     status = 500
-    schema = SCHEMA_URI_ERROR
+    schema = SchemaURI.ERROR
     scim_type = None
 
     def __init__(self, detail=None, **kwargs):

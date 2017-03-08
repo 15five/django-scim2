@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.utils.module_loading import import_string
 import six
 
 from .settings import scim_settings

@@ -21,6 +21,7 @@ from django.core.urlresolvers import reverse
 from django import core
 from six.moves.urllib.parse import urljoin
 
+from django_scim import constants
 from .exceptions import PatchError
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
@@ -144,7 +145,7 @@ class SCIMUser(SCIMMixin):
         ready for conversion to a JSON object.
         """
         d = {
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:User'],
+            'schemas': [constants.SchemaURI.USER],
             'id': self.id,
             'userName': self.obj.username,
             'name': {
@@ -204,12 +205,12 @@ class SCIMUser(SCIMMixin):
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(get_base_scim_location_getter()(request), path)
         return {
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+            'schemas': [constants.SchemaURI.RESOURCE_TYPE],
             'id': id_,
             'name': 'User',
             'endpoint': reverse('scim:users'),
             'description': 'User Account',
-            'schema': 'urn:ietf:params:scim:schemas:core:2.0:User',
+            'schema': constants.SchemaURI.USER,
             'meta': {
                 'location': location,
                 'resourceType': 'ResourceType'
@@ -313,7 +314,7 @@ class SCIMGroup(SCIMMixin):
         ready for conversion to a JSON object.
         """
         return {
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+            'schemas': [constants.SchemaURI.GROUP],
             'id': self.id,
             'displayName': self.display_name,
             'members': self.members,
@@ -344,12 +345,12 @@ class SCIMGroup(SCIMMixin):
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(get_base_scim_location_getter()(request), path)
         return {
-            'schemas': ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+            'schemas': [constants.SchemaURI.RESOURCE_TYPE],
             'id': id_,
             'name': 'Group',
             'endpoint': reverse('scim:groups'),
             'description': 'Group',
-            'schema': 'urn:ietf:params:scim:schemas:core:2.0:Group',
+            'schema': constants.SchemaURI.GROUP,
             'meta': {
                 'location': location,
                 'resourceType': 'ResourceType'
