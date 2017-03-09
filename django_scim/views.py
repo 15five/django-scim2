@@ -23,7 +23,7 @@ from .exceptions import SCIMException
 from .exceptions import NotFoundError
 from .exceptions import BadRequestError
 from .exceptions import IntegrityError
-from .schemas import ALL as ALL_SCHEMAS
+from .utils import get_all_schemas_getter
 from .utils import get_group_adapter
 from .utils import get_group_model
 from .utils import get_user_adapter
@@ -304,7 +304,7 @@ class SchemasView(SCIMView):
 
     http_method_names = ['get']
 
-    schemas_by_uri = {s['id']: s for s in ALL_SCHEMAS}
+    schemas_by_uri = {s['id']: s for s in get_all_schemas_getter()()}
 
     def get(self, request, uuid=None, *args, **kwargs):
         if uuid:

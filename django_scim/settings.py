@@ -32,6 +32,7 @@ DEFAULTS = {
     'GROUP_ADAPTER': 'django_scim.adapters.SCIMGroup',
     'SERVICE_PROVIDER_CONFIG_MODEL': 'django_scim.models.SCIMServiceProviderConfig',
     'BASE_LOCATION_GETTER': 'django_scim.utils.default_base_scim_location_getter',
+    'SCHEMAS_GETTER': 'django_scim.schemas.default_schemas_getter',
     'DOCUMENTATION_URI': None,
     'SCHEME': 'https',
     'NETLOC': None,
@@ -52,6 +53,7 @@ IMPORT_STRINGS = (
     'GROUP_ADAPTER',
     'SERVICE_PROVIDER_CONFIG_MODEL',
     'BASE_LOCATION_GETTER',
+    'SCHEMAS_GETTER',
 )
 
 

@@ -39,6 +39,14 @@ def get_base_scim_location_getter():
     return scim_settings.BASE_LOCATION_GETTER
 
 
+def get_all_schemas_getter():
+    """
+    Return a function that will, when called, returns the base
+    location of scim app.
+    """
+    return scim_settings.SCHEMAS_GETTER
+
+
 def default_base_scim_location_getter(request=None, *args, **kwargs):
     """
     Return the default location of the app implementing the SCIM api.
@@ -55,4 +63,3 @@ def default_base_scim_location_getter(request=None, *args, **kwargs):
     base_scim_location = six.moves.urllib.parse.urlunparse(base_scim_location_parts)
 
     return base_scim_location
-

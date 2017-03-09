@@ -197,11 +197,11 @@ class SCIMUser(SCIMMixin):
             self.obj.is_active = active
 
     @classmethod
-    def resource_type_dict(self, request=None):
+    def resource_type_dict(cls, request=None):
         """
         Return a ``dict`` containing ResourceType metadata for the user object.
         """
-        id_ = self.resource_type
+        id_ = cls.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(get_base_scim_location_getter()(request), path)
         return {
@@ -337,11 +337,11 @@ class SCIMGroup(SCIMMixin):
         self.obj.name = name or ''
 
     @classmethod
-    def resource_type_dict(self, request=None):
+    def resource_type_dict(cls, request=None):
         """
         Return a ``dict`` containing ResourceType metadata for the group object.
         """
-        id_ = self.resource_type
+        id_ = cls.resource_type
         path = reverse('scim:resource-types', kwargs={'uuid': id_})
         location = urljoin(get_base_scim_location_getter()(request), path)
         return {

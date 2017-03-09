@@ -18,5 +18,9 @@ def load_schemas():
 
     return schemas
 
+
 ALL = load_schemas()
 
+
+def default_schemas_getter():
+    return ALL
