@@ -188,9 +188,9 @@ class SCIMUser(SCIMMixin):
         email = emails[0] if emails else None
         self.obj.email = email
 
-        password = d.get('password')
-        if password:
-            self.obj.password = password
+        cleartext_password = d.get('password')
+        if cleartext_password:
+            self.obj.set_password(cleartext_password)
 
         active = d.get('active')
         if active is not None:
