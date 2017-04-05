@@ -47,6 +47,14 @@ def get_all_schemas_getter():
     return scim_settings.SCHEMAS_GETTER
 
 
+def get_extra_model_filter_kwargs_getter(model):
+    """
+    Return a function that will, when called, returns the base
+    location of scim app.
+    """
+    return scim_settings.GET_EXTRA_MODEL_FILTER_KWARGS_GETTER(model)
+
+
 def default_base_scim_location_getter(request=None, *args, **kwargs):
     """
     Return the default location of the app implementing the SCIM api.
@@ -63,3 +71,22 @@ def default_base_scim_location_getter(request=None, *args, **kwargs):
     base_scim_location = six.moves.urllib.parse.urlunparse(base_scim_location_parts)
 
     return base_scim_location
+
+
+def default_get_extra_model_filter_kwargs_getter(model):
+    """
+    Return a **method** that will return extra model filter kwargs for the passed in model.
+
+    :param model:  
+    """
+    def get_extra_filter_kwargs(self, request, *args, **kwargs):
+        """
+        Return extra filter kwargs for the given model.
+        :param request: 
+        :param args: 
+        :param kwargs: 
+        :rtype: dict 
+        """
+        return {}
+
+    return get_extra_filter_kwargs
