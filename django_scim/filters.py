@@ -249,7 +249,7 @@ class SCIMUserFilterTransformer(STransformer):
         return new_sql, new_params
 
     @classmethod
-    def search(cls, query):
+    def search(cls, query, request=None):
         """Takes a SCIM 1.1 filter query and returns a Django `QuerySet` that
         contains zero or more user model instances.
 

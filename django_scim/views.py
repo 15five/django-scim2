@@ -85,7 +85,7 @@ class FilterMixin(object):
 
     def _search(self, request, query, start, count):
         try:
-            qs = self.parser.search(query)
+            qs = self.parser.search(query, request)
         except ValueError as e:
             raise BadRequestError('Invalid filter/search query: ' + str(e))
 
