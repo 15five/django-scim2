@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -32,6 +33,9 @@ from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
 
 
+logger = logging.getLogger(__name__)
+
+
 class SCIMView(View):
 
     implemented = True
@@ -45,6 +49,7 @@ class SCIMView(View):
         try:
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
+            logger.exception('Unable to complete SCIM call.')
             if not isinstance(e, SCIMException):
                 e = SCIMException(six.text_type(e))
 
