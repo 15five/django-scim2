@@ -109,7 +109,8 @@ class FilterMixin(object):
                     add_obj = False
                     break
 
-            obj_list.append(obj)
+            if add_obj:
+                obj_list.append(obj)
 
         return obj_list
 
