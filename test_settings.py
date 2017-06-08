@@ -1,6 +1,7 @@
 """
 Django settings for tests.
 """
+import logging
 import os
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -67,6 +68,8 @@ CACHES = {
         'LOCATION': 'unique-snowflake'
     }
 }
+
+logging.disable(logging.CRITICAL)
 
 # Internationalization
 
