@@ -225,14 +225,19 @@ class SCIMUserFilterTransformer(STransformer):
               AND
               (
                 -- Check for SHA1
-                SUBSTRING(password FROM 12) = ENCODE(DIGEST(SUBSTRING(
-                    password FROM 6 FOR 5)||%%(%s)s, 'sha1'), 'hex')
+                SPLIT_PART(password, '$', 3) = ENCODE(DIGEST(
+                    SPLIT_PART(password, '$', 2')||%%(%s)s, 'sha1'), 'hex')
                 OR
                 -- Check for BCrypt
                 SUBSTRING(password FROM 8) = CRYPT(
                   %%(%s)s, SUBSTRING(password FROM 8))
+                OR
+                -- Check for BCryptSHA256
+                SUBSTRING(password FROM 15) = CRYPT(
+                  ENCODE(DIGEST(%%(%s)s, 'sha256'), 'hex'),
+                  SUBSTRING(password FROM 15))
               )
-            )""" % (pname, pname))
+            )""" % (pname, pname, pname))
 
     @classmethod
     def condition_sql_and_params(cls, sql, params):
