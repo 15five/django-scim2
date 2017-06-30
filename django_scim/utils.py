@@ -1,3 +1,4 @@
+import json
 import six
 
 from .settings import scim_settings
@@ -90,3 +91,30 @@ def default_get_extra_model_filter_kwargs_getter(model):
         return {}
 
     return get_extra_filter_kwargs
+
+
+def obfuscate_sensitive(string, keys_to_obfuscate=('password',)):
+    if not string:
+        return string
+
+    try:
+        obj = json.loads(string)
+    except:
+        return string
+
+    obj = recursive_obfuscate(obj)
+
+    return json.dumps(obj)
+
+
+def recursive_obfuscate(obj, keys_to_obfuscate=('password',)):
+
+    if isinstance(obj, dict):
+        keys = obj.keys()
+        for key in keys:
+            if key.lower() in keys_to_obfuscate:
+                obj[key] = '*' * 10
+            else:
+                obj[key] = recursive_obfuscate(obj[key], keys_to_obfuscate)
+
+    return obj
