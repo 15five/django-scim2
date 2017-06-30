@@ -31,7 +31,6 @@ from .utils import get_user_adapter
 from .utils import get_base_scim_location_getter
 from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
-from .utils import obfuscate_sensitive
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +47,6 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
-            logger.debug(obfuscate_sensitive(request.body))
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
             logger.exception('Unable to complete SCIM call.')
