@@ -47,6 +47,7 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
+            logger.debug(request.body)
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
             logger.exception('Unable to complete SCIM call.')
