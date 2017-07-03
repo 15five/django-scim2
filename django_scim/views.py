@@ -47,10 +47,10 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
-            logger.debug(request.body)
+            logger.debug('REQUEST BODY >>>>>' + six.text_type(request.body) + '<<<<<')
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
-            logger.exception('Unable to complete SCIM call.')
+            logger.debug('Unable to complete SCIM call.', exc_info=1)
             if not isinstance(e, SCIMException):
                 e = SCIMException(six.text_type(e))
 
