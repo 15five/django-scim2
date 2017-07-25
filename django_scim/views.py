@@ -48,7 +48,7 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
-            body = get_loggable_body(request.body)
+            body = get_loggable_body(request.body.decode())
             logger.debug(u'REQUEST BODY >>>>>' + body + u'<<<<<')
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
