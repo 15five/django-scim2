@@ -31,6 +31,7 @@ from .utils import get_user_adapter
 from .utils import get_base_scim_location_getter
 from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
+from .utils import get_loggable_body
 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,8 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
-            logger.debug('REQUEST BODY >>>>>' + six.text_type(request.body) + '<<<<<')
+            body = get_loggable_body(request.body)
+            logger.debug(u'REQUEST BODY >>>>>' + six.text_type(body) + u'<<<<<')
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
             logger.debug('Unable to complete SCIM call.', exc_info=1)
