@@ -125,4 +125,4 @@ def get_loggable_body(text):
 
     obj = clean_structure_of_passwords(obj)
 
-    return json.dumps(obj)
+    return six.text_type(json.dumps(obj))

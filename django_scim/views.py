@@ -49,7 +49,7 @@ class SCIMView(View):
 
         try:
             body = get_loggable_body(request.body)
-            logger.debug(u'REQUEST BODY >>>>>' + six.text_type(body) + u'<<<<<')
+            logger.debug(u'REQUEST BODY >>>>>' + body + u'<<<<<')
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
             logger.debug('Unable to complete SCIM call.', exc_info=1)
