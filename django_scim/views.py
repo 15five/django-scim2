@@ -48,8 +48,29 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
-            body = get_loggable_body(request.body.decode())
-            logger.debug(u'REQUEST BODY >>>>>' + body + u'<<<<<')
+            try:
+                body = get_loggable_body(request.body.decode())
+                logger.debug(
+                    u'REQUEST '
+                    u'PATH >>>>>{}<<<<< '
+                    u'METHOD >>>>>{}<<<<< '
+                    u'BODY >>>>>{}<<<<<'.format(
+                        request.path,
+                        request.method,
+                        body,
+                    )
+                )
+            except:
+                logger.debug(
+                    u'REQUEST '
+                    u'PATH >>>>>{}<<<<< '
+                    u'METHOD >>>>>{}<<<<< '
+                    u'ERROR >>>>>Could not get loggable body<<<<<'.format(
+                        request.path,
+                        request.method,
+                    ),
+                    exc_info=1,
+                )
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
             logger.debug('Unable to complete SCIM call.', exc_info=1)
