@@ -1,4 +1,4 @@
 Django>=1.5
-PlyPlus==0.5.6
-ply==3.4
+PlyPlus==0.7.5
+ply==3.10
 python-dateutil==2.1

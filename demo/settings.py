@@ -106,3 +106,13 @@ STATIC_URL = '/static/'
 
 DJANGO_SCIM_NETLOC = 'localhost'
 
+SCIM_SERVICE_PROVIDER = {
+    'NETLOC': 'localhost',
+    'AUTHENTICATION_SCHEMES': [
+        {
+            'type': 'oauth2',
+            'name': 'OAuth 2',
+            'description': 'Oauth 2 implemented with bearer token',
+        },
+    ],
+}
