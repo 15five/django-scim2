@@ -206,13 +206,13 @@ class SearchView(FilterMixin, SCIMView):
 
 
 class GetView(object):
-    def get(self, request, uuid=None):
-        if uuid:
-            return self.get_single(request, uuid)
+    def get(self, request, *args, **kwargs):
+        if kwargs.get(self.lookup_url_kwarg):
+            return self.get_single(request)
 
         return self.get_many(request)
 
-    def get_single(self, request, *args, **kwargs):
+    def get_single(self, request):
         obj = self.get_object()
         scim_obj = self.scim_adapter(obj, request=request)
         content = json.dumps(scim_obj.to_dict())
@@ -232,7 +232,7 @@ class GetView(object):
 
 
 class DeleteView(object):
-    def delete(self, request, uuid):
+    def delete(self, request, *args, **kwargs):
         obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
@@ -265,7 +265,7 @@ class PostView(object):
 
 
 class PutView(object):
-    def put(self, request, uuid):
+    def put(self, request, *args, **kwargs):
         obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
@@ -283,7 +283,7 @@ class PutView(object):
 
 
 class PatchView(object):
-    def patch(self, request, uuid):
+    def patch(self, request, *args, **kwargs):
         obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
