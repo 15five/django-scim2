@@ -38,8 +38,32 @@ logger = logging.getLogger(__name__)
 
 
 class SCIMView(View):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'uuid'
 
     implemented = True
+
+    def get_object(self):
+        """Get object by configurable ID."""
+        # Perform the lookup filtering.
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        assert lookup_url_kwarg in self.kwargs, (
+            'Expected view %s to be called with a URL keyword argument '
+            'named "%s". Fix your URL conf, or set the `.lookup_field` '
+            'attribute on the view correctly.' %
+            (self.__class__.__name__, lookup_url_kwarg)
+        )
+
+        uuid = self.kwargs[lookup_url_kwarg]
+
+        extra_filter_kwargs = self.get_extra_filter_kwargs(self.request, uuid)
+        extra_filter_kwargs[self.lookup_field] = uuid
+
+        try:
+            return self.model_cls.objects.get(**extra_filter_kwargs)
+        except ObjectDoesNotExist as _e:
+            raise NotFoundError(uuid)
 
     @method_decorator(csrf_exempt)
     @method_decorator(login_required)
@@ -182,28 +206,20 @@ class SearchView(FilterMixin, SCIMView):
 
 
 class GetView(object):
-    def get(self, request, uuid=None):
-        if uuid:
-            return self.get_single(request, uuid)
+    def get(self, request, *args, **kwargs):
+        if kwargs.get(self.lookup_url_kwarg):
+            return self.get_single(request)
 
         return self.get_many(request)
 
-    def get_single(self, request, uuid):
-
-        extra_filter_kwargs = self.get_extra_filter_kwargs(request, uuid)
-        extra_filter_kwargs['id'] = uuid  # Override ID with passed UUID
-
-        try:
-            obj = self.model_cls.objects.get(**extra_filter_kwargs)
-        except ObjectDoesNotExist as _e:
-            raise NotFoundError(uuid)
-        else:
-            scim_obj = self.scim_adapter(obj, request=request)
-            content = json.dumps(scim_obj.to_dict())
-            response = HttpResponse(content=content,
-                                    content_type=constants.SCIM_CONTENT_TYPE)
-            response['Location'] = scim_obj.location
-            return response
+    def get_single(self, request):
+        obj = self.get_object()
+        scim_obj = self.scim_adapter(obj, request=request)
+        content = json.dumps(scim_obj.to_dict())
+        response = HttpResponse(content=content,
+                                content_type=constants.SCIM_CONTENT_TYPE)
+        response['Location'] = scim_obj.location
+        return response
 
     def get_many(self, request):
         query = request.GET.get('filter')
@@ -211,20 +227,13 @@ class GetView(object):
             return self._search(request, query, *self._page(request))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
-        qs = self.model_cls.objects.filter(**extra_filter_kwargs).order_by('id')
+        qs = self.model_cls.objects.filter(**extra_filter_kwargs).order_by(self.lookup_field)
         return self._build_response(request, qs, *self._page(request))
 
 
 class DeleteView(object):
-    def delete(self, request, uuid):
-
-        extra_filter_kwargs = self.get_extra_filter_kwargs(request, uuid)
-        extra_filter_kwargs['id'] = uuid  # Override ID with passed UUID
-
-        try:
-            obj = self.model_cls.objects.get(**extra_filter_kwargs)
-        except ObjectDoesNotExist as _e:
-            raise NotFoundError(uuid)
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
 
@@ -256,15 +265,8 @@ class PostView(object):
 
 
 class PutView(object):
-    def put(self, request, uuid):
-
-        extra_filter_kwargs = self.get_extra_filter_kwargs(request, uuid)
-        extra_filter_kwargs['id'] = uuid  # Override ID with passed UUID
-
-        try:
-            obj = self.model_cls.objects.get(**extra_filter_kwargs)
-        except ObjectDoesNotExist:
-            raise NotFoundError(uuid)
+    def put(self, request, *args, **kwargs):
+        obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
 
@@ -281,15 +283,8 @@ class PutView(object):
 
 
 class PatchView(object):
-    def patch(self, request, uuid):
-
-        extra_filter_kwargs = self.get_extra_filter_kwargs(request, uuid)
-        extra_filter_kwargs['id'] = uuid  # Override ID with passed UUID
-
-        try:
-            obj = self.model_cls.objects.get(**extra_filter_kwargs)
-        except ObjectDoesNotExist:
-            raise NotFoundError(uuid)
+    def patch(self, request, *args, **kwargs):
+        obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
         body = json.loads(request.body.decode())
