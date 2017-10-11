@@ -1,3 +1,4 @@
+ENCODING = 'utf-8'
 SCIM_CONTENT_TYPE = 'application/scim+json'
 
 

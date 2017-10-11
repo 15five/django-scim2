@@ -73,7 +73,7 @@ class SCIMView(View):
 
         try:
             try:
-                body = get_loggable_body(request.body.decode())
+                body = get_loggable_body(request.body.decode(constants.ENCODING))
                 logger.debug(
                     u'REQUEST '
                     u'PATH >>>>>{}<<<<< '
@@ -189,7 +189,7 @@ class SearchView(FilterMixin, SCIMView):
     get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter('search')
 
     def post(self, request):
-        body = json.loads(request.body.decode() or '{}')
+        body = json.loads(request.body.decode(constants.ENCODING) or '{}')
         if body.get('schemas') != [constants.SchemaURI.SERACH_REQUEST]:
             raise BadRequestError('Invalid schema uri. Must be SearchRequest.')
 
@@ -247,7 +247,7 @@ class PostView(object):
         obj = self.model_cls()
         scim_obj = self.scim_adapter(obj, request=request)
 
-        body = json.loads(request.body.decode())
+        body = json.loads(request.body.decode(constants.ENCODING))
 
         scim_obj.from_dict(body)
 
@@ -270,7 +270,7 @@ class PutView(object):
 
         scim_obj = self.scim_adapter(obj, request=request)
 
-        body = json.loads(request.body.decode())
+        body = json.loads(request.body.decode(constants.ENCODING))
 
         scim_obj.from_dict(body)
         scim_obj.save()
@@ -287,7 +287,7 @@ class PatchView(object):
         obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
-        body = json.loads(request.body.decode())
+        body = json.loads(request.body.decode(constants.ENCODING))
 
         operations = body.get('Operations')
 
