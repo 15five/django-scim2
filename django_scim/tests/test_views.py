@@ -113,6 +113,55 @@ class FilterMixinTestCase(TestCase):
         }
         self.assertEqual(expected, result)
 
+    def test__filter_raw_queryset_with_extra_filter_kwargs(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+            is_active=False,
+        )
+
+        mixin = views.FilterMixin()
+        qs = get_user_model().objects.all()
+
+        # Test single attribute
+        extra_filter_kwargs = {
+            'is_active': True,
+        }
+        obj_list = mixin._filter_raw_queryset_with_extra_filter_kwargs(
+            qs=qs,
+            extra_filter_kwargs=extra_filter_kwargs
+        )
+        expected = [ford]
+        self.assertEqual(obj_list, expected)
+
+        # Test single attribute
+        extra_filter_kwargs = {
+            'is_active': False,
+        }
+        obj_list = mixin._filter_raw_queryset_with_extra_filter_kwargs(
+            qs=qs,
+            extra_filter_kwargs=extra_filter_kwargs
+        )
+        expected = [abernathy]
+        self.assertEqual(obj_list, expected)
+
+        # Test __in option
+        extra_filter_kwargs = {
+            'is_active__in': (False, True),
+        }
+        obj_list = mixin._filter_raw_queryset_with_extra_filter_kwargs(
+            qs=qs,
+            extra_filter_kwargs=extra_filter_kwargs
+        )
+        expected = [ford, abernathy]
+        self.assertEqual(obj_list, expected)
+
 
 class SearchTestCase(LoginMixin, TestCase):
     maxDiff = None

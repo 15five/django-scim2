@@ -153,9 +153,16 @@ class FilterMixin(object):
         for obj in qs:
             add_obj = True
             for attr_name, attr_val in extra_filter_kwargs.items():
-                if not hasattr(obj, attr_name) or getattr(obj, attr_name, None) != attr_val:
-                    add_obj = False
-                    break
+                if attr_name.endswith('__in'):
+                    attr_name = attr_name.replace('__in', '')
+                    if not hasattr(obj, attr_name) or getattr(obj, attr_name) not in attr_val:
+                        add_obj = False
+                        break
+
+                else:
+                    if not hasattr(obj, attr_name) or getattr(obj, attr_name) != attr_val:
+                        add_obj = False
+                        break
 
             if add_obj:
                 obj_list.append(obj)
