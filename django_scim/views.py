@@ -254,6 +254,8 @@ class PostView(object):
         try:
             scim_obj.save()
         except db.utils.IntegrityError as e:
+            # Cast error to a SCIM IntegrityError to use the status
+            # attribute on the SCIM IntegrityError.
             raise IntegrityError(str(e))
 
         content = json.dumps(scim_obj.to_dict())
