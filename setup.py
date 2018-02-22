@@ -30,6 +30,11 @@ def long_description():
     """Get the long description from the README"""
     return open(os.path.join(BASE_DIR, 'README.rst')).read()
 
+
+tests_require = [
+    'mock',
+]
+
 def run_tests():
     settings_mod = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
     os.environ['DJANGO_SETTINGS_MODULE'] = settings_mod
@@ -59,18 +64,19 @@ setup(
     download_url='https://github.com/15five/django-scim2/archive/master.zip',
     maintainer='Paul Logston',
     maintainer_email='paul@15five.com',
-    author='Erik van Zijst',
-    author_email='erik.van.zijst@gmail.com',
+    author='Paul Logston',
+    author_email='paul@15five.com',
     keywords='django scim 2.0',
     license='MIT',
     long_description=long_description(),
     packages=['django_scim'],
     install_requires=[
         'python-dateutil>=2.6.0',
-        'PlyPlus>=0.7.2',
+        'PlyPlus>=0.7.5',
     ],
     scripts=['scim'],
     test_suite='setup.run_tests',
+    tests_require=tests_require,
     zip_safe=False,
     include_package_data=True,
     classifiers=[

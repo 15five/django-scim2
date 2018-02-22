@@ -58,6 +58,14 @@ def get_extra_model_filter_kwargs_getter(model):
     return scim_settings.GET_EXTRA_MODEL_FILTER_KWARGS_GETTER(model)
 
 
+def get_extra_model_exclude_kwargs_getter(model):
+    """
+    Return a function that will, when called, returns the base
+    location of scim app.
+    """
+    return scim_settings.GET_EXTRA_MODEL_EXCLUDE_KWARGS_GETTER(model)
+
+
 def default_base_scim_location_getter(request=None, *args, **kwargs):
     """
     Return the default location of the app implementing the SCIM api.
@@ -94,6 +102,24 @@ def default_get_extra_model_filter_kwargs_getter(model):
 
     return get_extra_filter_kwargs
 
+
+def default_get_extra_model_exclude_kwargs_getter(model):
+    """
+    Return a **method** that will return extra model exclude kwargs for the passed in model.
+
+    :param model:
+    """
+    def get_extra_exclude_kwargs(self, request, *args, **kwargs):
+        """
+        Return extra exclude kwargs for the given model.
+        :param request:
+        :param args:
+        :param kwargs:
+        :rtype: dict
+        """
+        return {}
+
+    return get_extra_exclude_kwargs
 
 
 def clean_structure_of_passwords(obj):

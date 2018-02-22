@@ -31,6 +31,7 @@ from .utils import get_user_adapter
 from .utils import get_base_scim_location_getter
 from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
+from .utils import get_extra_model_exclude_kwargs_getter
 from .utils import get_loggable_body
 
 
@@ -59,6 +60,8 @@ class SCIMView(View):
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(self.request, uuid)
         extra_filter_kwargs[self.lookup_field] = uuid
+        # No use of get_extra_exclude_kwargs here since we are
+        # searching for a specific single object.
 
         try:
             return self.model_cls.objects.get(**extra_filter_kwargs)
@@ -144,6 +147,8 @@ class FilterMixin(object):
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
         qs = self._filter_raw_queryset_with_extra_filter_kwargs(qs, extra_filter_kwargs)
+        extra_exclude_kwargs = self.get_extra_exclude_kwargs(request)
+        qs = self._filter_raw_queryset_with_extra_exclude_kwargs(qs, extra_exclude_kwargs)
 
         return self._build_response(request, qs, start, count)
 
@@ -161,6 +166,28 @@ class FilterMixin(object):
 
                 else:
                     if not hasattr(obj, attr_name) or getattr(obj, attr_name) != attr_val:
+                        add_obj = False
+                        break
+
+            if add_obj:
+                obj_list.append(obj)
+
+        return obj_list
+
+    def _filter_raw_queryset_with_extra_exclude_kwargs(self, qs, extra_exclude_kwargs):
+
+        obj_list = []
+        for obj in qs:
+            add_obj = True
+            for attr_name, attr_val in extra_exclude_kwargs.items():
+                if attr_name.endswith('__in'):
+                    attr_name = attr_name.replace('__in', '')
+                    if hasattr(obj, attr_name) and getattr(obj, attr_name) in attr_val:
+                        add_obj = False
+                        break
+
+                else:
+                    if hasattr(obj, attr_name) and getattr(obj, attr_name) == attr_val:
                         add_obj = False
                         break
 
@@ -194,6 +221,7 @@ class SearchView(FilterMixin, SCIMView):
 
     scim_adapter = None
     get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter('search')
+    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter('search')
 
     def post(self, request):
         body = json.loads(request.body.decode(constants.ENCODING) or '{}')
@@ -234,7 +262,12 @@ class GetView(object):
             return self._search(request, query, *self._page(request))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
-        qs = self.model_cls.objects.filter(**extra_filter_kwargs).order_by(self.lookup_field)
+        extra_exclude_kwargs = self.get_extra_exclude_kwargs(request)
+        qs = self.model_cls.objects.filter(
+            **extra_filter_kwargs
+        ).exclude(
+            **extra_exclude_kwargs
+        ).order_by(self.lookup_field)
         return self._build_response(request, qs, *self._page(request))
 
 
@@ -317,6 +350,7 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
     scim_adapter = get_user_adapter()
     model_cls = get_user_model()
     get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
+    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
     parser = SCIMUserFilterTransformer
 
 
@@ -327,6 +361,7 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView,
     scim_adapter = get_group_adapter()
     model_cls = get_group_model()
     get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
+    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
     parser = None
 
 

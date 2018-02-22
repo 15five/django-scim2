@@ -1,6 +1,11 @@
 import json
 from unittest import skip
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.test import TestCase
@@ -162,6 +167,55 @@ class FilterMixinTestCase(TestCase):
         expected = [ford, abernathy]
         self.assertEqual(obj_list, expected)
 
+    def test__filter_raw_queryset_with_extra_exclude_kwargs(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+            is_active=False,
+        )
+
+        mixin = views.FilterMixin()
+        qs = get_user_model().objects.all()
+
+        # Test single attribute
+        extra_exclude_kwargs = {
+            'is_active': True,
+        }
+        obj_list = mixin._filter_raw_queryset_with_extra_exclude_kwargs(
+            qs=qs,
+            extra_exclude_kwargs=extra_exclude_kwargs
+        )
+        expected = [abernathy]
+        self.assertEqual(obj_list, expected)
+
+        # Test single attribute
+        extra_exclude_kwargs = {
+            'is_active': False,
+        }
+        obj_list = mixin._filter_raw_queryset_with_extra_exclude_kwargs(
+            qs=qs,
+            extra_exclude_kwargs=extra_exclude_kwargs
+        )
+        expected = [ford]
+        self.assertEqual(obj_list, expected)
+
+        # Test __in option
+        extra_exclude_kwargs = {
+            'is_active__in': (),
+        }
+        obj_list = mixin._filter_raw_queryset_with_extra_exclude_kwargs(
+            qs=qs,
+            extra_exclude_kwargs=extra_exclude_kwargs
+        )
+        expected = [ford, abernathy]
+        self.assertEqual(obj_list, expected)
+
 
 class SearchTestCase(LoginMixin, TestCase):
     maxDiff = None
@@ -283,6 +337,81 @@ class UserTestCase(LoginMixin, TestCase):
             'Resources': [
                 get_user_adapter()(self.user, self.request).to_dict(),
                 ford.to_dict(),
+                abernathy.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
+
+    @mock.patch('django_scim.views.UsersView.get_extra_filter_kwargs')
+    def test_get_all_users_with_extra_model_filter_kwargs(self, func):
+        """
+        Test GET /Users with extra model filters.
+        """
+        # define kwargs returned by a call to get_extra_filter_kwargs
+        func.return_value = {'is_active': True}
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        ford = get_user_adapter()(ford, self.request)
+        get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+            is_active=False,
+        )
+
+        url = reverse('scim:users')
+        resp = self.client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+        result = json.loads(resp.content.decode())
+
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 2,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
+                get_user_adapter()(self.user, self.request).to_dict(),
+                ford.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
+
+    @mock.patch('django_scim.views.UsersView.get_extra_exclude_kwargs')
+    def test_get_all_users_with_extra_model_exclude_kwargs(self, func):
+        """
+        Test GET /Users with extra model exclude filters.
+        """
+        # define kwargs returned by a call to get_extra_exclude_kwargs
+        func.return_value = {'is_active': True}
+
+        get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+            is_active=False,
+        )
+        abernathy = get_user_adapter()(abernathy, self.request)
+
+        url = reverse('scim:users')
+        resp = self.client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+        result = json.loads(resp.content.decode())
+
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 1,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
                 abernathy.to_dict(),
             ],
         }
@@ -512,6 +641,72 @@ class GroupTestCase(LoginMixin, TestCase):
             "startIndex": 1,
             'Resources': [
                 behavior.to_dict(),
+                security.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
+
+    @mock.patch('django_scim.views.GroupsView.get_extra_filter_kwargs')
+    def test_get_all_groups_with_extra_model_filter_kwargs(self, func):
+        """
+        Test GET /Users with extra model filters.
+        """
+        # define kwargs returned by a call to get_extra_filter_kwargs
+        func.return_value = {'name': 'Behavior Group'}
+
+        behavior = get_group_model().objects.create(
+            name='Behavior Group',
+        )
+        behavior = get_group_adapter()(behavior, self.request)
+
+        get_group_model().objects.create(
+            name='Security Group',
+        )
+
+        url = reverse('scim:groups')
+        resp = self.client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+
+        result = json.loads(resp.content.decode())
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 1,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
+                behavior.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
+
+    @mock.patch('django_scim.views.GroupsView.get_extra_exclude_kwargs')
+    def test_get_all_groups_with_extra_model_exclude_kwargs(self, func):
+        """
+        Test GET /Users with extra model exclude filters.
+        """
+        # define kwargs returned by a call to get_extra_exclude_kwargs
+        func.return_value = {'name': 'Behavior Group'}
+
+        get_group_model().objects.create(
+            name='Behavior Group',
+        )
+
+        security = get_group_model().objects.create(
+            name='Security Group',
+        )
+        security = get_group_adapter()(security, self.request)
+
+        url = reverse('scim:groups')
+        resp = self.client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+
+        result = json.loads(resp.content.decode())
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 1,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
                 security.to_dict(),
             ],
         }
