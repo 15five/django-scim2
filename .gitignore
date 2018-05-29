@@ -9,3 +9,4 @@ MANIFEST
 test_database
 .eggs/
 docs/_build
+.nazar-ignore
