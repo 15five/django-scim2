@@ -132,8 +132,8 @@ class SCIMUser(SCIMMixin):
         """
         d = {
             'resourceType': self.resource_type,
-            'created': self.obj.date_joined.isoformat(),
-            'lastModified': self.obj.date_joined.isoformat(),
+            'created': self.obj.date_joined.isoformat(timespec='milliseconds'),
+            'lastModified': self.obj.date_joined.isoformat(timespec='milliseconds'),
             'location': self.location,
         }
 

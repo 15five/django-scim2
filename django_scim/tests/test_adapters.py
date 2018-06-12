@@ -67,9 +67,9 @@ class SCIMUserTestCase(TestCase):
 
         expected = {
             'resourceType': 'User',
-            'lastModified': ford.date_joined.isoformat(),
+            'lastModified': ford.date_joined.isoformat(timespec='milliseconds'),
             'location': u'https://localhost/scim/v2/Users/1',
-            'created': ford.date_joined.isoformat(),
+            'created': ford.date_joined.isoformat(timespec='milliseconds'),
         }
 
         ford = get_user_adapter()(ford, self.request)
@@ -92,9 +92,9 @@ class SCIMUserTestCase(TestCase):
             'userName': 'rford',
             'meta': {
                 'resourceType': 'User',
-                'lastModified': ford.date_joined.isoformat(),
+                'lastModified': ford.date_joined.isoformat(timespec='milliseconds'),
                 'location': u'https://localhost/scim/v2/Users/1',
-                'created': ford.date_joined.isoformat(),
+                'created': ford.date_joined.isoformat(timespec='milliseconds'),
             },
             'displayName': u'Robert Ford',
             'name': {
