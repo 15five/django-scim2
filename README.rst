@@ -24,9 +24,16 @@ Then add the ``django_scim`` app to ``INSTALLED_APPS`` in your Django's settings
 Add the necessary url patterns to your root urls.py file. Please note that the
 namespace is mandatory and must be named `scim`::
 
+    # Django 1.11
     urlpatterns = [
         ...
         url(r'^scim/v2/', include('django_scim.urls', namespace='scim')),
+    ]
+
+    # Django 2+
+    urlpatterns = [
+        ...
+        path('scim/v2/', include('django_scim.urls')),
     ]
 
 Finally, add settings appropriate for you app to your settings.py file::
