@@ -10,4 +10,5 @@ CHANGE LOG
 ** NON BREAKING CHANGES **
 - change accuracy of timestamp from micro- to milli-second
 - Upgrade dateutil library
+- Support Django 2.0.0
 
