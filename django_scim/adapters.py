@@ -16,12 +16,13 @@ An adapter is instantiated with a model instance. Eg::
     ...
 
 """
-from django.contrib.auth import get_user_model
-from django.core.urlresolvers import reverse
-from django import core
-from six.moves.urllib.parse import urljoin
+from urllib.parse import urljoin
 
-from django_scim import constants
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from django import core
+
+from . import constants
 from .exceptions import PatchError
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
@@ -404,4 +405,3 @@ class SCIMGroup(SCIMMixin):
 
         else:
             raise NotImplemented
-

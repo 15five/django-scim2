@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -11,12 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils import six
 from django.utils.decorators import method_decorator
-from django.utils.six.moves.urllib.parse import urljoin
-
-try:
-    from django.urls import reverse
-except ImportError:
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from . import constants
 from .filters import SCIMUserFilterTransformer

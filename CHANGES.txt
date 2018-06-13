@@ -1,8 +1,13 @@
 CHANGE LOG
 ==========
 
-0.3.1
+0.4.0
 -----
-- change accuracy of timestamp from micro- to milli-second
+** BREAKING CHANGES **
+- Port to Python 3.6, drop support for anything less than Python 3.6
+- Port to Django 1.11+, drop support for anything less than Django 1.11
 
+** NON BREAKING CHANGES **
+- change accuracy of timestamp from micro- to milli-second
+- Upgrade dateutil library
 

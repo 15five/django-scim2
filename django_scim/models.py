@@ -1,7 +1,8 @@
-from django.core.urlresolvers import reverse
-from six.moves.urllib.parse import urljoin
+from urllib.parse import urljoin
 
-from django_scim import constants
+from django.urls import reverse
+
+from . import constants
 from .settings import scim_settings
 from .utils import get_base_scim_location_getter
 
@@ -55,4 +56,3 @@ class SCIMServiceProviderConfig(object):
             'authenticationSchemes': scim_settings.AUTHENTICATION_SCHEMES,
             'meta': self.meta,
         }
-

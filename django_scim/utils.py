@@ -1,7 +1,6 @@
 import json
 
-import six
-
+from urllib.parse import urlunparse
 
 from .settings import scim_settings
 
@@ -79,7 +78,7 @@ def default_base_scim_location_getter(request=None, *args, **kwargs):
         ''   # fragment
     )
 
-    base_scim_location = six.moves.urllib.parse.urlunparse(base_scim_location_parts)
+    base_scim_location = urlunparse(base_scim_location_parts)
 
     return base_scim_location
 

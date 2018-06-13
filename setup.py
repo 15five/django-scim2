@@ -31,10 +31,6 @@ def long_description():
     return open(os.path.join(BASE_DIR, 'README.rst')).read()
 
 
-tests_require = [
-    'mock',
-]
-
 def run_tests():
     settings_mod = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
     os.environ['DJANGO_SETTINGS_MODULE'] = settings_mod
@@ -76,7 +72,6 @@ setup(
     ],
     scripts=['scim'],
     test_suite='setup.run_tests',
-    tests_require=tests_require,
     zip_safe=False,
     include_package_data=True,
     classifiers=[

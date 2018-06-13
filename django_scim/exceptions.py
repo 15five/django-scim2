@@ -1,4 +1,3 @@
-
 from .constants import SchemaURI
 
 class SCIMException(Exception):
@@ -7,7 +6,7 @@ class SCIMException(Exception):
     scim_type = None
 
     def __init__(self, detail=None, **kwargs):
-        super(SCIMException, self).__init__()
+        super().__init__()
         self.detail = detail or ''
         self.status = kwargs.get('status') or self.status
         self.schemas = kwargs.get('schemas') or [self.schema]
@@ -31,7 +30,7 @@ class NotFoundError(SCIMException):
     def __init__(self, uuid, **kwargs):
         detail_template = u'Resource {} not found'
         detail = detail_template.format(uuid)
-        super(NotFoundError, self).__init__(detail, **kwargs)
+        super().__init__(detail, **kwargs)
 
 
 class BadRequestError(SCIMException):

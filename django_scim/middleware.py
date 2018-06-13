@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http.response import HttpResponse
 
 from .settings import scim_settings
@@ -14,7 +14,7 @@ class SCIMAuthCheckMiddleware(object):
     def __init__(self, get_response=None):
         # One-time configuration and initialization.
         self.get_response = get_response
-        super(SCIMAuthCheckMiddleware, self).__init__()
+        super().__init__()
 
     def __call__(self, request):
         self.process_request(request)
@@ -35,4 +35,3 @@ class SCIMAuthCheckMiddleware(object):
         if not hasattr(self, '_reverse_url'):
             self._reverse_url = reverse('scim:root')
         return self._reverse_url
-

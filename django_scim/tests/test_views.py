@@ -1,9 +1,7 @@
 import json
+from unittest import mock
 from unittest import skip
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -11,12 +9,7 @@ from django.contrib.auth.hashers import make_password
 from django.test import TestCase
 from django.test import Client
 from django.test import RequestFactory
-from django.utils.six.moves.urllib.parse import urljoin
-
-try:
-    from django.urls import reverse
-except ImportError:
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django_scim import views
 from django_scim import constants
@@ -38,7 +31,7 @@ class LoginMixin(object):
         )
 
         self.client = Client()
-        self.client.login(username='superuser', password='password1')
+        self.assertTrue(self.client.login(username='superuser', password='password1'))
 
 
 class SCIMTestCase(TestCase):
