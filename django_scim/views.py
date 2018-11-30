@@ -1,6 +1,6 @@
 import json
 import logging
-from urllib.parse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
