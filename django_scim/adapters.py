@@ -16,7 +16,7 @@ An adapter is instantiated with a model instance. Eg::
     ...
 
 """
-from urllib.parse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
