@@ -1,5 +1,6 @@
 from .constants import SchemaURI
 
+
 class SCIMException(Exception):
     status = 500
     schema = SchemaURI.ERROR
@@ -13,7 +14,7 @@ class SCIMException(Exception):
 
         msg = '({} {}) {}'.format(self.status, self.scim_type, self.detail)
 
-        super().__init__(msg)
+        super(Exception, self).__init__(msg)
 
 
     def to_dict(self):
@@ -34,7 +35,7 @@ class NotFoundError(SCIMException):
     def __init__(self, uuid, **kwargs):
         detail_template = u'Resource {} not found'
         detail = detail_template.format(uuid)
-        super().__init__(detail, **kwargs)
+        super(SCIMException, self).__init__(detail, **kwargs)
 
 
 class BadRequestError(SCIMException):
@@ -43,3 +44,4 @@ class BadRequestError(SCIMException):
 
 class IntegrityError(SCIMException):
     status = 409
+

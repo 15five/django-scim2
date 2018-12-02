@@ -14,7 +14,7 @@ class SCIMAuthCheckMiddleware(object):
     def __init__(self, get_response=None):
         # One-time configuration and initialization.
         self.get_response = get_response
-        super().__init__()
+        super(object, self).__init__()
 
     def __call__(self, request):
         self.process_request(request)
