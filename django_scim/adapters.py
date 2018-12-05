@@ -276,7 +276,7 @@ class SCIMGroup(SCIMMixin):
     @property
     def display_name(self):
         """
-        Return the displayName of the user per the SCIM spec.
+        Return the displayName of the group per the SCIM spec.
         """
         return self.obj.name
 
@@ -305,7 +305,7 @@ class SCIMGroup(SCIMMixin):
     @property
     def meta(self):
         """
-        Return the meta object of the user per the SCIM spec.
+        Return the meta object of the group per the SCIM spec.
         """
         d = {
             'resourceType': self.resource_type,
