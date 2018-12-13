@@ -6,11 +6,15 @@ class SCIMException(Exception):
     scim_type = None
 
     def __init__(self, detail=None, **kwargs):
-        super().__init__()
         self.detail = detail or ''
         self.status = kwargs.get('status') or self.status
         self.schemas = kwargs.get('schemas') or [self.schema]
         self.scim_type = kwargs.get('scim_type') or self.scim_type
+
+        msg = '({} {}) {}'.format(self.status, self.scim_type, self.detail)
+
+        super().__init__(msg)
+
 
     def to_dict(self):
         d = {
@@ -34,10 +38,6 @@ class NotFoundError(SCIMException):
 
 
 class BadRequestError(SCIMException):
-    status = 400
-
-
-class PatchError(SCIMException):
     status = 400
 
 

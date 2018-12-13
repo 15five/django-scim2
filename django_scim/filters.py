@@ -8,63 +8,13 @@ import re
 
 from plyplus import Grammar, STransformer, PlyplusException
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+
+from .grammars import USER_GRAMMAR
+from .grammars import GROUP_GRAMMAR
 
 
 STRING_REPLACEMENT_RE_PAT = re.compile(r'\%\([^).]+\)s', re.MULTILINE)
-
-
-user_grammar = Grammar("""
-  start: logical_or;
-
-  ?logical_or: logical_or op_or logical_and | logical_and;
-  ?logical_and: logical_and op_and expr | expr;
-
-  ?expr: un_string_expr | un_expr | bin_expr | '\(' logical_or '\)';
-
-  ?bin_expr: (bin_string_expr | bin_passwd_expr | bin_pk_expr | bin_date_expr |
-              bin_bool_expr);
-
-  un_string_expr: (string_field | password) pr;
-  un_expr: (date_field | bool_field) pr;
-  bin_string_expr: string_field string_op t_string;
-  bin_passwd_expr: password eq t_string;
-  bin_pk_expr: pk eq t_string;
-  bin_date_expr: date_field date_op t_date;
-  bin_bool_expr: bool_field eq t_bool;
-
-  ?string_op: eq | co | sw;
-  ?date_op: eq | gt | ge | lt | le;
-
-  ?op_or: '(?i)or';
-  ?op_and: '(?i)and';
-  pr: '(?i)pr';
-  eq: '(?i)eq';
-  co: '(?i)co';
-  sw: '(?i)sw';
-  gt: '(?i)gt';
-  ge: '(?i)ge';
-  lt: '(?i)lt';
-  le: '(?i)le';
-
-  ?string_field: username | first_name | last_name | email;
-  ?date_field: date_joined;
-  ?bool_field: is_active;
-
-  username: '(?i)userName';
-  first_name: '(?i)name\.givenName' | '(?i)givenName';
-  last_name: '(?i)name\.familyName' | '(?i)familyName';
-  password: '(?i)password';
-  pk: '(?i)id';
-  date_joined: '(?i)meta\.created' | '(?i)created';
-  email: '(?i)emails\.value' | '(?i)emails';
-  is_active: '(?i)active';
-
-  t_string: '"(?:[^"\\\\]|\\\\.)*"' ;
-  t_date: '"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Zz]?"';
-  t_bool: 'false' | 'true';
-
-  SPACES: '[ ]+' (%ignore);
-  """)
 
 
 class SCIMUserFilterTransformer(STransformer):
@@ -84,6 +34,7 @@ class SCIMUserFilterTransformer(STransformer):
     # fully qualified column names:
     pk = lambda *args: u'u.id'
     username = lambda *args: u'u.username'
+    external_id = lambda *args: u'u.external_id'
     password = lambda *args: u'u.password'
     first_name = lambda *args: u'u.first_name'
     last_name = lambda *args: u'u.last_name'
@@ -261,7 +212,7 @@ class SCIMUserFilterTransformer(STransformer):
         :param unicode query: a `unicode` query string.
         """
         try:
-            sql, params = cls().transform(user_grammar.parse(query))
+            sql, params = cls().transform(USER_GRAMMAR.parse(query))
             sql, params = cls.condition_sql_and_params(sql, params)
         except PlyplusException as e:
             raise ValueError(e)
@@ -279,3 +230,135 @@ class SCIMUserFilterTransformer(STransformer):
         def __unicode__(self):
             return self.sql
 
+
+class SCIMGroupFilterTransformer(STransformer):
+    """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
+    and a dict with query parameters to go with the query."""
+
+    # data types:
+    t_string = lambda self, exp: exp.tail[0][1:-1]
+
+    # operators
+    op_or = lambda self, exp: u'OR'
+    op_and = lambda self, exp: u'AND'
+    pr = eq = co = sw = lambda self, ex: ex.tail[0].lower()
+
+    # fully qualified column names:
+    pk = lambda *args: u'g.id'
+    name = lambda *args: u'g.name'
+
+    @property
+    def group_table(self):
+        return Group._meta.db_table
+
+    # expressions:
+    def logical_or(self, exp):
+        # We're not doing a simple 'OR', as that doesn't scale when the two
+        # conditions operate on different tables and rely on indices.
+        # This is because Postgres' query planner cannot leverage indices from
+        # different tables. Instead, we'll use a UNION.
+        #
+        # http://grokbase.com/t/postgresql/pgsql-general/034qrq6me0/left-join-not-using-index
+        return u"""
+            g.id IN (
+                WITH group AS (
+                    SELECT DISTINCT g.id
+                    FROM {group_table} g
+                    {join}
+                    WHERE
+                    {operand1}
+
+                    UNION
+
+                    SELECT DISTINCT g.id
+                    FROM {group_table} g
+                    {join}
+                    WHERE
+                    {operand2}
+                )
+                SELECT DISTINCT id FROM groups
+            )
+        """.format(join=self.join(),
+                   group_table=self.group_table,
+                   operand1=exp.tail[0],
+                   operand2=exp.tail[1])
+
+    def logical_and(self, exp):
+        op1, op2 = exp.tail
+        return u'(%s AND %s)' % (op1, op2)
+
+    __default__ = lambda self, exp: exp.tail[0]
+
+    def __init__(self):
+        self._seq = itertools.count(0, step=1)
+        self._params = {}
+
+    def _push_param(self, value):
+        name = str(next(self._seq))
+        self._params[name] = value
+        return name
+
+    def join(self):
+        """Returns join expressions. E.g.
+
+            JOIN bb_userprofile p ON p.user_id = u.id
+        """
+        return ''
+
+    def start(self, exp):
+        return u"""
+            SELECT DISTINCT g.*
+            FROM {group_table} g
+                {join}
+            WHERE {fragment}
+            ORDER BY g.id ASC
+            """.format(join=self.join(),
+                       group_table=self.group_table,
+                       fragment=exp.tail[0]), self._params
+
+    def un_string_expr(self, exp):
+        # Django uses empty strings instead of NULL in VARCHARs:
+        return u"(%s IS NOT NULL AND %s != '')" % (exp.tail[0], exp.tail[0])
+
+    def bin_string_expr(self, exp):
+        field, op, literal = exp.tail
+        if op == u'eq':
+            return u'UPPER(%s) = UPPER(%%(%s)s)' % (field, self._push_param(literal))
+        elif op == u'sw':
+            literal += u'%'
+        elif op == u'co':
+            literal = u'%' + literal + u'%'
+        return u'%s ILIKE %%(%s)s' % (field, self._push_param(literal))
+
+    def bin_pk_expr(self, exp):
+        field, op, value = exp.tail
+        return u'%s = %%(%s)s' % (field, self._push_param(int(value)))
+
+    @classmethod
+    def condition_sql_and_params(cls, sql, params):
+        # replace %(id)s with %s and update params accordingly
+        replacements = STRING_REPLACEMENT_RE_PAT.findall(sql)
+        new_sql = STRING_REPLACEMENT_RE_PAT.sub('%s', sql, count=len(replacements))
+
+        new_params = []
+        for replacement in replacements:
+            # strip '%(' adn ')s' from replacement arg
+            replacement = replacement[2:-2]
+            new_params.append(params.get(replacement))
+
+        return new_sql, new_params
+
+    @classmethod
+    def search(cls, query, request=None):
+        """Takes a SCIM 1.1 filter query and returns a Django `QuerySet` that
+        contains zero or more group model instances.
+
+        :param unicode query: a `unicode` query string.
+        """
+        try:
+            sql, params = cls().transform(GROUP_GRAMMAR.parse(query))
+            sql, params = cls.condition_sql_and_params(sql, params)
+        except PlyplusException as e:
+            raise ValueError(e)
+        else:
+            return Group.objects.raw(sql, params)

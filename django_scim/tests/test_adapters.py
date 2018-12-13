@@ -100,6 +100,7 @@ class SCIMUserTestCase(TestCase):
             'name': {
                 'givenName': 'Robert',
                 'familyName': 'Ford',
+                'formatted': 'Robert Ford',
             },
             'groups': [
                 {

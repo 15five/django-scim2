@@ -3,8 +3,8 @@ try:
 except ImportError:
     from django.conf.urls import url as re_path
 
-from .filters import SCIMUserFilterTransformer
-from .utils import get_user_adapter
+from .filters import SCIMUserFilterTransformer, SCIMGroupFilterTransformer
+from .utils import get_user_adapter, get_group_adapter
 from . import views
 
 
@@ -29,7 +29,7 @@ urlpatterns = [
         name='users'),
 
     re_path(r'^Groups/.search$',
-        views.SearchView.as_view(implemented=False),
+        views.SearchView.as_view(scim_adapter=get_group_adapter(), parser=SCIMGroupFilterTransformer),
         name='groups-search'),
 
     re_path(r'^Groups(?:/(?P<uuid>[^/]+))?$',

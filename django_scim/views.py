@@ -15,7 +15,7 @@ from django.utils.decorators import method_decorator
 from django.urls import reverse
 
 from . import constants
-from .filters import SCIMUserFilterTransformer
+from . import filters
 from .exceptions import SCIMException
 from .exceptions import NotFoundError
 from .exceptions import BadRequestError
@@ -347,7 +347,7 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
     model_cls = get_user_model()
     get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
     get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
-    parser = SCIMUserFilterTransformer
+    parser = filters.SCIMUserFilterTransformer
 
 
 class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
@@ -358,7 +358,7 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView,
     model_cls = get_group_model()
     get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
     get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
-    parser = None
+    parser = filters.SCIMGroupFilterTransformer
 
 
 class ServiceProviderConfigView(SCIMView):

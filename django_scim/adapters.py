@@ -23,7 +23,7 @@ from django.urls import reverse
 from django import core
 
 from . import constants
-from .exceptions import PatchError
+from .exceptions import BadRequestError
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
 from .utils import get_user_adapter
@@ -74,7 +74,7 @@ class SCIMMixin(object):
         on the appropriate adapter) for each.
         """
         for operation in operations:
-            op_code = operation.get('op')
+            op_code = operation.get('op').lower()
             op_code = 'handle_' + op_code
             handler = getattr(self, op_code)
             handler(operation)
@@ -99,6 +99,10 @@ class SCIMUser(SCIMMixin):
         if self.obj.first_name and self.obj.last_name:
             return u'{0.first_name} {0.last_name}'.format(self.obj)
         return self.obj.username
+
+    @property
+    def name_formatted(self):
+        return self.display_name
 
     @property
     def emails(self):
@@ -152,6 +156,7 @@ class SCIMUser(SCIMMixin):
             'name': {
                 'givenName': self.obj.first_name,
                 'familyName': self.obj.last_name,
+                'formatted': self.name_formatted,
             },
             'displayName': self.display_name,
             'emails': self.emails,
@@ -241,13 +246,13 @@ class SCIMUser(SCIMMixin):
                 elif attr_value:
                     email = attr_value[0].get('value')
                 else:
-                    raise PatchError('Invalid email value')
+                    raise BadRequestError('Invalid email value')
 
                 try:
                     validator = core.validators.EmailValidator()
                     validator(email)
                 except core.exceptions.ValidationError:
-                    raise PatchError('Invalid email value')
+                    raise BadRequestError('Invalid email value')
 
                 self.obj.email = email
 
@@ -368,7 +373,7 @@ class SCIMGroup(SCIMMixin):
             users = get_user_model().objects.filter(id__in=ids)
 
             if len(ids) != users.count():
-                raise PatchError('Can not add a non-existent user to group')
+                raise BadRequestError('Can not add a non-existent user to group')
 
             for user in users:
                 self.obj.user_set.add(user)
@@ -386,7 +391,7 @@ class SCIMGroup(SCIMMixin):
             users = get_user_model().objects.filter(id__in=ids)
 
             if len(ids) != users.count():
-                raise PatchError('Can not remove a non-existent user from group')
+                raise BadRequestError('Can not remove a non-existent user from group')
 
             for user in users:
                 self.obj.user_set.remove(user)
