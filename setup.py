@@ -69,8 +69,12 @@ setup(
     install_requires=[
         'python-dateutil>=2.6.0',
         'PlyPlus>=0.7.5',
+        'six',
     ],
     scripts=['scim'],
+    tests_require=[
+        'mock',
+    ],
     test_suite='setup.run_tests',
     zip_safe=False,
     include_package_data=True,

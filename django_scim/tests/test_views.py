@@ -1,7 +1,4 @@
 import json
-from unittest import mock
-from unittest import skip
-from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +7,13 @@ from django.test import TestCase
 from django.test import Client
 from django.test import RequestFactory
 from django.urls import reverse
+import six
+from six.moves.urllib.parse import urljoin
+if six.PY3:
+    from unittest import mock
+else:
+    import mock
+from unittest import skip
 
 from django_scim import views
 from django_scim import constants

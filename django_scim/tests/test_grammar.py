@@ -10,6 +10,10 @@ class UserGrammarTestCase(TestCase):
         query = u'emails.value eq "ehughes@westworld.com"'
         USER_GRAMMAR.parse(query)
 
+    def test_parse_username(self):
+        query = u'userName eq "ehughes@westworld.com"'
+        USER_GRAMMAR.parse(query)
+
     def test_parse_username_with_slash(self):
         query = u'userName eq "ehughes@westworld.com/123"'
         USER_GRAMMAR.parse(query)
@@ -18,6 +22,9 @@ class UserGrammarTestCase(TestCase):
 class GroupGrammarTestCase(TestCase):
 
     def test_parse_name(self):
-        query = u'name eq "party-group"'
+        query = u'name eq "Security-Team"'
         GROUP_GRAMMAR.parse(query)
 
+    def test_parse_name(self):
+        query = u'displayName eq "Security-Team"'
+        GROUP_GRAMMAR.parse(query)

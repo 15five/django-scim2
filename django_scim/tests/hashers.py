@@ -8,7 +8,7 @@ class NoopPasswordHasher(BasePasswordHasher):
     algorithm = 'plain'
 
     def encode(self, password, salt):
-        return f'{self.algorithm}${password}'
+        return '{}${}'.format(self.algorithm, password)
 
     def salt(self):
         return None
