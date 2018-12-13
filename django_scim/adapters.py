@@ -16,7 +16,7 @@ An adapter is instantiated with a model instance. Eg::
     ...
 
 """
-from urllib.parse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -137,8 +137,8 @@ class SCIMUser(SCIMMixin):
         """
         d = {
             'resourceType': self.resource_type,
-            'created': self.obj.date_joined.isoformat(timespec='milliseconds'),
-            'lastModified': self.obj.date_joined.isoformat(timespec='milliseconds'),
+            'created': self.obj.date_joined.isoformat(),
+            'lastModified': self.obj.date_joined.isoformat(),
             'location': self.location,
         }
 
@@ -276,7 +276,7 @@ class SCIMGroup(SCIMMixin):
     @property
     def display_name(self):
         """
-        Return the displayName of the user per the SCIM spec.
+        Return the displayName of the group per the SCIM spec.
         """
         return self.obj.name
 
@@ -305,7 +305,7 @@ class SCIMGroup(SCIMMixin):
     @property
     def meta(self):
         """
-        Return the meta object of the user per the SCIM spec.
+        Return the meta object of the group per the SCIM spec.
         """
         d = {
             'resourceType': self.resource_type,

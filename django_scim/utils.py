@@ -1,6 +1,6 @@
 import json
 
-from urllib.parse import urlunparse
+from six.moves.urllib.parse import urlunparse
 
 from .settings import scim_settings
 
