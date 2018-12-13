@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.5.0
+-----
+- Added a group grammar for parsing group pushes
+
 0.4.1
 -----
 - Docs changes
