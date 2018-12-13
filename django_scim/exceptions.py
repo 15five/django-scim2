@@ -33,9 +33,8 @@ class NotFoundError(SCIMException):
     status = 404
 
     def __init__(self, uuid, **kwargs):
-        detail_template = u'Resource {} not found'
-        detail = detail_template.format(uuid)
-        super(SCIMException, self).__init__(detail, **kwargs)
+        detail = u'Resource {} not found'.format(uuid)
+        super(NotFoundError, self).__init__(detail, **kwargs)
 
 
 class BadRequestError(SCIMException):
