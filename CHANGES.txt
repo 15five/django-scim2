@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.5.1
+-----
+- Added tests for grammar
+- Added back explicit support for python2.7 on Django 1.11
+
 0.5.0
 -----
 - Added a group grammar for parsing group pushes
