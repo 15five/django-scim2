@@ -21,6 +21,18 @@ Then add the ``django_scim`` app to ``INSTALLED_APPS`` in your Django's settings
         'django_scim',
     )
 
+Add the appropriate middleware to authorize or deny the SCIM calls::
+
+    MIDDLEWARE_CLASSES = (
+        ...
+        'django_scim.middleware.SCIMAuthCheckMiddleware',
+        ...
+    )
+
+Make sure to place this middleware after authentication middleware as this
+middleware simply checks `request.user.is_anonymous()` to determine if the SCIM
+request should be allowed or denied.
+
 Add the necessary url patterns to your root urls.py file. Please note that the
 namespace is mandatory and must be named `scim`::
 
