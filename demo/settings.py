@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_scim',
+    'oauth2_provider',
 )
 
 MIDDLEWARE_CLASSES = (
