@@ -12,9 +12,8 @@ class SCIMAuthCheckMiddleware(object):
     """
 
     def __init__(self, get_response=None):
-        # One-time configuration and initialization.
+        # One-time configuration and initialization per server start.
         self.get_response = get_response
-        super(object, self).__init__()
 
     def __call__(self, request):
         self.process_request(request)
@@ -24,7 +23,7 @@ class SCIMAuthCheckMiddleware(object):
         # If we've just passed through the auth middleware and there is no user
         # associated with the request we can assume permission
         # was denied and return a 401.
-        if not hasattr(request, 'user') or request.user.is_anonymous():
+        if not hasattr(request, 'user') or request.user.is_anonymous:
             if request.path.startswith(self.reverse_url):
                 response = HttpResponse(status=401)
                 response['WWW-Authenticate'] = scim_settings.WWW_AUTHENTICATE_HEADER
