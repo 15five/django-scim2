@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.5.3
+-----
+- Bug fix: https://github.com/15five/django-scim2/issues/13
+  Thank you @tomatsue
+
 0.5.2
 -----
 - Bug fix
