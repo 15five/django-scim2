@@ -18,6 +18,10 @@ class UserGrammarTestCase(TestCase):
         query = u'userName eq "ehughes@westworld.com/123"'
         USER_GRAMMAR.parse(query)
 
+    def test_azure_ad_style_email_filter_query(self):
+        query = 'emails[type eq "Primary"].value eq "001750ca-8202-47cd-b553-c63f4f245940"'
+        USER_GRAMMAR.parse(query)
+
 
 class GroupGrammarTestCase(TestCase):
 
