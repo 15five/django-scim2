@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, RequestFactory
 
 from django_scim import constants
+from django_scim.adapters import SCIMMixin
 from django_scim.utils import get_user_adapter
 from django_scim.utils import get_group_adapter
 from django_scim.utils import get_group_model
@@ -140,6 +141,26 @@ class SCIMUserTestCase(TestCase):
         }
 
         self.assertEqual(ford.resource_type_dict(), expected)
+
+
+class SCIMMixinPathParserTestCase(TestCase):
+    maxDiff = None
+
+    def test_azure_ad_style_paths(self):
+        """
+        Test paths typically sent by AzureAD.
+        """
+        paths = [
+            "addresses[type eq \"work\"].country",
+            "addresses[type eq \"work\"].locality",
+            "addresses[type eq \"work\"].postalCode",
+            "addresses[type eq \"work\"].streetAddress",
+            "externalId",
+            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department",
+        ]
+
+        result_paths = list(map(SCIMMixin(None).parse_path, paths))
+        self.assertEqual(result_paths, paths)
 
 
 class SCIMGroupTestCase(TestCase):
