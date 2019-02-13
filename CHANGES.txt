@@ -1,6 +1,22 @@
 CHANGE LOG
 ==========
 
+0.6.0
+-----
+- Add tests for work on supporting complex SCIM filtering
+- Update PATCH handler to decipher path key
+
+  This commit contains a BREAKING CHANGE.
+
+  If you have overridden the "handle_<op_code>" methods on the User and
+  Group adapters, those methods need to be updated to take path, and value
+  in addition to operation.
+
+  New adapter signature:
+
+  def handle_<op_code (eg. add)>(self, path, value, operation):
+      ...
+
 0.5.3
 -----
 - Bug fix: https://github.com/15five/django-scim2/issues/13

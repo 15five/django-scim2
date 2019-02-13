@@ -67,17 +67,41 @@ class SCIMMixin(object):
     def handle_operations(self, operations):
         """
         The SCIM specification allows for making changes to specific attributes
-        of a model. These changes are sent in PUT requests and are batched into
-        operations to be performed on a object.Operations could be 'add',
-        'remove', 'replace', etc. This method iterates through all of the
+        of a model. These changes are sent in PATCH requests and are batched into
+        operations to be performed on a object. Operations can have an op code
+        of 'add', 'remove', or 'replace'. This method iterates through all of the
         operations in ``operations`` and calls the appropriate handler (defined
         on the appropriate adapter) for each.
         """
         for operation in operations:
+            path = operation.get('path')
+            path = self.parse_path(path)
+
+            value = operation.get('value')
+
             op_code = operation.get('op').lower()
             op_code = 'handle_' + op_code
             handler = getattr(self, op_code)
-            handler(operation)
+
+            handler(path, value, operation)
+
+    def parse_path(self, path):
+        """
+        Return new path given an original path.
+
+        This method can be overridden to provide a more usable path within the
+        associated handle methods.
+        """
+        return path
+
+    def handle_add(self, path, value, operation):
+        raise NotImplementedError
+
+    def handle_remove(self, path, value, operation):
+        raise NotImplementedError
+
+    def handle_replace(self, path, value, operation):
+        raise NotImplementedError
 
 
 class SCIMUser(SCIMMixin):
@@ -223,7 +247,7 @@ class SCIMUser(SCIMMixin):
             }
         }
 
-    def handle_replace(self, operation):
+    def handle_replace(self, path, value, operation):
         """
         Handle the replace operations.
         """
@@ -234,7 +258,7 @@ class SCIMUser(SCIMMixin):
             'active': 'is_active',
         }
 
-        attrs = operation.get('value', {})
+        attrs = value or {}
 
         for attr, attr_value in attrs.items():
             if attr in attr_map:
@@ -363,12 +387,12 @@ class SCIMGroup(SCIMMixin):
             }
         }
 
-    def handle_add(self, operation):
+    def handle_add(self, path, value, operation):
         """
         Handle add operations.
         """
-        if operation.get('path') == 'members':
-            members = operation.get('value', [])
+        if path == 'members':
+            members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
 
@@ -379,14 +403,14 @@ class SCIMGroup(SCIMMixin):
                 self.obj.user_set.add(user)
 
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
-    def handle_remove(self, operation):
+    def handle_remove(self, path, value, operation):
         """
         Handle remove operations.
         """
-        if operation.get('path') == 'members':
-            members = operation.get('value', [])
+        if path == 'members':
+            members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
 
@@ -397,16 +421,17 @@ class SCIMGroup(SCIMMixin):
                 self.obj.user_set.remove(user)
 
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
-    def handle_replace(self, operation):
+    def handle_replace(self, path, value, operation):
         """
         Handle the replace operations.
         """
-        if operation.get('path') == 'name':
-            name = operation.get('value')[0].get('value')
+        if path == 'name':
+            name = value[0].get('value')
             self.obj.name = name
             self.obj.save()
 
         else:
-            raise NotImplemented
+            raise NotImplementedError
+
