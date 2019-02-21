@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.7.0
+-----
+- Change where logging of requests is done (now in middleware)
+
 0.6.0
 -----
 - Add tests for work on supporting complex SCIM filtering
