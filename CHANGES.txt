@@ -4,6 +4,7 @@ CHANGE LOG
 0.7.0
 -----
 - Change where logging of requests is done (now in middleware)
+- Improve demo application
 
 0.6.0
 -----
