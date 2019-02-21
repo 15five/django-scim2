@@ -1,0 +1,2 @@
+This app is intended to be an example of how one can override
+some of the defaults in django-scim2 to fit your needs.
