@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.8.0
+-----
+- Add basic abstract models for Users and Groups
+- Update parse path function
+
 0.7.0
 -----
 - Change where logging of requests is done (now in middleware)
