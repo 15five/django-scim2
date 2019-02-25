@@ -1,4 +1,4 @@
 Django==1.11.20
-django-scim2==0.6.0
+django-scim2==0.7.0
 fluent-logger==0.9.3
 
