@@ -75,9 +75,9 @@ class SCIMMixin(object):
         """
         for operation in operations:
             path = operation.get('path')
-            path = self.parse_path(path)
-
             value = operation.get('value')
+
+            path, value = self.parse_path_and_value(path, value)
 
             op_code = operation.get('op').lower()
             op_code = 'handle_' + op_code
@@ -85,14 +85,14 @@ class SCIMMixin(object):
 
             handler(path, value, operation)
 
-    def parse_path(self, path):
+    def parse_path_and_value(self, path, value):
         """
-        Return new path given an original path.
+        Return new path and value given an original path and value.
 
-        This method can be overridden to provide a more usable path within the
+        This method can be overridden to provide a more usable path and value within the
         associated handle methods.
         """
-        return path
+        return path, value
 
     def handle_add(self, path, value, operation):
         raise NotImplementedError
