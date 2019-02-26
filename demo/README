@@ -1,2 +1,9 @@
 This app is intended to be an example of how one can override
 some of the defaults in django-scim2 to fit your needs.
+
+This app is not meant to be a kitchen sink, showing all options that can
+be used or overridden. This is a jumping off point.
+
+This app is also not guaranteed to functional at all times. This demo app
+is only supposed to be a loose example of what is possible.
+

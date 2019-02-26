@@ -10,3 +10,4 @@ test_database
 .eggs/
 docs/_build
 .DS_Store
+db.sqlite3

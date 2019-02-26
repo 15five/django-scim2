@@ -42,8 +42,10 @@ class SCIMServiceProviderConfig(object):
                 'maxOperations': 1000,
                 'maxPayloadSize': 1048576,
             },
+            # Django-SCIM2 does not fully support the SCIM2.0 filtering spec.
+            # Until it does, let's under promise and over deliver to the world.
             'filter': {
-                'supported': True,
+                'supported': False,
                 'maxResults': 50,
             },
             'changePassword': {

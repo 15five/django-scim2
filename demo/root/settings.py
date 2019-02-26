@@ -9,12 +9,12 @@ https://docs.djangoproject.com/en/1.8/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from fluent import sender
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -39,7 +39,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_scim',
     'oauth2_provider',
-    'scim_customizations',
+    'app',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -52,7 +52,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
-    'scim_customizations.middleware.CustomSCIMAuthCheckMiddleware',
+    'app.middleware.CustomSCIMAuthCheckMiddleware',
 )
 
 AUTHENTICATION_BACKENDS = [
@@ -61,6 +61,8 @@ AUTHENTICATION_BACKENDS = [
     # used for SCIM integration
     'oauth2_provider.backends.OAuth2Backend',
 ]
+
+AUTH_USER_MODEL = 'app.User'
 
 ROOT_URLCONF = 'root.urls'
 
@@ -107,9 +109,6 @@ USE_TZ = True
 
 
 # Logging
-
-from fluent import sender
-
 # Start Fluentd logging system
 sender.setup('app')
 
@@ -204,7 +203,7 @@ LOGGING = {
         },
         'scim': {
             'level': 'DEBUG',
-            'class': 'scim_customizations.log_handlers.SCIMFluentHandler',
+            'class': 'app.log_handlers.SCIMFluentHandler',
             'formatter': 'scim-details',
             'tag': 'app.scim',
         },
@@ -217,15 +216,28 @@ LOGGING = {
 
 STATIC_URL = '/static/'
 
-DJANGO_SCIM_NETLOC = 'localhost'
-
 SCIM_SERVICE_PROVIDER = {
+    'USER_ADAPTER': 'app.adapters.SCIMUser',
+    'GROUP_MODEL': 'app.models.Group',
+    'GROUP_ADAPTER': 'django_scim.adapters.SCIMGroup',
+    'SERVICE_PROVIDER_CONFIG_MODEL': 'django_scim.models.SCIMServiceProviderConfig',
+    'BASE_LOCATION_GETTER': 'app.utils.get_full_domain_from_request',
+    'GET_EXTRA_MODEL_FILTER_KWARGS_GETTER': 'app.utils.get_extra_model_filter_kwargs_getter',
+    'GET_EXTRA_MODEL_EXCLUDE_KWARGS_GETTER': 'app.utils.get_extra_model_exclude_kwargs_getter',
+    'SCHEMAS_GETTER': 'django_scim.schemas.default_schemas_getter',
+    'DOCUMENTATION_URI': None,
+    'SCHEME': 'https',
+    # use default value, this will be overridden by value returned by BASE_LOCATION_GETTER
     'NETLOC': 'localhost',
     'AUTHENTICATION_SCHEMES': [
         {
             'type': 'oauth2',
             'name': 'OAuth 2',
             'description': 'Oauth 2 implemented with bearer token',
+            'specUri': '',
+            'documentationUri': '',
         },
     ],
+    'WWW_AUTHENTICATE_HEADER': 'Basic realm="Template App SCIM2.0"',
 }
+
