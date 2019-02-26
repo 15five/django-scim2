@@ -71,7 +71,6 @@ setup(
         'PlyPlus>=0.7.5',
         'six',
     ],
-    scripts=['scim'],
     tests_require=[
         'mock',
     ],

@@ -41,7 +41,7 @@ class SCIMServiceProviderConfigTestCase(TestCase):
             'documentationUri': None,
             'etag': {'supported': False},
             'filter': {
-                'supported': True,
+                'supported': False,
                 'maxResults': 50
             },
             'meta': {

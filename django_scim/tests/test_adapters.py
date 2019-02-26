@@ -150,17 +150,18 @@ class SCIMMixinPathParserTestCase(TestCase):
         """
         Test paths typically sent by AzureAD.
         """
-        paths = [
-            "addresses[type eq \"work\"].country",
-            "addresses[type eq \"work\"].locality",
-            "addresses[type eq \"work\"].postalCode",
-            "addresses[type eq \"work\"].streetAddress",
-            "externalId",
-            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department",
+        paths_and_values = [
+            ("addresses[type eq \"work\"].country", 1),
+            ("addresses[type eq \"work\"].locality", 1),
+            ("addresses[type eq \"work\"].postalCode", 1),
+            ("addresses[type eq \"work\"].streetAddress", 1),
+            ("externalId", 1),
+            ("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department", 1),
         ]
 
-        result_paths = list(map(SCIMMixin(None).parse_path, paths))
-        self.assertEqual(result_paths, paths)
+        func = SCIMMixin(None).parse_path_and_value
+        result_paths = list(map(lambda x: func(*x), paths_and_values))
+        self.assertEqual(result_paths, paths_and_values)
 
 
 class SCIMGroupTestCase(TestCase):
