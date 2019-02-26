@@ -5,6 +5,7 @@ CHANGE LOG
 -----
 - Add basic abstract models for Users and Groups
 - Update parse path function
+- Added more to demo application
 
 0.7.0
 -----
