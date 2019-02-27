@@ -49,7 +49,8 @@ class SCIMAuthCheckMiddleware(object):
                 return response
 
     def process_response(self, request, response):
-        self.log_call(request, response)
+        if request.path.startswith(self.reverse_url):
+            self.log_call(request, response)
         return response
 
     def get_loggable_request_body(self, request):
