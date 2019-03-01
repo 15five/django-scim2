@@ -1,8 +1,12 @@
 language: python
 python:
     - "3.6"
-install: "pip install tox-travis coverage codecov"
+install: "pip install tox-travis  Django==1.11.20 coverage codecov"
+env:
+    - PYTHONDONTWRITEBYTECODE=1 DJANGO_SETTINGS_MODULE=test_settings
 script:
-    - tox
+    #- tox
+    - coverage run setup.py test
+    - coverage report -m
     - codecov
 
