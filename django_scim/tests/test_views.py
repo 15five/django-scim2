@@ -1,10 +1,16 @@
+import copy
 import json
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AbstractUser
+from django.db import connection
+from django.db import models
+from django.db.models.base import ModelBase
 from django.test import TestCase
 from django.test import Client
+from django.test import override_settings
 from django.test import RequestFactory
 from django.urls import reverse
 import six
@@ -17,12 +23,51 @@ from unittest import skip
 
 from django_scim import views
 from django_scim import constants
+from django_scim import models as scim_models
+from django_scim import utils
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from django_scim.utils import get_group_adapter
-from django_scim.utils import get_group_model
 from django_scim.utils import get_user_adapter
 from django_scim.utils import get_base_scim_location_getter
 from django_scim.utils import get_service_provider_config_model
+
+
+USER_MODEL = None
+GROUP_MODEL = None
+
+
+def setUpModule():
+    global USER_MODEL
+    global GROUP_MODEL
+
+    # setup group
+    class TestViewsGroup(scim_models.AbstractSCIMGroupMixin):
+        name = models.CharField('name', max_length=80, unique=True)
+
+
+    # setup user
+    class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
+        scim_groups = models.ManyToManyField(
+            TestViewsGroup,
+            related_name="user_set",
+        )
+
+    USER_MODEL = TestViewsUser
+    GROUP_MODEL = TestViewsGroup
+
+    for model in (GROUP_MODEL, USER_MODEL):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(model)
+
+
+def tearDownModule():
+    for model in (GROUP_MODEL, USER_MODEL):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.delete_model(model)
+
+
+def get_group_model():
+    return GROUP_MODEL
 
 
 class LoginMixin(object):
@@ -68,6 +113,8 @@ class SCIMTestCase(TestCase):
         self.fail('TODO')
 
 
+
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
 class FilterMixinTestCase(TestCase):
     maxDiff = None
     factory = RequestFactory()
@@ -262,6 +309,9 @@ class SearchTestCase(LoginMixin, TestCase):
         self.assertEqual(expected, result)
 
 
+
+
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
 class UserTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -571,6 +621,8 @@ class UserTestCase(LoginMixin, TestCase):
         self.assertIsNone(ford)
 
 
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@mock.patch('django_scim.views.GroupsView.model_cls_getter', get_group_model)
 class GroupTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -587,7 +639,7 @@ class GroupTestCase(LoginMixin, TestCase):
             first_name='Robert',
             last_name='Ford'
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
 
         behavior = get_group_adapter()(behavior, self.request)
 
@@ -612,7 +664,7 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         behavior = get_group_adapter()(behavior, self.request)
 
         security = get_group_model().objects.create(
@@ -623,7 +675,7 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Abernathy',
             username='dabernathy',
         )
-        abernathy.groups.add(security)
+        abernathy.scim_groups.add(security)
         security = get_group_adapter()(security, self.request)
 
         url = reverse('scim:groups')
@@ -757,7 +809,7 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         abernathy = get_user_model().objects.create(
             first_name='Dolores',
             last_name='Abernathy',
@@ -800,13 +852,13 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         abernathy = get_user_model().objects.create(
             first_name='Dolores',
             last_name='Abernathy',
             username='dabernathy',
         )
-        abernathy.groups.add(behavior)
+        abernathy.scim_groups.add(behavior)
 
         data = {
             'schemas': [constants.SchemaURI.PATCH_OP],

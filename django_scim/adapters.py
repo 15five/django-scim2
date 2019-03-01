@@ -48,11 +48,11 @@ class SCIMMixin(object):
 
     @property
     def id(self):
-        return str(self.obj.id)
+        return str(self.obj.scim_id)
 
     @property
     def path(self):
-        return reverse(self.url_name, kwargs={'uuid': self.obj.id})
+        return reverse(self.url_name, kwargs={'uuid': self.obj.scim_id})
 
     @property
     def location(self):
@@ -62,7 +62,7 @@ class SCIMMixin(object):
         self.obj.save()
 
     def delete(self):
-        self.obj.__class__.objects.filter(id=self.obj.id).delete()
+        self.obj.__class__.objects.filter(id=self.obj.scim_id).delete()
 
     def handle_operations(self, operations):
         """
@@ -140,7 +140,7 @@ class SCIMUser(SCIMMixin):
         """
         Return the groups of the user per the SCIM spec.
         """
-        group_qs = self.obj.groups.all()
+        group_qs = self.obj.scim_groups.all()
         scim_groups = [get_group_adapter()(g, self.request) for g in group_qs]
 
         dicts = []

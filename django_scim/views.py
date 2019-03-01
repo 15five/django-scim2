@@ -34,10 +34,30 @@ logger = logging.getLogger(__name__)
 
 
 class SCIMView(View):
-    lookup_field = 'id'
-    lookup_url_kwarg = 'uuid'
+    lookup_field = 'scim_id'  # database field
+    lookup_url_kwarg = 'uuid'  # argument in django URL pattern
 
     implemented = True
+
+    @property
+    def model_cls(self):
+        # pull from __class__ to avoid binding model class getter to
+        # self instance and passing self to class getter
+        return self.__class__.model_cls_getter()
+
+    @property
+    def get_extra_filter_kwargs(self):
+        return get_extra_model_filter_kwargs_getter(self.model_cls)
+
+    @property
+    def get_extra_exclude_kwargs(self):
+        return get_extra_model_exclude_kwargs_getter(self.model_cls)
+
+    @property
+    def scim_adapter(self):
+        # pull from __class__ to avoid binding adapter class getter to
+        # self instance and passing self to class getter
+        return self.__class__.scim_adapter_getter()
 
     def get_object(self):
         """Get object by configurable ID."""
@@ -92,7 +112,7 @@ class SCIMView(View):
 class FilterMixin(object):
 
     parser = None
-    scim_adapter = None
+    scim_adapter_getter = None
 
     def _page(self, request):
         try:
@@ -191,9 +211,8 @@ class FilterMixin(object):
 class SearchView(FilterMixin, SCIMView):
     http_method_names = ['post']
 
-    scim_adapter = None
-    get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter('search')
-    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter('search')
+    # override model class so correct extra_filter/exclude_kwarg getter is fetched
+    model_cls = 'search'
 
     def post(self, request):
         body = json.loads(request.body.decode(constants.ENCODING) or '{}')
@@ -210,6 +229,16 @@ class SearchView(FilterMixin, SCIMView):
             url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
             response['Location'] = url + '/.search'
             return response
+
+
+class UserSearchView(SearchView):
+    scim_adapter_getter = get_user_adapter
+    parser = filters.SCIMUserFilterTransformer
+
+
+class GroupSearchView(SearchView):
+    scim_adapter_getter = get_group_adapter
+    parser = filters.SCIMGroupFilterTransformer
 
 
 class GetView(object):
@@ -319,10 +348,8 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
-    scim_adapter = get_user_adapter()
-    model_cls = get_user_model()
-    get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
-    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
+    scim_adapter_getter = get_user_adapter
+    model_cls_getter = get_user_model
     parser = filters.SCIMUserFilterTransformer
 
 
@@ -330,10 +357,8 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView,
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
-    scim_adapter = get_group_adapter()
-    model_cls = get_group_model()
-    get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
-    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
+    scim_adapter_getter = get_group_adapter
+    model_cls_getter = get_group_model
     parser = filters.SCIMGroupFilterTransformer
 
 

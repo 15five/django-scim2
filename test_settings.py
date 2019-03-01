@@ -32,9 +32,12 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'django_scim.middleware.SCIMAuthCheckMiddleware',
 )
 
 ROOT_URLCONF = 'django_scim.tests.urls'
+
+
 
 TEMPLATES = [
     {

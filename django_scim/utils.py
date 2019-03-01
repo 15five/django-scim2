@@ -89,7 +89,7 @@ def default_get_extra_model_filter_kwargs_getter(model):
 
     :param model:  
     """
-    def get_extra_filter_kwargs(self, request, *args, **kwargs):
+    def get_extra_filter_kwargs(request, *args, **kwargs):
         """
         Return extra filter kwargs for the given model.
         :param request: 
@@ -108,7 +108,7 @@ def default_get_extra_model_exclude_kwargs_getter(model):
 
     :param model:
     """
-    def get_extra_exclude_kwargs(self, request, *args, **kwargs):
+    def get_extra_exclude_kwargs(request, *args, **kwargs):
         """
         Return extra exclude kwargs for the given model.
         :param request:

@@ -32,14 +32,14 @@ def long_description():
 
 
 def run_tests():
-    settings_mod = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
-    os.environ['DJANGO_SETTINGS_MODULE'] = settings_mod
+    os.environ['DJANGO_SETTINGS_MODULE'] = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
 
     import django
     django.setup()
     from django.test.utils import get_runner
     from django.conf import settings
 
+    # eg. TEST_FILTER=django_scim.tests.test_views.UserTestCase.test_get_user_by_id
     test_filter = os.environ.get('TEST_FILTER')
     test_labels = [test_filter] if test_filter else []
 

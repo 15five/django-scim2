@@ -62,7 +62,7 @@ class SCIMServiceProviderConfig(object):
         }
 
 
-class AbstractSCIMCommonAttributes(models.Model):
+class AbstractSCIMCommonAttributesMixin(models.Model):
     """
     An abstract model to provide SCIM Common Attributes.
 
@@ -141,11 +141,21 @@ class AbstractSCIMCommonAttributes(models.Model):
         help_text=_('A string that is an identifier for the resource as defined by the provisioning client.'),
     )
 
+    def set_scim_id(self, is_new):
+        if is_new:
+            self.__class__.objects.filter(id=self.id).update(scim_id=self.id)
+            self.scim_id = str(self.id)
+
+    def save(self, *args, **kwargs):
+        is_new = self.id is None
+        super(AbstractSCIMCommonAttributesMixin, self).save(*args, **kwargs)
+        self.set_scim_id(is_new)
+
     class Meta:
         abstract = True
 
 
-class AbstractSCIMUser(AbstractSCIMCommonAttributes):
+class AbstractSCIMUserMixin(AbstractSCIMCommonAttributesMixin):
     """
     An abstract model to provide the User resource schema.
 
@@ -173,11 +183,15 @@ class AbstractSCIMUser(AbstractSCIMCommonAttributes):
         help_text=_("A service provider's unique identifier for the user"),
     )
 
+    @property
+    def scim_groups(self):
+        raise NotImplemented
+
     class Meta:
         abstract = True
 
 
-class AbstractSCIMGroup(AbstractSCIMCommonAttributes):
+class AbstractSCIMGroupMixin(AbstractSCIMCommonAttributesMixin):
     """
     An abstract model to provide the Group resource schema.
 
@@ -200,3 +214,14 @@ class AbstractSCIMGroup(AbstractSCIMCommonAttributes):
 
     class Meta:
         abstract = True
+
+    def set_scim_display_name(self, is_new):
+        if is_new:
+            self.__class__.objects.filter(id=self.id).update(scim_display_name=self.name)
+            self.scim_display_name = self.name
+
+    def save(self, *args, **kwargs):
+        is_new = self.id is None
+        super(AbstractSCIMGroupMixin, self).save(*args, **kwargs)
+        self.set_scim_display_name(is_new)
+
