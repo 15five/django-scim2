@@ -1,6 +1,8 @@
 django-scim2
 ============
 
+|tests| |coverage| |docs|
+
 This is a partial provider-side implementation of the SCIM 2.0 [1]_
 specification for use in Django.
 
@@ -76,19 +78,28 @@ https://github.com/15five/django-scim2
 Documentation
 -------------
 
-.. image:: https://readthedocs.org/projects/django-scim2/badge/?version=latest
-  :target: http://django-scim2.readthedocs.io/en/latest/?badge=latest
+.. |docs| image:: https://readthedocs.org/projects/django-scim2/badge/
+  :target: https://django-scim2.readthedocs.io/
   :alt: Documentation Status
 
-http://django-scim2.readthedocs.io/
+https://django-scim2.readthedocs.io/
 
 Tests
 -----
 
-.. image:: https://travis-ci.com/15five/django-scim2.svg?branch=master
+.. |tests| image:: https://travis-ci.com/15five/django-scim2.svg?branch=master
     :target: https://travis-ci.com/15five/django-scim2
 
 https://travis-ci.com/15five/django-scim2
+
+
+Coverage
+--------
+
+.. |coverage| image:: https://codecov.io/gh/15five/django-scim2/graph/badge.svg
+    :target: https://codecov.io/gh/15five/django-scim2
+
+https://codecov.io/gh/15five/django-scim2/
 
 License
 -------
