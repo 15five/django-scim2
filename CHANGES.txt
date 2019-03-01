@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.10.1
+------
+- Add badges to README
+
 0.10.0
 ------
 - Drop support for Python2
