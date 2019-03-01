@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.10.0
+------
+- Drop support for Python2
+  !!BREAKING CHANGE!!
+- Add linting and coverage
+
 0.9.0
 -----
 - Decouple Django object id and SCIM ID
