@@ -340,7 +340,7 @@ class SCIMGroup(SCIMMixin):
 
     def to_dict(self):
         """
-        Return a ``dict`` conforming to the SCIM User Schema,
+        Return a ``dict`` conforming to the SCIM Group Schema,
         ready for conversion to a JSON object.
         """
         return {
