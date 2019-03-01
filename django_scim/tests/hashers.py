@@ -18,5 +18,5 @@ class NoopPasswordHasher(BasePasswordHasher):
         return password == decoded
 
     def safe_summary(self, encoded):
-        return {_('desc'): 'Not hashed'}
+        return {'desc': 'Not hashed'}
 

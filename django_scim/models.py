@@ -185,7 +185,7 @@ class AbstractSCIMUserMixin(AbstractSCIMCommonAttributesMixin):
 
     @property
     def scim_groups(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     class Meta:
         abstract = True

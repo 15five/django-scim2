@@ -6,7 +6,7 @@ import dateutil.parser
 import itertools
 import re
 
-from plyplus import Grammar, STransformer, PlyplusException
+from plyplus import STransformer, PlyplusException
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
@@ -22,25 +22,25 @@ class SCIMUserFilterTransformer(STransformer):
     and a dict with query parameters to go with the query."""
 
     # data types:
-    t_string = lambda self, exp: exp.tail[0][1:-1]
-    t_date = lambda self, exp: dateutil.parser.parse(exp.tail[0][1:-1])
-    t_bool = lambda self, exp: exp.tail[0] == u'true'
+    t_string = lambda self, exp: exp.tail[0][1:-1]  # noqa: 731
+    t_date = lambda self, exp: dateutil.parser.parse(exp.tail[0][1:-1])  # noqa: 731
+    t_bool = lambda self, exp: exp.tail[0] == u'true'  # noqa: 731
 
     # operators
-    op_or = lambda self, exp: u'OR'
-    op_and = lambda self, exp: u'AND'
-    gt = ge = lt = le = pr = eq = co = sw = lambda self, ex: ex.tail[0].lower()
+    op_or = lambda self, exp: u'OR'  # noqa: 731
+    op_and = lambda self, exp: u'AND'  # noqa: 731
+    gt = ge = lt = le = pr = eq = co = sw = lambda self, ex: ex.tail[0].lower()  # noqa: 731
 
     # fully qualified column names:
-    pk = lambda *args: u'u.id'
-    username = lambda *args: u'u.username'
-    external_id = lambda *args: u'u.external_id'
-    password = lambda *args: u'u.password'
-    first_name = lambda *args: u'u.first_name'
-    last_name = lambda *args: u'u.last_name'
-    email = lambda *args: u'u.email'
-    date_joined = lambda *args: u'u.date_joined'
-    is_active = lambda *args: u'u.is_active'
+    pk = lambda *args: u'u.id'  # noqa: 731
+    username = lambda *args: u'u.username'  # noqa: 731
+    external_id = lambda *args: u'u.external_id'  # noqa: 731
+    password = lambda *args: u'u.password'  # noqa: 731
+    first_name = lambda *args: u'u.first_name'  # noqa: 731
+    last_name = lambda *args: u'u.last_name'  # noqa: 731
+    email = lambda *args: u'u.email'  # noqa: 731
+    date_joined = lambda *args: u'u.date_joined'  # noqa: 731
+    is_active = lambda *args: u'u.is_active'  # noqa: 731
 
     @property
     def auth_user_db_table(self):
@@ -110,7 +110,7 @@ class SCIMUserFilterTransformer(STransformer):
                         auth_user_db_table=self.auth_user_db_table,
                         **params)
 
-    __default__ = lambda self, exp: exp.tail[0]
+    __default__ = lambda self, exp: exp.tail[0]  # noqa: 731
 
     def __init__(self):
         self._seq = itertools.count(0, step=1)
@@ -221,7 +221,7 @@ class SCIMUserFilterTransformer(STransformer):
 
     class PasswordExpression(object):
         def __init__(self, sql):
-            assert isinstance(sql, unicode)
+            assert isinstance(sql, str)
             self.sql = sql
 
         def __str__(self):
@@ -236,16 +236,16 @@ class SCIMGroupFilterTransformer(STransformer):
     and a dict with query parameters to go with the query."""
 
     # data types:
-    t_string = lambda self, exp: exp.tail[0][1:-1]
+    t_string = lambda self, exp: exp.tail[0][1:-1]  # noqa: 731
 
     # operators
-    op_or = lambda self, exp: u'OR'
-    op_and = lambda self, exp: u'AND'
-    pr = eq = co = sw = lambda self, ex: ex.tail[0].lower()
+    op_or = lambda self, exp: u'OR'  # noqa: 731
+    op_and = lambda self, exp: u'AND'  # noqa: 731
+    pr = eq = co = sw = lambda self, ex: ex.tail[0].lower()  # noqa: 731
 
     # fully qualified column names:
-    pk = lambda *args: u'g.id'
-    name = lambda *args: u'g.name'
+    pk = lambda *args: u'g.id'  # noqa: 731
+    name = lambda *args: u'g.name'  # noqa: 731
 
     @property
     def group_table(self):
@@ -287,7 +287,7 @@ class SCIMGroupFilterTransformer(STransformer):
         op1, op2 = exp.tail
         return u'(%s AND %s)' % (op1, op2)
 
-    __default__ = lambda self, exp: exp.tail[0]
+    __default__ = lambda self, exp: exp.tail[0]  # noqa: 731
 
     def __init__(self):
         self._seq = itertools.count(0, step=1)

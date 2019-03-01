@@ -32,6 +32,6 @@ class GroupGrammarTestCase(TestCase):
         query = u'name eq "Security-Team"'
         GROUP_GRAMMAR.parse(query)
 
-    def test_parse_name(self):
+    def test_parse_display_name(self):
         query = u'displayName eq "Security-Team"'
         GROUP_GRAMMAR.parse(query)

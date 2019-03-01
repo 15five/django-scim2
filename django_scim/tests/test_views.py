@@ -1,30 +1,22 @@
-import copy
 import json
+from unittest import mock
+from unittest import skip
+from urllib.parse import urljoin
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.db import connection
 from django.db import models
-from django.db.models.base import ModelBase
 from django.test import TestCase
 from django.test import Client
 from django.test import override_settings
 from django.test import RequestFactory
 from django.urls import reverse
-import six
-from six.moves.urllib.parse import urljoin
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
-from unittest import skip
 
 from django_scim import views
 from django_scim import constants
 from django_scim import models as scim_models
-from django_scim import utils
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from django_scim.utils import get_group_adapter
 from django_scim.utils import get_user_adapter
@@ -43,7 +35,6 @@ def setUpModule():
     # setup group
     class TestViewsGroup(scim_models.AbstractSCIMGroupMixin):
         name = models.CharField('name', max_length=80, unique=True)
-
 
     # setup user
     class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
@@ -111,7 +102,6 @@ class SCIMTestCase(TestCase):
     @skip('')
     def test_auth_request(self):
         self.fail('TODO')
-
 
 
 @override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
@@ -307,8 +297,6 @@ class SearchTestCase(LoginMixin, TestCase):
             "Resources": [],
         }
         self.assertEqual(expected, result)
-
-
 
 
 @override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
@@ -995,7 +983,7 @@ class ResourceTypesTestCase(LoginMixin, TestCase):
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         user_type = get_user_adapter().resource_type_dict()
         group_type = get_group_adapter().resource_type_dict()
-        key = lambda o: o.get('id')
+        key = lambda o: o.get('id')  # noqa: 731
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'Resources': list(sorted((user_type, group_type), key=key)),
@@ -1019,7 +1007,7 @@ class SchemasTestCase(LoginMixin, TestCase):
         url = reverse('scim:schemas')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
-        key = lambda o: o.get('id')
+        key = lambda o: o.get('id')  # noqa: 731
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'Resources': list(sorted(ALL_SCHEMAS, key=key)),

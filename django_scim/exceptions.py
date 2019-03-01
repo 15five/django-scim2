@@ -16,7 +16,6 @@ class SCIMException(Exception):
 
         super(Exception, self).__init__(msg)
 
-
     def to_dict(self):
         d = {
             'schemas': self.schemas,

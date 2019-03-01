@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from plyplus import Grammar
 
 
@@ -87,3 +89,4 @@ GROUP_GRAMMAR = Grammar("""
 
   SPACES: '[ ]+' (%ignore);
   """)
+

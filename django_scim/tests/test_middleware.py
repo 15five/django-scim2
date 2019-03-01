@@ -1,8 +1,4 @@
-import six
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+from unittest import mock
 from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import AnonymousUser
 

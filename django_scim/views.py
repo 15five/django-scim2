@@ -80,7 +80,7 @@ class SCIMView(View):
 
         try:
             return self.model_cls.objects.get(**extra_filter_kwargs)
-        except ObjectDoesNotExist as _e:
+        except ObjectDoesNotExist:
             raise NotFoundError(uuid)
 
     @method_decorator(csrf_exempt)
@@ -191,7 +191,7 @@ class FilterMixin(object):
     def _build_response(self, request, qs, start, count):
         try:
             total_count = sum(1 for _ in qs)
-            qs = qs[start-1:(start-1) + count]
+            qs = qs[start - 1:(start - 1) + count]
             resources = [self.scim_adapter(o, request=request).to_dict() for o in qs]
             doc = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],
@@ -388,7 +388,7 @@ class ResourceTypesView(SCIMView):
                 return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=404)
 
         else:
-            key_func = lambda o: o.get('id')
+            key_func = lambda o: o.get('id')  # noqa: E731
             type_dicts = self.type_dict_by_type_id(request).values()
             types = list(sorted(type_dicts, key=key_func))
             doc = {
@@ -413,7 +413,7 @@ class SchemasView(SCIMView):
                 return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=404)
 
         else:
-            key_func = lambda o: o.get('id')
+            key_func = lambda o: o.get('id')  # noqa: E731
             schemas = list(sorted(self.schemas_by_uri.values(), key=key_func))
             doc = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],

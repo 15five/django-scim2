@@ -118,6 +118,9 @@ dmypy.json
 # IntelliJ
 .idea/
 
+# Vim
+*.swp
+
 # MacOSX
 .DS_Store
 

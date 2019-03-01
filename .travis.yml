@@ -1,6 +1,10 @@
 language: python
 python:
     - "3.6"
-install: "pip install tox-travis"
-script: tox
+install: "pip install tox-travis coverage codecov"
+script:
+    - tox
+    - coverage run setup.py test
+    - coverage report -m
+    - codecov
 

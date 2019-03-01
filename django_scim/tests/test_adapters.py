@@ -24,7 +24,6 @@ def setUpModule():
     class TestAdaptersGroup(scim_models.AbstractSCIMGroupMixin):
         name = models.CharField('name', max_length=80, unique=True)
 
-
     # setup user
     class TestAdaptersUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
         scim_groups = models.ManyToManyField(
@@ -233,7 +232,7 @@ class SCIMGroupTestCase(TestCase):
         RequestFactory()
         behavior = get_group_adapter()(behavior, self.request)
 
-        expected =  [
+        expected = [
             {
                 'display': u'Robert Ford',
                 'value': '1',
