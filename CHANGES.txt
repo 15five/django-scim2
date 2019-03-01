@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.9.0
+-----
+- Decouple Django object id and SCIM ID
+  !!MASSIVE BREAKING CHANGE!!
+- Add tests for Abstract SCIM models
+
 0.8.2
 -----
 - Only log during SCIM calls
