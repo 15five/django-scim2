@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.10.2
+------
+- Add separate logging methods for requests and response
+
 0.10.1
 ------
 - Add badges to README
