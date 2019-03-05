@@ -92,7 +92,7 @@ class SCIMView(View):
         try:
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
-            logger.debug('Unable to complete SCIM call.', exc_info=1)
+            logger.exception('Unable to complete SCIM call.')
             if not isinstance(e, SCIMException):
                 e = SCIMException(six.text_type(e))
 
