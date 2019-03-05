@@ -39,12 +39,13 @@ class SCIMAuthCheckMiddleware(object):
         return self._reverse_url
 
     def process_request(self, request):
+        if request.path.startswith(self.reverse_url):
+            self.log_request(request)
         # If we've just passed through the auth middleware and there is no user
         # associated with the request we can assume permission
         # was denied and return a 401.
         if not hasattr(request, 'user') or request.user.is_anonymous:
             if request.path.startswith(self.reverse_url):
-                self.log_request(request)
                 response = HttpResponse(status=401)
                 response['WWW-Authenticate'] = scim_settings.WWW_AUTHENTICATE_HEADER
                 return response
@@ -54,16 +55,16 @@ class SCIMAuthCheckMiddleware(object):
             self.log_response(request, response)
         return response
 
-    def get_loggable_request_body(self, request):
+    def get_loggable_content(self, content):
         try:
-            body = get_loggable_body(request.body.decode(constants.ENCODING))
+            body = get_loggable_body(content.decode(constants.ENCODING))
         except Exception as e:
             body = 'Could not parse request body\n' + str(e)
 
         return body
 
     def get_loggable_request_message(self, request):
-        body = self.get_loggable_request_body(request)
+        body = self.get_loggable_content(request.body)
         parts = [
             'PATH',
             request.path,
@@ -76,7 +77,7 @@ class SCIMAuthCheckMiddleware(object):
         return '\n'.join(parts)
 
     def get_loggable_response_message(self, request, response):
-        body = self.get_loggable_request_body(request)
+        body = self.get_loggable_content(response.content)
         parts = [
             'PATH',
             request.path,
