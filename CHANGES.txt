@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.10.4
+------
+- Fix logging on requests. Log on more than 401s.
+
 0.10.3
 ------
 - Increase logging level for failed SCIM view call
