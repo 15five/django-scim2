@@ -18,15 +18,27 @@ class SCIMMiddlewareTestCase(TestCase):
         response = middleware.process_request(request)
         self.assertEqual(response.status_code, 401)
 
-    @mock.patch('django_scim.middleware.SCIMAuthCheckMiddleware.log_call')
-    def test_log_called_only_for_scim_calls(self, log_call_func):
+    @mock.patch('django_scim.middleware.SCIMAuthCheckMiddleware.log_request')
+    def test_log_called_only_for_scim_calls_request(self, log_func):
+        middleware = SCIMAuthCheckMiddleware()
+
+        request = RequestFactory().get('/')
+        middleware.process_request(request)
+        log_func.assert_not_called()
+
+        request = RequestFactory().get(middleware.reverse_url)
+        middleware.process_request(request)
+        log_func.assert_called()
+
+    @mock.patch('django_scim.middleware.SCIMAuthCheckMiddleware.log_response')
+    def test_log_called_only_for_scim_calls_response(self, log_func):
         middleware = SCIMAuthCheckMiddleware()
 
         request = RequestFactory().get('/')
         middleware.process_response(request, None)
-        log_call_func.assert_not_called()
+        log_func.assert_not_called()
 
         request = RequestFactory().get(middleware.reverse_url)
         middleware.process_response(request, None)
-        log_call_func.assert_called()
+        log_func.assert_called()
 

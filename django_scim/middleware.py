@@ -44,13 +44,14 @@ class SCIMAuthCheckMiddleware(object):
         # was denied and return a 401.
         if not hasattr(request, 'user') or request.user.is_anonymous:
             if request.path.startswith(self.reverse_url):
+                self.log_request(request)
                 response = HttpResponse(status=401)
                 response['WWW-Authenticate'] = scim_settings.WWW_AUTHENTICATE_HEADER
                 return response
 
     def process_response(self, request, response):
         if request.path.startswith(self.reverse_url):
-            self.log_call(request, response)
+            self.log_response(request, response)
         return response
 
     def get_loggable_request_body(self, request):
@@ -61,7 +62,20 @@ class SCIMAuthCheckMiddleware(object):
 
         return body
 
-    def get_loggable_request_message(self, request, response):
+    def get_loggable_request_message(self, request):
+        body = self.get_loggable_request_body(request)
+        parts = [
+            'PATH',
+            request.path,
+            'METHOD',
+            request.method,
+            'BODY',
+            body,
+        ]
+
+        return '\n'.join(parts)
+
+    def get_loggable_response_message(self, request, response):
         body = self.get_loggable_request_body(request)
         parts = [
             'PATH',
@@ -76,6 +90,10 @@ class SCIMAuthCheckMiddleware(object):
 
         return '\n'.join(parts)
 
-    def log_call(self, request, response):
-        message = self.get_loggable_request_message(request, response)
+    def log_request(self, request):
+        message = self.get_loggable_request_message(request)
+        logger.debug(message)
+
+    def log_response(self, request, response):
+        message = self.get_loggable_response_message(request, response)
         logger.debug(message)
