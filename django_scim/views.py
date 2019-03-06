@@ -92,8 +92,8 @@ class SCIMView(View):
         try:
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
-            logger.exception('Unable to complete SCIM call.')
             if not isinstance(e, SCIMException):
+                logger.exception('Unable to complete SCIM call.')
                 e = SCIMException(six.text_type(e))
 
             content = json.dumps(e.to_dict())
