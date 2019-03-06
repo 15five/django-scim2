@@ -13,14 +13,40 @@ import plyplus
 from . import exceptions
 from .grammars import USER_GRAMMAR
 from .grammars import GROUP_GRAMMAR
+from .utils import get_group_model
 
 
 STRING_REPLACEMENT_RE_PAT = re.compile(r'\%\([^).]+\)s', re.MULTILINE)
 
 
-class SCIMUserFilterTransformer(plyplus.STransformer):
+class QueryHelper:
+    @classmethod
+    def get_parsed_query(cls, query, request):
+        try:
+            return cls.grammar.parse(query)
+        except plyplus.common.TokenizeError as e:
+            error_string = str(e)
+            if 'illegal character in input' in error_string.lower():
+                raise exceptions.NotImplementedError(error_string)
+            raise
+
+    @classmethod
+    def run_search_query(cls, parsed_query, request):
+        try:
+            sql, params = cls().transform(parsed_query)
+            sql, params = cls.condition_sql_and_params(sql, params)
+        except plyplus.PlyplusException as e:
+            raise ValueError(e)
+        else:
+            return cls.model_cls_getter().objects.raw(sql, params)
+
+
+class SCIMUserFilterTransformer(QueryHelper, plyplus.STransformer):
     """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
     and a dict with query parameters to go with the query."""
+
+    grammar = USER_GRAMMAR
+    model_cls_getter = get_user_model
 
     # data types:
     t_string = lambda self, exp: exp.tail[0][1:-1]  # noqa: 731
@@ -212,21 +238,8 @@ class SCIMUserFilterTransformer(plyplus.STransformer):
 
         :param unicode query: a `unicode` query string.
         """
-        try:
-            parsed_query = USER_GRAMMAR.parse(query)
-        except plyplus.common.TokenizeError as e:
-            error_string = str(e)
-            if 'illegal character in input' in error_string.lower():
-                raise exceptions.NotImplementedError(error_string)
-            raise
-
-        try:
-            sql, params = cls().transform(parsed_query)
-            sql, params = cls.condition_sql_and_params(sql, params)
-        except plyplus.PlyplusException as e:
-            raise ValueError(e)
-        else:
-            return get_user_model().objects.raw(sql, params)
+        parsed_query = cls.get_parsed_query(query, request)
+        return cls.run_search_query(parsed_query, request)
 
     class PasswordExpression(object):
         def __init__(self, sql):
@@ -240,9 +253,12 @@ class SCIMUserFilterTransformer(plyplus.STransformer):
             return self.sql
 
 
-class SCIMGroupFilterTransformer(plyplus.STransformer):
+class SCIMGroupFilterTransformer(QueryHelper, plyplus.STransformer):
     """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
     and a dict with query parameters to go with the query."""
+
+    grammar = GROUP_GRAMMAR
+    model_cls_getter = get_group_model
 
     # data types:
     t_string = lambda self, exp: exp.tail[0][1:-1]  # noqa: 731
@@ -364,18 +380,5 @@ class SCIMGroupFilterTransformer(plyplus.STransformer):
 
         :param unicode query: a `unicode` query string.
         """
-        try:
-            parsed_query = GROUP_GRAMMAR.parse(query)
-        except plyplus.common.TokenizeError as e:
-            error_string = str(e)
-            if 'illegal character in input' in error_string.lower():
-                raise exceptions.NotImplementedError(error_string)
-            raise
-
-        try:
-            sql, params = cls().transform(parsed_query)
-            sql, params = cls.condition_sql_and_params(sql, params)
-        except plyplus.PlyplusException as e:
-            raise ValueError(e)
-        else:
-            return Group.objects.raw(sql, params)
+        parsed_query = cls.get_parsed_query(query, request)
+        return cls.run_search_query(parsed_query, request)
