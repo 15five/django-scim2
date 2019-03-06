@@ -43,3 +43,6 @@ class BadRequestError(SCIMException):
 class IntegrityError(SCIMException):
     status = 409
 
+
+class NotImplementedError(SCIMException):
+    status = 501

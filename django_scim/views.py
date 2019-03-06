@@ -15,11 +15,8 @@ from django.utils.decorators import method_decorator
 from django.urls import reverse
 
 from . import constants
+from . import exceptions
 from . import filters
-from .exceptions import SCIMException
-from .exceptions import NotFoundError
-from .exceptions import BadRequestError
-from .exceptions import IntegrityError
 from .utils import get_all_schemas_getter
 from .utils import get_group_adapter
 from .utils import get_group_model
@@ -81,7 +78,7 @@ class SCIMView(View):
         try:
             return self.model_cls.objects.get(**extra_filter_kwargs)
         except ObjectDoesNotExist:
-            raise NotFoundError(uuid)
+            raise exceptions.NotFoundError(uuid)
 
     @method_decorator(csrf_exempt)
     @method_decorator(login_required)
@@ -92,9 +89,9 @@ class SCIMView(View):
         try:
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
-            if not isinstance(e, SCIMException):
+            if not isinstance(e, exceptions.SCIMException):
                 logger.exception('Unable to complete SCIM call.')
-                e = SCIMException(six.text_type(e))
+                e = exceptions.SCIMException(six.text_type(e))
 
             content = json.dumps(e.to_dict())
             return HttpResponse(content=content,
@@ -120,7 +117,7 @@ class FilterMixin(object):
             if start is not None:
                 start = int(start)
                 if start < 1:
-                    raise BadRequestError('Invalid startIndex (must be >= 1)')
+                    raise exceptions.BadRequestError('Invalid startIndex (must be >= 1)')
 
             count = request.GET.get('count', 50)
             if count is not None:
@@ -129,13 +126,13 @@ class FilterMixin(object):
             return start, count
 
         except ValueError as e:
-            raise BadRequestError('Invalid pagination values: ' + str(e))
+            raise exceptions.BadRequestError('Invalid pagination values: ' + str(e))
 
     def _search(self, request, query, start, count):
         try:
             qs = self.parser.search(query, request)
         except ValueError as e:
-            raise BadRequestError('Invalid filter/search query: ' + str(e))
+            raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
         qs = self._filter_raw_queryset_with_extra_filter_kwargs(qs, extra_filter_kwargs)
@@ -201,7 +198,7 @@ class FilterMixin(object):
                 'Resources': resources,
             }
         except ValueError as e:
-            raise BadRequestError(six.text_type(e))
+            raise exceptions.BadRequestError(six.text_type(e))
         else:
             content = json.dumps(doc)
             return HttpResponse(content=content,
@@ -217,12 +214,12 @@ class SearchView(FilterMixin, SCIMView):
     def post(self, request):
         body = json.loads(request.body.decode(constants.ENCODING) or '{}')
         if body.get('schemas') != [constants.SchemaURI.SERACH_REQUEST]:
-            raise BadRequestError('Invalid schema uri. Must be SearchRequest.')
+            raise exceptions.BadRequestError('Invalid schema uri. Must be SearchRequest.')
 
         query = body.get('filter', request.GET.get('filter'))
 
         if not query:
-            raise BadRequestError('No filter query specified')
+            raise exceptions.BadRequestError('No filter query specified')
         else:
             response = self._search(request, query, *self._page(request))
             path = reverse(self.scim_adapter.url_name)
@@ -297,7 +294,7 @@ class PostView(object):
         except db.utils.IntegrityError as e:
             # Cast error to a SCIM IntegrityError to use the status
             # attribute on the SCIM IntegrityError.
-            raise IntegrityError(str(e))
+            raise exceptions.IntegrityError(str(e))
 
         content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,

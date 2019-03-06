@@ -23,7 +23,7 @@ from django.urls import reverse
 from django import core
 
 from . import constants
-from .exceptions import BadRequestError
+from . import exceptions
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
 from .utils import get_user_adapter
@@ -95,13 +95,13 @@ class SCIMMixin(object):
         return path, value
 
     def handle_add(self, path, value, operation):
-        raise NotImplementedError
+        raise exceptions.NotImplementedError
 
     def handle_remove(self, path, value, operation):
-        raise NotImplementedError
+        raise exceptions.NotImplementedError
 
     def handle_replace(self, path, value, operation):
-        raise NotImplementedError
+        raise exceptions.NotImplementedError
 
 
 class SCIMUser(SCIMMixin):
@@ -270,18 +270,18 @@ class SCIMUser(SCIMMixin):
                 elif attr_value:
                     email = attr_value[0].get('value')
                 else:
-                    raise BadRequestError('Invalid email value')
+                    raise exceptions.BadRequestError('Invalid email value')
 
                 try:
                     validator = core.validators.EmailValidator()
                     validator(email)
                 except core.exceptions.ValidationError:
-                    raise BadRequestError('Invalid email value')
+                    raise exceptions.BadRequestError('Invalid email value')
 
                 self.obj.email = email
 
             else:
-                raise NotImplementedError('Not Implemented')
+                raise exceptions.NotImplementedError('Not Implemented')
 
         self.obj.save()
 
@@ -397,13 +397,13 @@ class SCIMGroup(SCIMMixin):
             users = get_user_model().objects.filter(id__in=ids)
 
             if len(ids) != users.count():
-                raise BadRequestError('Can not add a non-existent user to group')
+                raise exceptions.BadRequestError('Can not add a non-existent user to group')
 
             for user in users:
                 self.obj.user_set.add(user)
 
         else:
-            raise NotImplementedError
+            raise exceptions.NotImplementedError
 
     def handle_remove(self, path, value, operation):
         """
@@ -415,13 +415,13 @@ class SCIMGroup(SCIMMixin):
             users = get_user_model().objects.filter(id__in=ids)
 
             if len(ids) != users.count():
-                raise BadRequestError('Can not remove a non-existent user from group')
+                raise exceptions.BadRequestError('Can not remove a non-existent user from group')
 
             for user in users:
                 self.obj.user_set.remove(user)
 
         else:
-            raise NotImplementedError
+            raise exceptions.NotImplementedError
 
     def handle_replace(self, path, value, operation):
         """
@@ -433,5 +433,5 @@ class SCIMGroup(SCIMMixin):
             self.obj.save()
 
         else:
-            raise NotImplementedError
+            raise exceptions.NotImplementedError
 

@@ -6,10 +6,11 @@ import dateutil.parser
 import itertools
 import re
 
-from plyplus import STransformer, PlyplusException
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+import plyplus
 
+from . import exceptions
 from .grammars import USER_GRAMMAR
 from .grammars import GROUP_GRAMMAR
 
@@ -17,7 +18,7 @@ from .grammars import GROUP_GRAMMAR
 STRING_REPLACEMENT_RE_PAT = re.compile(r'\%\([^).]+\)s', re.MULTILINE)
 
 
-class SCIMUserFilterTransformer(STransformer):
+class SCIMUserFilterTransformer(plyplus.STransformer):
     """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
     and a dict with query parameters to go with the query."""
 
@@ -212,9 +213,17 @@ class SCIMUserFilterTransformer(STransformer):
         :param unicode query: a `unicode` query string.
         """
         try:
-            sql, params = cls().transform(USER_GRAMMAR.parse(query))
+            parsed_query = USER_GRAMMAR.parse(query)
+        except plyplus.common.TokenizeError as e:
+            error_string = str(e)
+            if 'illegal character in input' in error_string.lower():
+                raise exceptions.NotImplementedError(error_string)
+            raise
+
+        try:
+            sql, params = cls().transform(parsed_query)
             sql, params = cls.condition_sql_and_params(sql, params)
-        except PlyplusException as e:
+        except plyplus.PlyplusException as e:
             raise ValueError(e)
         else:
             return get_user_model().objects.raw(sql, params)
@@ -231,7 +240,7 @@ class SCIMUserFilterTransformer(STransformer):
             return self.sql
 
 
-class SCIMGroupFilterTransformer(STransformer):
+class SCIMGroupFilterTransformer(plyplus.STransformer):
     """Transforms a PlyPlus parse tree into a tuple containing a raw SQL query
     and a dict with query parameters to go with the query."""
 
@@ -356,9 +365,17 @@ class SCIMGroupFilterTransformer(STransformer):
         :param unicode query: a `unicode` query string.
         """
         try:
-            sql, params = cls().transform(GROUP_GRAMMAR.parse(query))
+            parsed_query = GROUP_GRAMMAR.parse(query)
+        except plyplus.common.TokenizeError as e:
+            error_string = str(e)
+            if 'illegal character in input' in error_string.lower():
+                raise exceptions.NotImplementedError(error_string)
+            raise
+
+        try:
+            sql, params = cls().transform(parsed_query)
             sql, params = cls.condition_sql_and_params(sql, params)
-        except PlyplusException as e:
+        except plyplus.PlyplusException as e:
             raise ValueError(e)
         else:
             return Group.objects.raw(sql, params)

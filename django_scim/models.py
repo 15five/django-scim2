@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from . import constants
+from . import exceptions
 from .settings import scim_settings
 from .utils import get_base_scim_location_getter
 
@@ -185,7 +186,7 @@ class AbstractSCIMUserMixin(AbstractSCIMCommonAttributesMixin):
 
     @property
     def scim_groups(self):
-        raise NotImplementedError
+        raise exceptions.NotImplementedError
 
     class Meta:
         abstract = True
