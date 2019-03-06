@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.10.5
+------
+- Tone down the number of logged exceptions (if they are SCIMExceptions as those are somewhat expected)
+
 0.10.4
 ------
 - Fix logging on requests. Log on more than 401s.
