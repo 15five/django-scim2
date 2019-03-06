@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.10.6
+------
+- Create a NotImplementedError for SCIM
+- Refactor FilterTransformers
+
 0.10.5
 ------
 - Tone down the number of logged exceptions (if they are SCIMExceptions as those are somewhat expected)
