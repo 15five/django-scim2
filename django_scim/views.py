@@ -105,6 +105,16 @@ class SCIMView(View):
         """
         return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=501)
 
+    def load_body(self, body):
+        decoded = body.decode(constants.ENCODING)
+        stripped = decoded.strip() or '{}'
+
+        try:
+            return json.loads(stripped)
+        except json.decoder.JSONDecodeError as e:
+            msg = 'Could not decode JSON body: ' + e.args[0]
+            raise exceptions.BadRequestError(msg)
+
 
 class FilterMixin(object):
 
@@ -212,7 +222,7 @@ class SearchView(FilterMixin, SCIMView):
     model_cls = 'search'
 
     def post(self, request):
-        body = json.loads(request.body.decode(constants.ENCODING) or '{}')
+        body = self.load_body(request.body)
         if body.get('schemas') != [constants.SchemaURI.SERACH_REQUEST]:
             raise exceptions.BadRequestError('Invalid schema uri. Must be SearchRequest.')
 
@@ -220,12 +230,12 @@ class SearchView(FilterMixin, SCIMView):
 
         if not query:
             raise exceptions.BadRequestError('No filter query specified')
-        else:
-            response = self._search(request, query, *self._page(request))
-            path = reverse(self.scim_adapter.url_name)
-            url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
-            response['Location'] = url + '/.search'
-            return response
+
+        response = self._search(request, query, *self._page(request))
+        path = reverse(self.scim_adapter.url_name)
+        url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
+        response['Location'] = url + '/.search'
+        return response
 
 
 class UserSearchView(SearchView):
@@ -285,7 +295,10 @@ class PostView(object):
         obj = self.model_cls()
         scim_obj = self.scim_adapter(obj, request=request)
 
-        body = json.loads(request.body.decode(constants.ENCODING))
+        body = self.load_body(request.body)
+
+        if not body:
+            raise exceptions.BadRequestError('POST call made with empty body')
 
         scim_obj.from_dict(body)
 
@@ -310,7 +323,10 @@ class PutView(object):
 
         scim_obj = self.scim_adapter(obj, request=request)
 
-        body = json.loads(request.body.decode(constants.ENCODING))
+        body = self.load_body(request.body)
+
+        if not body:
+            raise exceptions.BadRequestError('PUT call made with empty body')
 
         scim_obj.from_dict(body)
         scim_obj.save()
@@ -327,9 +343,12 @@ class PatchView(object):
         obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
-        body = json.loads(request.body.decode(constants.ENCODING))
+        body = self.load_body(request.body)
 
         operations = body.get('Operations')
+
+        if not operations:
+            raise exceptions.BadRequestError('PATCH call made without operations array')
 
         with transaction.atomic():
             scim_obj.handle_operations(operations)

@@ -527,6 +527,19 @@ class UserTestCase(LoginMixin, TestCase):
         ford = get_user_adapter()(ford, self.request)
         self.assertEqual(result, ford.to_dict())
 
+    def test_put_empty_body(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        data = '''    '''
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
+
     def test_patch_replace(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -553,6 +566,34 @@ class UserTestCase(LoginMixin, TestCase):
 
         ford.refresh_from_db()
         self.assertEqual(ford.last_name, 'Updated Ford')
+
+    def test_patch_add_with_unsupported_path(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        # TODO: Once scim2-filter-parser is installed, we can try to change this
+        # this test to assert a 200 rather than 400
+        data = '''
+        {
+          "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+          ],
+          "Operations": [
+            {
+              "op": "Add",
+              "path": "addresses[type eq \"work\"].locality",
+              "value": "Zone 3"
+            }
+          ]
+        }
+        '''
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
 
     def test_patch_atomic(self):
         ford = get_user_model().objects.create(
