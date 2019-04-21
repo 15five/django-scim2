@@ -15,11 +15,8 @@ from django.utils.decorators import method_decorator
 from django.urls import reverse
 
 from . import constants
-from .filters import SCIMUserFilterTransformer
-from .exceptions import SCIMException
-from .exceptions import NotFoundError
-from .exceptions import BadRequestError
-from .exceptions import IntegrityError
+from . import exceptions
+from . import filters
 from .utils import get_all_schemas_getter
 from .utils import get_group_adapter
 from .utils import get_group_model
@@ -28,17 +25,36 @@ from .utils import get_base_scim_location_getter
 from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
 from .utils import get_extra_model_exclude_kwargs_getter
-from .utils import get_loggable_body
 
 
 logger = logging.getLogger(__name__)
 
 
 class SCIMView(View):
-    lookup_field = 'id'
-    lookup_url_kwarg = 'uuid'
+    lookup_field = 'scim_id'  # database field
+    lookup_url_kwarg = 'uuid'  # argument in django URL pattern
 
     implemented = True
+
+    @property
+    def model_cls(self):
+        # pull from __class__ to avoid binding model class getter to
+        # self instance and passing self to class getter
+        return self.__class__.model_cls_getter()
+
+    @property
+    def get_extra_filter_kwargs(self):
+        return get_extra_model_filter_kwargs_getter(self.model_cls)
+
+    @property
+    def get_extra_exclude_kwargs(self):
+        return get_extra_model_exclude_kwargs_getter(self.model_cls)
+
+    @property
+    def scim_adapter(self):
+        # pull from __class__ to avoid binding adapter class getter to
+        # self instance and passing self to class getter
+        return self.__class__.scim_adapter_getter()
 
     def get_object(self):
         """Get object by configurable ID."""
@@ -61,8 +77,8 @@ class SCIMView(View):
 
         try:
             return self.model_cls.objects.get(**extra_filter_kwargs)
-        except ObjectDoesNotExist as _e:
-            raise NotFoundError(uuid)
+        except ObjectDoesNotExist:
+            raise exceptions.NotFoundError(uuid)
 
     @method_decorator(csrf_exempt)
     @method_decorator(login_required)
@@ -71,34 +87,11 @@ class SCIMView(View):
             return self.status_501(request, *args, **kwargs)
 
         try:
-            try:
-                body = get_loggable_body(request.body.decode(constants.ENCODING))
-                logger.debug(
-                    u'REQUEST '
-                    u'PATH >>>>>{}<<<<< '
-                    u'METHOD >>>>>{}<<<<< '
-                    u'BODY >>>>>{}<<<<<'.format(
-                        request.path,
-                        request.method,
-                        body,
-                    )
-                )
-            except:
-                logger.debug(
-                    u'REQUEST '
-                    u'PATH >>>>>{}<<<<< '
-                    u'METHOD >>>>>{}<<<<< '
-                    u'ERROR >>>>>Could not get loggable body<<<<<'.format(
-                        request.path,
-                        request.method,
-                    ),
-                    exc_info=1,
-                )
             return super(SCIMView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
-            logger.debug('Unable to complete SCIM call.', exc_info=1)
-            if not isinstance(e, SCIMException):
-                e = SCIMException(six.text_type(e))
+            if not isinstance(e, exceptions.SCIMException):
+                logger.exception('Unable to complete SCIM call.')
+                e = exceptions.SCIMException(six.text_type(e))
 
             content = json.dumps(e.to_dict())
             return HttpResponse(content=content,
@@ -112,11 +105,21 @@ class SCIMView(View):
         """
         return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=501)
 
+    def load_body(self, body):
+        decoded = body.decode(constants.ENCODING)
+        stripped = decoded.strip() or '{}'
+
+        try:
+            return json.loads(stripped)
+        except json.decoder.JSONDecodeError as e:
+            msg = 'Could not decode JSON body: ' + e.args[0]
+            raise exceptions.BadRequestError(msg)
+
 
 class FilterMixin(object):
 
     parser = None
-    scim_adapter = None
+    scim_adapter_getter = None
 
     def _page(self, request):
         try:
@@ -124,7 +127,7 @@ class FilterMixin(object):
             if start is not None:
                 start = int(start)
                 if start < 1:
-                    raise BadRequestError('Invalid startIndex (must be >= 1)')
+                    raise exceptions.BadRequestError('Invalid startIndex (must be >= 1)')
 
             count = request.GET.get('count', 50)
             if count is not None:
@@ -133,13 +136,13 @@ class FilterMixin(object):
             return start, count
 
         except ValueError as e:
-            raise BadRequestError('Invalid pagination values: ' + str(e))
+            raise exceptions.BadRequestError('Invalid pagination values: ' + str(e))
 
     def _search(self, request, query, start, count):
         try:
             qs = self.parser.search(query, request)
         except ValueError as e:
-            raise BadRequestError('Invalid filter/search query: ' + str(e))
+            raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
         qs = self._filter_raw_queryset_with_extra_filter_kwargs(qs, extra_filter_kwargs)
@@ -195,7 +198,7 @@ class FilterMixin(object):
     def _build_response(self, request, qs, start, count):
         try:
             total_count = sum(1 for _ in qs)
-            qs = qs[start-1:(start-1) + count]
+            qs = qs[start - 1:(start - 1) + count]
             resources = [self.scim_adapter(o, request=request).to_dict() for o in qs]
             doc = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],
@@ -205,7 +208,7 @@ class FilterMixin(object):
                 'Resources': resources,
             }
         except ValueError as e:
-            raise BadRequestError(six.text_type(e))
+            raise exceptions.BadRequestError(six.text_type(e))
         else:
             content = json.dumps(doc)
             return HttpResponse(content=content,
@@ -215,25 +218,34 @@ class FilterMixin(object):
 class SearchView(FilterMixin, SCIMView):
     http_method_names = ['post']
 
-    scim_adapter = None
-    get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter('search')
-    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter('search')
+    # override model class so correct extra_filter/exclude_kwarg getter is fetched
+    model_cls = 'search'
 
     def post(self, request):
-        body = json.loads(request.body.decode(constants.ENCODING) or '{}')
+        body = self.load_body(request.body)
         if body.get('schemas') != [constants.SchemaURI.SERACH_REQUEST]:
-            raise BadRequestError('Invalid schema uri. Must be SearchRequest.')
+            raise exceptions.BadRequestError('Invalid schema uri. Must be SearchRequest.')
 
         query = body.get('filter', request.GET.get('filter'))
 
         if not query:
-            raise BadRequestError('No filter query specified')
-        else:
-            response = self._search(request, query, *self._page(request))
-            path = reverse(self.scim_adapter.url_name)
-            url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
-            response['Location'] = url + '/.search'
-            return response
+            raise exceptions.BadRequestError('No filter query specified')
+
+        response = self._search(request, query, *self._page(request))
+        path = reverse(self.scim_adapter.url_name)
+        url = urljoin(get_base_scim_location_getter()(request=request), path).rstrip('/')
+        response['Location'] = url + '/.search'
+        return response
+
+
+class UserSearchView(SearchView):
+    scim_adapter_getter = get_user_adapter
+    parser = filters.SCIMUserFilterTransformer
+
+
+class GroupSearchView(SearchView):
+    scim_adapter_getter = get_group_adapter
+    parser = filters.SCIMGroupFilterTransformer
 
 
 class GetView(object):
@@ -283,7 +295,10 @@ class PostView(object):
         obj = self.model_cls()
         scim_obj = self.scim_adapter(obj, request=request)
 
-        body = json.loads(request.body.decode(constants.ENCODING))
+        body = self.load_body(request.body)
+
+        if not body:
+            raise exceptions.BadRequestError('POST call made with empty body')
 
         scim_obj.from_dict(body)
 
@@ -292,7 +307,7 @@ class PostView(object):
         except db.utils.IntegrityError as e:
             # Cast error to a SCIM IntegrityError to use the status
             # attribute on the SCIM IntegrityError.
-            raise IntegrityError(str(e))
+            raise exceptions.IntegrityError(str(e))
 
         content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
@@ -308,7 +323,10 @@ class PutView(object):
 
         scim_obj = self.scim_adapter(obj, request=request)
 
-        body = json.loads(request.body.decode(constants.ENCODING))
+        body = self.load_body(request.body)
+
+        if not body:
+            raise exceptions.BadRequestError('PUT call made with empty body')
 
         scim_obj.from_dict(body)
         scim_obj.save()
@@ -325,9 +343,12 @@ class PatchView(object):
         obj = self.get_object()
 
         scim_obj = self.scim_adapter(obj, request=request)
-        body = json.loads(request.body.decode(constants.ENCODING))
+        body = self.load_body(request.body)
 
         operations = body.get('Operations')
+
+        if not operations:
+            raise exceptions.BadRequestError('PATCH call made without operations array')
 
         with transaction.atomic():
             scim_obj.handle_operations(operations)
@@ -343,22 +364,18 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
-    scim_adapter = get_user_adapter()
-    model_cls = get_user_model()
-    get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
-    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
-    parser = SCIMUserFilterTransformer
+    scim_adapter_getter = get_user_adapter
+    model_cls_getter = get_user_model
+    parser = filters.SCIMUserFilterTransformer
 
 
 class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
-    scim_adapter = get_group_adapter()
-    model_cls = get_group_model()
-    get_extra_filter_kwargs = get_extra_model_filter_kwargs_getter(model_cls)
-    get_extra_exclude_kwargs = get_extra_model_exclude_kwargs_getter(model_cls)
-    parser = None
+    scim_adapter_getter = get_group_adapter
+    model_cls_getter = get_group_model
+    parser = filters.SCIMGroupFilterTransformer
 
 
 class ServiceProviderConfigView(SCIMView):
@@ -387,7 +404,7 @@ class ResourceTypesView(SCIMView):
                 return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=404)
 
         else:
-            key_func = lambda o: o.get('id')
+            key_func = lambda o: o.get('id')  # noqa: E731
             type_dicts = self.type_dict_by_type_id(request).values()
             types = list(sorted(type_dicts, key=key_func))
             doc = {
@@ -412,7 +429,7 @@ class SchemasView(SCIMView):
                 return HttpResponse(content_type=constants.SCIM_CONTENT_TYPE, status=404)
 
         else:
-            key_func = lambda o: o.get('id')
+            key_func = lambda o: o.get('id')  # noqa: E731
             schemas = list(sorted(self.schemas_by_uri.values(), key=key_func))
             doc = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],

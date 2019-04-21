@@ -1,12 +1,55 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
+from django.db import connection
+from django.db import models
+from django.test import override_settings
 from django.test import TestCase, RequestFactory
 
 from django_scim import constants
-from django_scim.utils import get_user_adapter
+from django_scim import models as scim_models
+from django_scim.adapters import SCIMMixin
 from django_scim.utils import get_group_adapter
-from django_scim.utils import get_group_model
+from django_scim.utils import get_user_adapter
 
 
+USER_MODEL = None
+GROUP_MODEL = None
+
+
+def setUpModule():
+    global USER_MODEL
+    global GROUP_MODEL
+
+    # setup group
+    class TestAdaptersGroup(scim_models.AbstractSCIMGroupMixin):
+        name = models.CharField('name', max_length=80, unique=True)
+
+    # setup user
+    class TestAdaptersUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
+        scim_groups = models.ManyToManyField(
+            TestAdaptersGroup,
+            related_name="user_set",
+        )
+
+    USER_MODEL = TestAdaptersUser
+    GROUP_MODEL = TestAdaptersGroup
+
+    for model in (GROUP_MODEL, USER_MODEL):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(model)
+
+
+def tearDownModule():
+    for model in (GROUP_MODEL, USER_MODEL):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.delete_model(model)
+
+
+def get_group_model():
+    return GROUP_MODEL
+
+
+@override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
 class SCIMUserTestCase(TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -44,7 +87,7 @@ class SCIMUserTestCase(TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         ford = get_user_adapter()(ford, self.request)
 
         expected = [
@@ -85,7 +128,7 @@ class SCIMUserTestCase(TestCase):
             username='rford',
             email='rford@ww.com',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
 
         expected = {
             'schemas': [constants.SchemaURI.USER],
@@ -100,6 +143,7 @@ class SCIMUserTestCase(TestCase):
             'name': {
                 'givenName': 'Robert',
                 'familyName': 'Ford',
+                'formatted': 'Robert Ford',
             },
             'groups': [
                 {
@@ -141,6 +185,28 @@ class SCIMUserTestCase(TestCase):
         self.assertEqual(ford.resource_type_dict(), expected)
 
 
+class SCIMMixinPathParserTestCase(TestCase):
+    maxDiff = None
+
+    def test_azure_ad_style_paths(self):
+        """
+        Test paths typically sent by AzureAD.
+        """
+        paths_and_values = [
+            ("addresses[type eq \"work\"].country", 1),
+            ("addresses[type eq \"work\"].locality", 1),
+            ("addresses[type eq \"work\"].postalCode", 1),
+            ("addresses[type eq \"work\"].streetAddress", 1),
+            ("externalId", 1),
+            ("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department", 1),
+        ]
+
+        func = SCIMMixin(None).parse_path_and_value
+        result_paths = list(map(lambda x: func(*x), paths_and_values))
+        self.assertEqual(result_paths, paths_and_values)
+
+
+@override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
 class SCIMGroupTestCase(TestCase):
     request = RequestFactory().get('/fake/request')
 
@@ -161,12 +227,12 @@ class SCIMGroupTestCase(TestCase):
             username='rford',
             email='rford@ww.com',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
 
         RequestFactory()
         behavior = get_group_adapter()(behavior, self.request)
 
-        expected =  [
+        expected = [
             {
                 'display': u'Robert Ford',
                 'value': '1',
@@ -199,7 +265,7 @@ class SCIMGroupTestCase(TestCase):
             username='rford',
             email='rford@ww.com',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
 
         expected = {
             'meta': {
@@ -241,3 +307,4 @@ class SCIMGroupTestCase(TestCase):
         }
 
         self.assertEqual(behavior.resource_type_dict(), expected)
+

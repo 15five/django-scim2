@@ -32,14 +32,14 @@ def long_description():
 
 
 def run_tests():
-    settings_mod = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
-    os.environ['DJANGO_SETTINGS_MODULE'] = settings_mod
+    os.environ['DJANGO_SETTINGS_MODULE'] = os.environ.get('DJANGO_SETTINGS_MODULE', 'test_settings')
 
     import django
     django.setup()
     from django.test.utils import get_runner
     from django.conf import settings
 
+    # eg. TEST_FILTER=django_scim.tests.test_views.UserTestCase.test_get_user_by_id
     test_filter = os.environ.get('TEST_FILTER')
     test_labels = [test_filter] if test_filter else []
 
@@ -69,8 +69,11 @@ setup(
     install_requires=[
         'python-dateutil>=2.6.0',
         'PlyPlus>=0.7.5',
+        'six',
     ],
-    scripts=['scim'],
+    tests_require=[
+        'mock',
+    ],
     test_suite='setup.run_tests',
     zip_safe=False,
     include_package_data=True,
@@ -82,11 +85,11 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],

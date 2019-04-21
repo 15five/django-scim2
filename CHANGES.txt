@@ -1,6 +1,100 @@
 CHANGE LOG
 ==========
 
+0.10.7
+------
+- Return better errors for malformed or unsupported JSON bodies
+
+0.10.6
+------
+- Create a NotImplementedError for SCIM
+- Refactor FilterTransformers
+
+0.10.5
+------
+- Tone down the number of logged exceptions (if they are SCIMExceptions as those are somewhat expected)
+
+0.10.4
+------
+- Fix logging on requests. Log on more than 401s.
+
+0.10.3
+------
+- Increase logging level for failed SCIM view call
+
+0.10.2
+------
+- Add separate logging methods for requests and response
+
+0.10.1
+------
+- Add badges to README
+
+0.10.0
+------
+- Drop support for Python2
+  !!BREAKING CHANGE!!
+- Add linting and coverage
+
+0.9.0
+-----
+- Decouple Django object id and SCIM ID
+  !!MASSIVE BREAKING CHANGE!!
+- Add tests for Abstract SCIM models
+
+0.8.2
+-----
+- Only log during SCIM calls
+
+0.8.1
+-----
+- Fix failing tests
+
+0.8.0
+-----
+- Add basic abstract models for Users and Groups
+- Update parse path function
+- Added more to demo application
+
+0.7.0
+-----
+- Change where logging of requests is done (now in middleware)
+- Improve demo application
+
+0.6.0
+-----
+- Add tests for work on supporting complex SCIM filtering
+- Update PATCH handler to decipher path key
+
+  This commit contains a BREAKING CHANGE.
+
+  If you have overridden the "handle_<op_code>" methods on the User and
+  Group adapters, those methods need to be updated to take path, and value
+  in addition to operation.
+
+  New adapter signature:
+
+  def handle_<op_code (eg. add)>(self, path, value, operation):
+      ...
+
+0.5.3
+-----
+- Bug fix: https://github.com/15five/django-scim2/issues/13
+  Thank you @tomatsue
+
+0.5.2
+-----
+- Bug fix
+
+0.5.1
+-----
+- Added tests for grammar
+- Added back explicit support for python2.7 on Django 1.11
+
+0.5.0
+-----
+- Added a group grammar for parsing group pushes
+
 0.4.1
 -----
 - Docs changes

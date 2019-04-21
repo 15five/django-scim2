@@ -3,22 +3,62 @@ from unittest import mock
 from unittest import skip
 from urllib.parse import urljoin
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AbstractUser
+from django.db import connection
+from django.db import models
 from django.test import TestCase
 from django.test import Client
+from django.test import override_settings
 from django.test import RequestFactory
 from django.urls import reverse
 
 from django_scim import views
 from django_scim import constants
+from django_scim import models as scim_models
 from django_scim.schemas import ALL as ALL_SCHEMAS
 from django_scim.utils import get_group_adapter
-from django_scim.utils import get_group_model
 from django_scim.utils import get_user_adapter
 from django_scim.utils import get_base_scim_location_getter
 from django_scim.utils import get_service_provider_config_model
+
+
+USER_MODEL = None
+GROUP_MODEL = None
+
+
+def setUpModule():
+    global USER_MODEL
+    global GROUP_MODEL
+
+    # setup group
+    class TestViewsGroup(scim_models.AbstractSCIMGroupMixin):
+        name = models.CharField('name', max_length=80, unique=True)
+
+    # setup user
+    class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
+        scim_groups = models.ManyToManyField(
+            TestViewsGroup,
+            related_name="user_set",
+        )
+
+    USER_MODEL = TestViewsUser
+    GROUP_MODEL = TestViewsGroup
+
+    for model in (GROUP_MODEL, USER_MODEL):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(model)
+
+
+def tearDownModule():
+    for model in (GROUP_MODEL, USER_MODEL):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.delete_model(model)
+
+
+def get_group_model():
+    return GROUP_MODEL
 
 
 class LoginMixin(object):
@@ -64,6 +104,7 @@ class SCIMTestCase(TestCase):
         self.fail('TODO')
 
 
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
 class FilterMixinTestCase(TestCase):
     maxDiff = None
     factory = RequestFactory()
@@ -258,6 +299,7 @@ class SearchTestCase(LoginMixin, TestCase):
         self.assertEqual(expected, result)
 
 
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
 class UserTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -485,6 +527,19 @@ class UserTestCase(LoginMixin, TestCase):
         ford = get_user_adapter()(ford, self.request)
         self.assertEqual(result, ford.to_dict())
 
+    def test_put_empty_body(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        data = '''    '''
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = self.client.patch(url, data=data, content_type='application/scim+json')
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
+
     def test_patch_replace(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -511,6 +566,34 @@ class UserTestCase(LoginMixin, TestCase):
 
         ford.refresh_from_db()
         self.assertEqual(ford.last_name, 'Updated Ford')
+
+    def test_patch_add_with_unsupported_path(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        # TODO: Once scim2-filter-parser is installed, we can try to change this
+        # this test to assert a 200 rather than 400
+        data = '''
+        {
+          "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+          ],
+          "Operations": [
+            {
+              "op": "Add",
+              "path": "addresses[type eq \"work\"].locality",
+              "value": "Zone 3"
+            }
+          ]
+        }
+        '''
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
 
     def test_patch_atomic(self):
         ford = get_user_model().objects.create(
@@ -567,6 +650,8 @@ class UserTestCase(LoginMixin, TestCase):
         self.assertIsNone(ford)
 
 
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@mock.patch('django_scim.views.GroupsView.model_cls_getter', get_group_model)
 class GroupTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -583,7 +668,7 @@ class GroupTestCase(LoginMixin, TestCase):
             first_name='Robert',
             last_name='Ford'
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
 
         behavior = get_group_adapter()(behavior, self.request)
 
@@ -608,7 +693,7 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         behavior = get_group_adapter()(behavior, self.request)
 
         security = get_group_model().objects.create(
@@ -619,7 +704,7 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Abernathy',
             username='dabernathy',
         )
-        abernathy.groups.add(security)
+        abernathy.scim_groups.add(security)
         security = get_group_adapter()(security, self.request)
 
         url = reverse('scim:groups')
@@ -753,7 +838,7 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         abernathy = get_user_model().objects.create(
             first_name='Dolores',
             last_name='Abernathy',
@@ -796,13 +881,13 @@ class GroupTestCase(LoginMixin, TestCase):
             last_name='Ford',
             username='rford',
         )
-        ford.groups.add(behavior)
+        ford.scim_groups.add(behavior)
         abernathy = get_user_model().objects.create(
             first_name='Dolores',
             last_name='Abernathy',
             username='dabernathy',
         )
-        abernathy.groups.add(behavior)
+        abernathy.scim_groups.add(behavior)
 
         data = {
             'schemas': [constants.SchemaURI.PATCH_OP],
@@ -939,7 +1024,7 @@ class ResourceTypesTestCase(LoginMixin, TestCase):
         self.assertEqual(resp.status_code, 200, resp.content.decode())
         user_type = get_user_adapter().resource_type_dict()
         group_type = get_group_adapter().resource_type_dict()
-        key = lambda o: o.get('id')
+        key = lambda o: o.get('id')  # noqa: 731
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'Resources': list(sorted((user_type, group_type), key=key)),
@@ -963,7 +1048,7 @@ class SchemasTestCase(LoginMixin, TestCase):
         url = reverse('scim:schemas')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
-        key = lambda o: o.get('id')
+        key = lambda o: o.get('id')  # noqa: 731
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'Resources': list(sorted(ALL_SCHEMAS, key=key)),

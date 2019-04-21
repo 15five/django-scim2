@@ -20,7 +20,6 @@ from six import string_types
 import importlib
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 
 
 # Settings defined by user in root settings file for their project.

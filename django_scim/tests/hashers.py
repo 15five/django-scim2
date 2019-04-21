@@ -8,7 +8,7 @@ class NoopPasswordHasher(BasePasswordHasher):
     algorithm = 'plain'
 
     def encode(self, password, salt):
-        return f'{self.algorithm}${password}'
+        return '{}${}'.format(self.algorithm, password)
 
     def salt(self):
         return None
@@ -18,5 +18,5 @@ class NoopPasswordHasher(BasePasswordHasher):
         return password == decoded
 
     def safe_summary(self, encoded):
-        return {_('desc'): 'Not hashed'}
+        return {'desc': 'Not hashed'}
 

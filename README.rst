@@ -1,6 +1,8 @@
 django-scim2
 ============
 
+|tests| |coverage| |docs|
+
 This is a partial provider-side implementation of the SCIM 2.0 [1]_
 specification for use in Django.
 
@@ -20,6 +22,18 @@ Then add the ``django_scim`` app to ``INSTALLED_APPS`` in your Django's settings
         ...
         'django_scim',
     )
+
+Add the appropriate middleware to authorize or deny the SCIM calls::
+
+    MIDDLEWARE_CLASSES = (
+        ...
+        'django_scim.middleware.SCIMAuthCheckMiddleware',
+        ...
+    )
+
+Make sure to place this middleware after authentication middleware as this
+middleware simply checks `request.user.is_anonymous()` to determine if the SCIM
+request should be allowed or denied.
 
 Add the necessary url patterns to your root urls.py file. Please note that the
 namespace is mandatory and must be named `scim`::
@@ -64,19 +78,28 @@ https://github.com/15five/django-scim2
 Documentation
 -------------
 
-.. image:: https://readthedocs.org/projects/django-scim2/badge/?version=latest
-  :target: http://django-scim2.readthedocs.io/en/latest/?badge=latest
+.. |docs| image:: https://readthedocs.org/projects/django-scim2/badge/
+  :target: https://django-scim2.readthedocs.io/
   :alt: Documentation Status
 
-http://django-scim2.readthedocs.io/
+https://django-scim2.readthedocs.io/
 
 Tests
 -----
 
-.. image:: https://travis-ci.org/15five/django-scim2.svg?branch=master
-   :target: https://travis-ci.org/15five/django-scim2
+.. |tests| image:: https://travis-ci.com/15five/django-scim2.svg?branch=master
+    :target: https://travis-ci.com/15five/django-scim2
 
-https://travis-ci.org/15five/django-scim2
+https://travis-ci.com/15five/django-scim2
+
+
+Coverage
+--------
+
+.. |coverage| image:: https://codecov.io/gh/15five/django-scim2/graph/badge.svg
+    :target: https://codecov.io/gh/15five/django-scim2
+
+https://codecov.io/gh/15five/django-scim2/
 
 License
 -------

@@ -87,15 +87,15 @@ def default_get_extra_model_filter_kwargs_getter(model):
     """
     Return a **method** that will return extra model filter kwargs for the passed in model.
 
-    :param model:  
+    :param model:
     """
-    def get_extra_filter_kwargs(self, request, *args, **kwargs):
+    def get_extra_filter_kwargs(request, *args, **kwargs):
         """
         Return extra filter kwargs for the given model.
-        :param request: 
-        :param args: 
-        :param kwargs: 
-        :rtype: dict 
+        :param request:
+        :param args:
+        :param kwargs:
+        :rtype: dict
         """
         return {}
 
@@ -108,7 +108,7 @@ def default_get_extra_model_exclude_kwargs_getter(model):
 
     :param model:
     """
-    def get_extra_exclude_kwargs(self, request, *args, **kwargs):
+    def get_extra_exclude_kwargs(request, *args, **kwargs):
         """
         Return extra exclude kwargs for the given model.
         :param request:
@@ -145,9 +145,10 @@ def get_loggable_body(text):
 
     try:
         obj = json.loads(text)
-    except:
+    except json.JSONDecodeError:
         return text
 
     obj = clean_structure_of_passwords(obj)
 
     return json.dumps(obj)
+

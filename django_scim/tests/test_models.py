@@ -22,7 +22,7 @@ class SCIMServiceProviderConfigTestCase(TestCase):
 
     def test_to_dict(self):
         config = get_service_provider_config_model()()
-        expected ={
+        expected = {
             'authenticationSchemes': [
                 {
                     'description': 'Oauth 2 implemented with bearer token',
@@ -41,7 +41,7 @@ class SCIMServiceProviderConfigTestCase(TestCase):
             'documentationUri': None,
             'etag': {'supported': False},
             'filter': {
-                'supported': True,
+                'supported': False,
                 'maxResults': 50
             },
             'meta': {

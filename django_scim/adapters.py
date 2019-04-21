@@ -23,7 +23,7 @@ from django.urls import reverse
 from django import core
 
 from . import constants
-from .exceptions import PatchError
+from . import exceptions
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
 from .utils import get_user_adapter
@@ -48,11 +48,11 @@ class SCIMMixin(object):
 
     @property
     def id(self):
-        return str(self.obj.id)
+        return str(self.obj.scim_id)
 
     @property
     def path(self):
-        return reverse(self.url_name, kwargs={'uuid': self.obj.id})
+        return reverse(self.url_name, kwargs={'uuid': self.obj.scim_id})
 
     @property
     def location(self):
@@ -62,22 +62,46 @@ class SCIMMixin(object):
         self.obj.save()
 
     def delete(self):
-        self.obj.__class__.objects.filter(id=self.obj.id).delete()
+        self.obj.__class__.objects.filter(id=self.obj.scim_id).delete()
 
     def handle_operations(self, operations):
         """
         The SCIM specification allows for making changes to specific attributes
-        of a model. These changes are sent in PUT requests and are batched into
-        operations to be performed on a object.Operations could be 'add',
-        'remove', 'replace', etc. This method iterates through all of the
+        of a model. These changes are sent in PATCH requests and are batched into
+        operations to be performed on a object. Operations can have an op code
+        of 'add', 'remove', or 'replace'. This method iterates through all of the
         operations in ``operations`` and calls the appropriate handler (defined
         on the appropriate adapter) for each.
         """
         for operation in operations:
-            op_code = operation.get('op')
+            path = operation.get('path')
+            value = operation.get('value')
+
+            path, value = self.parse_path_and_value(path, value)
+
+            op_code = operation.get('op').lower()
             op_code = 'handle_' + op_code
             handler = getattr(self, op_code)
-            handler(operation)
+
+            handler(path, value, operation)
+
+    def parse_path_and_value(self, path, value):
+        """
+        Return new path and value given an original path and value.
+
+        This method can be overridden to provide a more usable path and value within the
+        associated handle methods.
+        """
+        return path, value
+
+    def handle_add(self, path, value, operation):
+        raise exceptions.NotImplementedError
+
+    def handle_remove(self, path, value, operation):
+        raise exceptions.NotImplementedError
+
+    def handle_replace(self, path, value, operation):
+        raise exceptions.NotImplementedError
 
 
 class SCIMUser(SCIMMixin):
@@ -101,6 +125,10 @@ class SCIMUser(SCIMMixin):
         return self.obj.username
 
     @property
+    def name_formatted(self):
+        return self.display_name
+
+    @property
     def emails(self):
         """
         Return the email of the user per the SCIM spec.
@@ -112,7 +140,7 @@ class SCIMUser(SCIMMixin):
         """
         Return the groups of the user per the SCIM spec.
         """
-        group_qs = self.obj.groups.all()
+        group_qs = self.obj.scim_groups.all()
         scim_groups = [get_group_adapter()(g, self.request) for g in group_qs]
 
         dicts = []
@@ -152,6 +180,7 @@ class SCIMUser(SCIMMixin):
             'name': {
                 'givenName': self.obj.first_name,
                 'familyName': self.obj.last_name,
+                'formatted': self.name_formatted,
             },
             'displayName': self.display_name,
             'emails': self.emails,
@@ -218,7 +247,7 @@ class SCIMUser(SCIMMixin):
             }
         }
 
-    def handle_replace(self, operation):
+    def handle_replace(self, path, value, operation):
         """
         Handle the replace operations.
         """
@@ -229,7 +258,7 @@ class SCIMUser(SCIMMixin):
             'active': 'is_active',
         }
 
-        attrs = operation.get('value', {})
+        attrs = value or {}
 
         for attr, attr_value in attrs.items():
             if attr in attr_map:
@@ -241,18 +270,18 @@ class SCIMUser(SCIMMixin):
                 elif attr_value:
                     email = attr_value[0].get('value')
                 else:
-                    raise PatchError('Invalid email value')
+                    raise exceptions.BadRequestError('Invalid email value')
 
                 try:
                     validator = core.validators.EmailValidator()
                     validator(email)
                 except core.exceptions.ValidationError:
-                    raise PatchError('Invalid email value')
+                    raise exceptions.BadRequestError('Invalid email value')
 
                 self.obj.email = email
 
             else:
-                raise NotImplementedError('Not Implemented')
+                raise exceptions.NotImplementedError('Not Implemented')
 
         self.obj.save()
 
@@ -311,7 +340,7 @@ class SCIMGroup(SCIMMixin):
 
     def to_dict(self):
         """
-        Return a ``dict`` conforming to the SCIM User Schema,
+        Return a ``dict`` conforming to the SCIM Group Schema,
         ready for conversion to a JSON object.
         """
         return {
@@ -358,50 +387,51 @@ class SCIMGroup(SCIMMixin):
             }
         }
 
-    def handle_add(self, operation):
+    def handle_add(self, path, value, operation):
         """
         Handle add operations.
         """
-        if operation.get('path') == 'members':
-            members = operation.get('value', [])
+        if path == 'members':
+            members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
 
             if len(ids) != users.count():
-                raise PatchError('Can not add a non-existent user to group')
+                raise exceptions.BadRequestError('Can not add a non-existent user to group')
 
             for user in users:
                 self.obj.user_set.add(user)
 
         else:
-            raise NotImplemented
+            raise exceptions.NotImplementedError
 
-    def handle_remove(self, operation):
+    def handle_remove(self, path, value, operation):
         """
         Handle remove operations.
         """
-        if operation.get('path') == 'members':
-            members = operation.get('value', [])
+        if path == 'members':
+            members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
 
             if len(ids) != users.count():
-                raise PatchError('Can not remove a non-existent user from group')
+                raise exceptions.BadRequestError('Can not remove a non-existent user from group')
 
             for user in users:
                 self.obj.user_set.remove(user)
 
         else:
-            raise NotImplemented
+            raise exceptions.NotImplementedError
 
-    def handle_replace(self, operation):
+    def handle_replace(self, path, value, operation):
         """
         Handle the replace operations.
         """
-        if operation.get('path') == 'name':
-            name = operation.get('value')[0].get('value')
+        if path == 'name':
+            name = value[0].get('value')
             self.obj.name = name
             self.obj.save()
 
         else:
-            raise NotImplemented
+            raise exceptions.NotImplementedError
+
