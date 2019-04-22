@@ -40,7 +40,10 @@ class SCIMView(View):
     def model_cls(self):
         # pull from __class__ to avoid binding model class getter to
         # self instance and passing self to class getter
-        return self.__class__.model_cls_getter.im_func()
+        try:
+            return self.__class__.model_cls_getter()
+        except TypeError:
+            return self.__class__.model_cls_getter.__func__()  # Python 2 compatibility
 
     @property
     def get_extra_filter_kwargs(self):
