@@ -30,6 +30,9 @@ from .utils import get_user_adapter
 
 
 class SCIMMixin(object):
+
+    id_field = 'scim_id'  # Modifiable by overriding classes
+
     def __init__(self, obj, request=None):
         self.obj = obj
         self._request = request
@@ -48,11 +51,11 @@ class SCIMMixin(object):
 
     @property
     def id(self):
-        return str(self.obj.scim_id)
+        return str(getattr(self.obj, self.id_field))
 
     @property
     def path(self):
-        return reverse(self.url_name, kwargs={'uuid': self.obj.scim_id})
+        return reverse(self.url_name, kwargs={'uuid': self.id})
 
     @property
     def location(self):
@@ -62,7 +65,7 @@ class SCIMMixin(object):
         self.obj.save()
 
     def delete(self):
-        self.obj.__class__.objects.filter(id=self.obj.scim_id).delete()
+        self.obj.__class__.objects.filter(id=self.id).delete()
 
     def handle_operations(self, operations):
         """
