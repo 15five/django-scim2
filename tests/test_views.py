@@ -36,12 +36,19 @@ def setUpModule():
     class TestViewsGroup(scim_models.AbstractSCIMGroupMixin):
         name = models.CharField('name', max_length=80, unique=True)
 
+        class Meta:
+            app_label = 'django_scim'
+
+
     # setup user
     class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
         scim_groups = models.ManyToManyField(
             TestViewsGroup,
             related_name="user_set",
         )
+
+        class Meta:
+            app_label = 'django_scim'
 
     USER_MODEL = TestViewsUser
     GROUP_MODEL = TestViewsGroup

@@ -10,23 +10,26 @@ from .utils import get_group_model
 
 
 class FilterQuery:
-    model = None
+    model_getter = None
     joins = ()
     attr_map = None
 
     @classmethod
+    def table_name(cls):
+        return cls.model_getter()._meta.db_table
+
+    @classmethod
     def search(cls, filter_query):
-        table_name = cls.model._meta.db_table
-        q = Query(filter_query, table_name, cls.attr_map, cls.joins)
-        return cls.model.objects.raw(q.sql, q.params)
+        q = Query(filter_query, cls.table_name(), cls.attr_map, cls.joins)
+        return cls.model_getter().objects.raw(q.sql, q.params)
 
 
 class UserFilterQuery(FilterQuery):
-    model = get_user_model()
+    model_getter = get_user_model
     attr_map = {}
 
 
 class GroupFilterQuery(FilterQuery):
-    model = get_group_model()
+    model_getter = get_group_model
     attr_map = {}
 
