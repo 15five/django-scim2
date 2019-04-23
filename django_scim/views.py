@@ -37,7 +37,7 @@ class SCIMView(View):
     @property
     def lookup_field(self):
         """Database field, possibly redefined in the adapter"""
-        return getattr(self.scim_adapter, 'id_field', default='scim_id')
+        return getattr(self.scim_adapter, 'id_field', 'scim_id')
 
     @property
     def model_cls(self):
