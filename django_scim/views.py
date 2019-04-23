@@ -57,7 +57,7 @@ class SCIMView(View):
     def scim_adapter(self):
         # pull from __class__ to avoid binding adapter class getter to
         # self instance and passing self to class getter
-            return self.__class__.scim_adapter_getter()
+        return self.__class__.scim_adapter_getter()
 
     def get_object(self):
         """Get object by configurable ID."""
@@ -366,6 +366,7 @@ class PatchView(object):
 class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
     scim_adapter_getter = get_user_adapter
     model_cls_getter = get_user_model
     parser = filters.SCIMUserFilterTransformer
@@ -374,6 +375,7 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
 class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
 
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
     scim_adapter_getter = get_group_adapter
     model_cls_getter = get_group_model
     parser = filters.SCIMGroupFilterTransformer
