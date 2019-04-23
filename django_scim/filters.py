@@ -19,7 +19,7 @@ class FilterQuery:
         return cls.model_getter()._meta.db_table
 
     @classmethod
-    def search(cls, filter_query):
+    def search(cls, filter_query, request=None):
         q = Query(filter_query, cls.table_name(), cls.attr_map, cls.joins)
         return cls.model_getter().objects.raw(q.sql, q.params)
 
@@ -32,4 +32,3 @@ class UserFilterQuery(FilterQuery):
 class GroupFilterQuery(FilterQuery):
     model_getter = get_group_model
     attr_map = {}
-
