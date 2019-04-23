@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class SCIMView(View):
-    lookup_field = 'scim_id'  # database field
+    lookup_field = 'scim_id'  # database field, overridden by subclasses
     lookup_url_kwarg = 'uuid'  # argument in django URL pattern
 
     implemented = True
@@ -366,6 +366,7 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
 
     scim_adapter_getter = get_user_adapter
     model_cls_getter = get_user_model
+    lookup_field = get_user_adapter().id_field
     parser = filters.SCIMUserFilterTransformer
 
 
@@ -375,6 +376,7 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView,
 
     scim_adapter_getter = get_group_adapter
     model_cls_getter = get_group_model
+    lookup_field = get_group_adapter().id_field
     parser = filters.SCIMGroupFilterTransformer
 
 
