@@ -57,7 +57,10 @@ class SCIMView(View):
     def scim_adapter(self):
         # pull from __class__ to avoid binding adapter class getter to
         # self instance and passing self to class getter
-        return self.__class__.scim_adapter_getter()
+        try:
+            return self.__class__.scim_adapter_getter()
+        except TypeError:
+            return self.__class__.scim_adapter_getter.__func__()  # Python 2 compatibility
 
     def get_object(self):
         """Get object by configurable ID."""
