@@ -140,7 +140,7 @@ class FilterMixin(object):
 
     def _search(self, request, query, start, count):
         try:
-            qs = self.parser.search(query, request)
+            qs = self.parser.search(query)
         except ValueError as e:
             raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
@@ -240,12 +240,12 @@ class SearchView(FilterMixin, SCIMView):
 
 class UserSearchView(SearchView):
     scim_adapter_getter = get_user_adapter
-    parser = filters.SCIMUserFilterTransformer
+    parser = filters.UserFilterQuery
 
 
 class GroupSearchView(SearchView):
     scim_adapter_getter = get_group_adapter
-    parser = filters.SCIMGroupFilterTransformer
+    parser = filters.GroupFilterQuery
 
 
 class GetView(object):
@@ -366,7 +366,7 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
 
     scim_adapter_getter = get_user_adapter
     model_cls_getter = get_user_model
-    parser = filters.SCIMUserFilterTransformer
+    parser = filters.UserFilterQuery
 
 
 class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
@@ -375,7 +375,7 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView,
 
     scim_adapter_getter = get_group_adapter
     model_cls_getter = get_group_model
-    parser = filters.SCIMGroupFilterTransformer
+    parser = filters.GroupFilterQuery
 
 
 class ServiceProviderConfigView(SCIMView):
