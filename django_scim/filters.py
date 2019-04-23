@@ -31,6 +31,13 @@ class QueryHelper:
             raise
 
     @classmethod
+    def model_cls(cls):
+        try:
+            return cls.model_cls_getter()
+        except TypeError:
+            return cls.model_cls_getter.__func__()
+
+    @classmethod
     def run_search_query(cls, parsed_query, request):
         try:
             sql, params = cls().transform(parsed_query)
@@ -38,7 +45,7 @@ class QueryHelper:
         except plyplus.PlyplusException as e:
             raise ValueError(e)
         else:
-            return cls.model_cls_getter().objects.raw(sql, params)
+            return cls.model_cls().objects.raw(sql, params)
 
 
 class SCIMUserFilterTransformer(QueryHelper, plyplus.STransformer):
