@@ -1,5 +1,9 @@
 CHANGE LOG
 ==========
+0.11.0
+------
+- Replace PyPlus with scim2-filter-parser for better filter parsing
+- Move tests out of django_scim app folder to root of repo
 
 0.10.7
 ------

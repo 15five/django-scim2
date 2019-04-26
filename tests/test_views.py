@@ -36,12 +36,19 @@ def setUpModule():
     class TestViewsGroup(scim_models.AbstractSCIMGroupMixin):
         name = models.CharField('name', max_length=80, unique=True)
 
+        class Meta:
+            app_label = 'django_scim'
+
+
     # setup user
     class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
         scim_groups = models.ManyToManyField(
             TestViewsGroup,
             related_name="user_set",
         )
+
+        class Meta:
+            app_label = 'django_scim'
 
     USER_MODEL = TestViewsUser
     GROUP_MODEL = TestViewsGroup
@@ -251,8 +258,10 @@ class FilterMixinTestCase(TestCase):
         self.assertEqual(obj_list, expected)
 
 
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
 class SearchTestCase(LoginMixin, TestCase):
     maxDiff = None
+    request = RequestFactory().get('/fake/request')
 
     def test_search_without_schema(self):
         """
@@ -273,10 +282,16 @@ class SearchTestCase(LoginMixin, TestCase):
         }
         self.assertEqual(expected, result)
 
-    def test_search_for_user_with_username_filter(self):
+    def test_search_for_user_with_username_filter_without_value(self):
         """
         Test POST /Users/.search/?filter=userName eq ""
         """
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+
         url = reverse('scim:users-search')
         body = json.dumps({
             'schemas': [constants.SchemaURI.SERACH_REQUEST],
@@ -295,6 +310,40 @@ class SearchTestCase(LoginMixin, TestCase):
             "itemsPerPage": 50,
             "startIndex": 1,
             "Resources": [],
+        }
+        self.assertEqual(expected, result)
+
+    def test_search_for_user_with_username_filter_with_value(self):
+        """
+        Test POST /Users/.search/?filter=userName eq "rford"
+        """
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        url = reverse('scim:users-search')
+        body = json.dumps({
+            'schemas': [constants.SchemaURI.SERACH_REQUEST],
+            'filter': 'userName eq "rford"',
+        })
+        resp = self.client.post(url, body, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+        location = urljoin(get_base_scim_location_getter()(), '/scim/v2/')
+        location = urljoin(location, 'Users/.search')
+        self.assertEqual(resp['Location'], location)
+
+        result = json.loads(resp.content.decode())
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 1,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            "Resources": [
+                ford.to_dict(),
+            ]
         }
         self.assertEqual(expected, result)
 

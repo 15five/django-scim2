@@ -26,6 +26,20 @@ def get_group_adapter():
     return scim_settings.GROUP_ADAPTER
 
 
+def get_user_filter_parser():
+    """
+    Return the user filter parser.
+    """
+    return scim_settings.USER_FILTER_PARSER
+
+
+def get_group_filter_parser():
+    """
+    Return the group filter parser.
+    """
+    return scim_settings.GROUP_FILTER_PARSER
+
+
 def get_service_provider_config_model():
     """
     Return the Service Provider Config model.

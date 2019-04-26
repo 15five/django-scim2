@@ -35,9 +35,7 @@ MIDDLEWARE = (
     'django_scim.middleware.SCIMAuthCheckMiddleware',
 )
 
-ROOT_URLCONF = 'django_scim.tests.urls'
-
-
+ROOT_URLCONF = 'tests.urls'
 
 TEMPLATES = [
     {
@@ -90,12 +88,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Speed up tests with noop password hasher
-PASSWORD_HASHERS = ('django_scim.tests.hashers.NoopPasswordHasher',)
+PASSWORD_HASHERS = ('tests.hashers.NoopPasswordHasher',)
 
 
 # -- Django SCIM specific settings --
 
 SCIM_SERVICE_PROVIDER = {
+    'USER_FILTER_PARSER': 'tests.filters.UserFilterQuery',
+    'GROUP_FILTER_PARSER': 'tests.filters.GroupFilterQuery',
     'NETLOC': 'localhost',
     'AUTHENTICATION_SCHEMES': [
         {
