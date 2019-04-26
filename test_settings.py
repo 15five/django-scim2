@@ -94,6 +94,8 @@ PASSWORD_HASHERS = ('tests.hashers.NoopPasswordHasher',)
 # -- Django SCIM specific settings --
 
 SCIM_SERVICE_PROVIDER = {
+    'USER_FILTER_PARSER': 'tests.filters.UserFilterQuery',
+    'GROUP_FILTER_PARSER': 'tests.filters.GroupFilterQuery',
     'NETLOC': 'localhost',
     'AUTHENTICATION_SCHEMES': [
         {

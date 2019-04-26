@@ -16,11 +16,12 @@ from django.urls import reverse
 
 from . import constants
 from . import exceptions
-from . import filters
 from .utils import get_all_schemas_getter
 from .utils import get_group_adapter
 from .utils import get_group_model
 from .utils import get_user_adapter
+from .utils import get_user_filter_parser
+from .utils import get_group_filter_parser
 from .utils import get_base_scim_location_getter
 from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
@@ -118,7 +119,7 @@ class SCIMView(View):
 
 class FilterMixin(object):
 
-    parser = None
+    parser_getter = None
     scim_adapter_getter = None
 
     def _page(self, request):
@@ -140,7 +141,7 @@ class FilterMixin(object):
 
     def _search(self, request, query, start, count):
         try:
-            qs = self.parser.search(query)
+            qs = self.__class__.parser_getter().search(query)
         except ValueError as e:
             raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
@@ -240,12 +241,12 @@ class SearchView(FilterMixin, SCIMView):
 
 class UserSearchView(SearchView):
     scim_adapter_getter = get_user_adapter
-    parser = filters.UserFilterQuery
+    parser_getter = get_user_filter_parser
 
 
 class GroupSearchView(SearchView):
     scim_adapter_getter = get_group_adapter
-    parser = filters.GroupFilterQuery
+    parser_getter = get_group_filter_parser
 
 
 class GetView(object):
@@ -366,7 +367,7 @@ class UsersView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, 
 
     scim_adapter_getter = get_user_adapter
     model_cls_getter = get_user_model
-    parser = filters.UserFilterQuery
+    parser_getter = get_user_filter_parser
 
 
 class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView, SCIMView):
@@ -375,7 +376,7 @@ class GroupsView(FilterMixin, GetView, PostView, PutView, PatchView, DeleteView,
 
     scim_adapter_getter = get_group_adapter
     model_cls_getter = get_group_model
-    parser = filters.GroupFilterQuery
+    parser_getter = get_group_filter_parser
 
 
 class ServiceProviderConfigView(SCIMView):
