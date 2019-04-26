@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 
 from scim2_filter_parser.query import Query
 
-from . import exceptions
 from .utils import get_group_model
 
 
@@ -32,3 +31,4 @@ class UserFilterQuery(FilterQuery):
 class GroupFilterQuery(FilterQuery):
     model_getter = get_group_model
     attr_map = {}
+
