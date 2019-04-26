@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from django_scim.filters import UserFilterQuery
+from tests.filters import UserFilterQuery
 
 
 class Users(TestCase):
