@@ -12,6 +12,7 @@ class FilterQuery:
     model_getter = None
     joins = ()
     attr_map = None
+    query_class = Query
 
     @classmethod
     def table_name(cls):
@@ -19,7 +20,10 @@ class FilterQuery:
 
     @classmethod
     def search(cls, filter_query, request=None):
-        q = Query(filter_query, cls.table_name(), cls.attr_map, cls.joins)
+        q = cls.query_class(filter_query, cls.table_name(), cls.attr_map, cls.joins)
+        if q.where_sql is None:
+            return cls.model_getter().objects.none()
+
         return cls.model_getter().objects.raw(q.sql, q.params)
 
 
