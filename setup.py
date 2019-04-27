@@ -69,7 +69,7 @@ setup(
     install_requires=[
         'python-dateutil>=2.6.0',
         'six',
-        'scim2-filter-parser==0.0.2',
+        'scim2-filter-parser==0.1.0',
     ],
     tests_require=[
         'mock',
