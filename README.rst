@@ -3,7 +3,7 @@ django-scim2
 
 |tests| |coverage| |docs|
 
-This is a partial provider-side implementation of the SCIM 2.0 [1]_
+This is a provider-side implementation of the SCIM 2.0 [1]_
 specification for use in Django.
 
 Note that currently the only supported database is Postgres.
