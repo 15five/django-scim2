@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Installs django-scim2
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import sys
 import unittest
@@ -9,21 +9,6 @@ import sys
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-def get_version():
-    path = os.path.join(BASE_DIR, 'django_scim', '__init__.py')
-    version_line = None
-    with open(path) as fp:
-        for line in fp:
-            if line.startswith('__version__'):
-                version_line = line
-                break
-    if not version_line:
-        raise ValueError('Unable to find version line in __init__.py')
-
-    version = version_line.split('=')[1].strip().strip("'")
-    return version
 
 
 def long_description():
@@ -54,7 +39,7 @@ def run_tests():
 
 setup(
     name='django-scim2',
-    version=get_version(),
+    version='0.11.0',
     description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
     url='https://github.com/15five/django-scim2',
     download_url='https://github.com/15five/django-scim2/archive/master.zip',
@@ -65,10 +50,10 @@ setup(
     keywords='django scim 2.0',
     license='MIT',
     long_description=long_description(),
-    packages=['django_scim'],
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     install_requires=[
         'python-dateutil>=2.6.0',
-        'six',
         'scim2-filter-parser==0.1.0',
     ],
     tests_require=[
