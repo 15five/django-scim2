@@ -32,10 +32,13 @@ logger = logging.getLogger(__name__)
 
 
 class SCIMView(View):
-    lookup_field = 'scim_id'  # database field
     lookup_url_kwarg = 'uuid'  # argument in django URL pattern
-
     implemented = True
+
+    @property
+    def lookup_field(self):
+        """Database field, possibly redefined in the adapter"""
+        return getattr(self.scim_adapter, 'id_field', 'scim_id')
 
     @property
     def model_cls(self):
