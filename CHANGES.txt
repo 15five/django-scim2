@@ -1,11 +1,13 @@
 CHANGE LOG
 ==========
 
-0.11.2
+0.12.0
 ------
 - Include schemas in packaged version. Thanks @stefanfoulis!
 - Fix #21. Store and return externalId
 - Fix #22. Handle more complicated PATH calls
+  Please note: the parse_path_and_value method on the SCIMMixin adapater
+  changed signature. Please update your code accordingly.
 
 0.11.1
 ------
