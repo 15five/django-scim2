@@ -24,7 +24,41 @@ class FilterQuery:
         if q.where_sql is None:
             return cls.model_getter().objects.none()
 
-        return cls.model_getter().objects.raw(q.sql, q.params)
+        sql, params = cls.get_raw_args(q, request)
+
+        return cls.model_getter().objects.raw(sql, params)
+
+    @classmethod
+    def get_raw_args(cls, q, request=None):
+        """
+        Return a Query object's SQL augmented with params from cls.get_extras.
+        """
+        sql, params = q.sql, q.params
+
+        extra_sql, extra_params = cls.get_extras(q, request)
+        if extra_sql:
+            if "'%s'" in extra_sql:
+                raise ValueError(
+                    'Dangerous use of quotes around place holder. Please see '
+                    'https://docs.djangoproject.com/en/2.2/ref/models/querysets/#extra '
+                    'for more details.'
+                )
+
+            sql = sql.rstrip(';') + extra_sql + ';'
+            params += extra_params
+
+        return sql, params
+
+    @classmethod
+    def get_extras(cls, q, request=None) -> (str, list):
+        """
+        Return extra SQL and params to be attached to end of current Query's
+        SQL and params.
+
+        For example:
+            return 'AND tenant_id = %s', [request.user.tenant_id]
+        """
+        return '', []
 
 
 class UserFilterQuery(FilterQuery):
