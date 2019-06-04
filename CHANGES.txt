@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.11.2
+------
+- Include schemas in packaged version. Thanks @stefanfoulis!
+- Fix #21. Store and return externalId
+
 0.11.1
 ------
 - Add logic to add extra SQL to filters
