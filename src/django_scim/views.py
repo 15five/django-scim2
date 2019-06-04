@@ -1,6 +1,6 @@
 import json
 import logging
-from six.moves.urllib.parse import urljoin
+from urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -10,7 +10,6 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from django.utils import six
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 
@@ -95,7 +94,7 @@ class SCIMView(View):
         except Exception as e:
             if not isinstance(e, exceptions.SCIMException):
                 logger.exception('Unable to complete SCIM call.')
-                e = exceptions.SCIMException(six.text_type(e))
+                e = exceptions.SCIMException(str(e))
 
             content = json.dumps(e.to_dict())
             return HttpResponse(content=content,
@@ -212,7 +211,7 @@ class FilterMixin(object):
                 'Resources': resources,
             }
         except ValueError as e:
-            raise exceptions.BadRequestError(six.text_type(e))
+            raise exceptions.BadRequestError(str(e))
         else:
             content = json.dumps(doc)
             return HttpResponse(content=content,

@@ -5,6 +5,7 @@ CHANGE LOG
 ------
 - Include schemas in packaged version. Thanks @stefanfoulis!
 - Fix #21. Store and return externalId
+- Fix #22. Handle more complicated PATH calls
 
 0.11.1
 ------

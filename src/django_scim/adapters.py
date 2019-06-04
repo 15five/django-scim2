@@ -16,7 +16,8 @@ An adapter is instantiated with a model instance. Eg::
     ...
 
 """
-from six.moves.urllib.parse import urljoin
+from typing import Optional, Union
+from urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -98,6 +99,25 @@ class SCIMMixin(object):
         of 'add', 'remove', or 'replace'. This method iterates through all of the
         operations in ``operations`` and calls the appropriate handler (defined
         on the appropriate adapter) for each.
+
+        Django-scim2 only provides a partial implementation of PATCH call
+        handlers. The RFC (https://tools.ietf.org/html/rfc7644#section-3.5.2)
+        specifies a number of requirements for a full PATCH implementation.
+        This implementation does not meet all of those requirements. For
+        example, these are some features that have been left out.
+
+        Add Operations:
+            - If the target location does not exist, the attribute and value
+              are added.
+        Remove Operations:
+            - If the target location is a multi-valued attribute and a complex
+              filter is specified comparing a "value", the values matched by the
+              filter are removed.  If no other values remain after removal of
+              the selected values, the multi-valued attribute SHALL be
+              considered unassigned.
+        Replace Operations:
+            - If the target location path specifies an attribute that does not
+              exist, the service provider SHALL treat the operation as an "add".
         """
         for operation in operations:
             path = operation.get('path')
@@ -106,27 +126,88 @@ class SCIMMixin(object):
             path, value = self.parse_path_and_value(path, value)
 
             op_code = operation.get('op').lower()
+
+            if op_code not in constants.VALID_PATCH_OPS:
+                raise exceptions.BadRequestError(f'Unknown PATCH op "{op_code}"')
+
+            if op_code == 'remove' and not path:
+                msg = f'"path" must be specified during "remove" PATCH calls'
+                raise exceptions.BadRequestError(msg, scim_type='noTarget')
+
             op_code = 'handle_' + op_code
             handler = getattr(self, op_code)
 
             handler(path, value, operation)
 
-    def parse_path_and_value(self, path, value):
+    def parse_path_and_value(self,
+                             path: Optional[str],
+                             value: Union[str, list, dict]) -> (tuple, Union[str, list, dict]):
         """
         Return new path and value given an original path and value.
 
-        This method can be overridden to provide a more usable path and value within the
-        associated handle methods.
+        This method can be overridden to provide a more usable path and value
+        within the associated handle methods.
         """
+        # Convert all path's to 3-tuple (attr, subattr, Uri) in preparation for
+        # use of scim2-filter-parser. Complex paths can path through as the logic
+        # to handle them is not in place yet.
+        if path and not self.is_complex_path(path):
+            path = self.split_path(path)
+
+        elif not path and isinstance(value, dict):
+            # If there is no path and value is a dict, we assume that each
+            # key in the dict is an attribute path. Let's convert attribute
+            # paths to 3-tuples to have a uniform API.
+            value = {self.split_path(k): v for k, v in value.items()}
+
         return path, value
 
-    def handle_add(self, path, value, operation):
+    @staticmethod
+    def is_complex_path(path):
+        return '[' in path and ']' in path
+
+    @staticmethod
+    def split_path(path):
+        """
+        Convert path to 3-tuple of (attr, subattr, uri) if possible
+        """
+        match = constants.PATH_RE_PAT.match(path)
+        if match:
+            path = (
+                match.group('attr'),
+                match.group('subattr'),
+                match.group('uri')
+            )
+        return path
+
+    def handle_add(self,
+                   path: Optional[tuple],
+                   value: Union[str, list, dict],
+                   operation: dict):
+        """
+        Handle add operations per:
+        https://tools.ietf.org/html/rfc7644#section-3.5.2.1
+        """
         raise exceptions.NotImplementedError
 
-    def handle_remove(self, path, value, operation):
+    def handle_remove(self,
+                      path: tuple,
+                      value: Union[str, list, dict],
+                      operation: dict):
+        """
+        Handle remove operations per:
+        https://tools.ietf.org/html/rfc7644#section-3.5.2.2
+        """
         raise exceptions.NotImplementedError
 
-    def handle_replace(self, path, value, operation):
+    def handle_replace(self,
+                       path: Optional[tuple],
+                       value: Union[str, list, dict],
+                       operation: dict):
+        """
+        Handle replace operations per:
+        https://tools.ietf.org/html/rfc7644#section-3.5.2.3
+        """
         raise exceptions.NotImplementedError
 
 
@@ -140,6 +221,19 @@ class SCIMUser(SCIMMixin):
     # not great, could be more decoupled. But \__( )__/ whatevs.
     url_name = 'scim:users'
     resource_type = 'User'
+
+    # In order to start consolidating the frameworks for referencing
+    # attributes with scim2-filter-parser, a attribute map like
+    # the one used in that library is created here.
+    ATTR_MAP = {
+        # attr, sub attr, uri
+        ('userName', None, None): 'username',
+        ('name', 'familyName', None): 'last_name',
+        ('familyName', None, None): 'last_name',
+        ('name', 'givenName', None): 'first_name',
+        ('givenName', None, None): 'first_name',
+        ('active', None, None): 'is_active',
+    }
 
     @property
     def display_name(self):
@@ -243,10 +337,7 @@ class SCIMUser(SCIMMixin):
         self.obj.last_name = last_name or ''
 
         emails = d.get('emails', [])
-        primary_emails = [e['value'] for e in emails if e.get('primary')]
-        emails = primary_emails + emails
-        email = emails[0] if emails else None
-        self.obj.email = email
+        self.parse_emails(emails)
 
         cleartext_password = d.get('password')
         if cleartext_password:
@@ -277,38 +368,66 @@ class SCIMUser(SCIMMixin):
             }
         }
 
-    def handle_replace(self, path, value, operation):
-        """
-        Handle the replace operations.
-        """
-        attr_map = {
-            'familyName': 'last_name',
-            'givenName': 'first_name',
-            'userName': 'username',
-            'active': 'is_active',
-        }
+    def parse_emails(self, value: Optional[list]):
+        if value:
+            email = None
+            if isinstance(value, list):
+                primary_emails = sorted(
+                    (e for e in value if e.get('primary')),
+                    key=lambda d: d.get('value')
+                )
+                secondary_emails = sorted(
+                    (e for e in value if not e.get('primary')),
+                    key=lambda d: d.get('value')
+                )
 
-        attrs = value or {}
-
-        for attr, attr_value in attrs.items():
-            if attr in attr_map:
-                setattr(self.obj, attr_map.get(attr), attr_value)
-            elif attr == 'emails':
-                primary_emails = [e for e in attr_value if e.get('primary')]
-                if primary_emails:
-                    email = primary_emails[0].get('value')
-                elif attr_value:
-                    email = attr_value[0].get('value')
+                emails = primary_emails + secondary_emails
+                if emails:
+                    email = emails[0].get('value')
                 else:
                     raise exceptions.BadRequestError('Invalid email value')
 
-                try:
-                    validator = core.validators.EmailValidator()
-                    validator(email)
-                except core.exceptions.ValidationError:
-                    raise exceptions.BadRequestError('Invalid email value')
+            elif isinstance(value, dict):
+                # if value is a dict, let's assume it contains the primary email.
+                # OneLogin sends a dict despite the spec:
+                #   https://tools.ietf.org/html/rfc7643#section-4.1.2
+                #   https://tools.ietf.org/html/rfc7643#section-8.2
+                email = (value.get('value') or '').strip()
 
-                self.obj.email = email
+            self.validate_email(email)
+
+            self.obj.email = email
+
+    @staticmethod
+    def validate_email(email):
+        try:
+            core.validators.EmailValidator()(email)
+        except core.exceptions.ValidationError:
+            raise exceptions.BadRequestError('Invalid email value')
+
+    def handle_replace(self,
+                       path: Optional[str],
+                       value: Union[str, list, dict],
+                       operation: dict):
+        """
+        Handle the replace operations.
+        """
+        if path and isinstance(value, str):
+            # Restructure for use in loop below.
+            value = {path: value}
+
+        if not isinstance(value, dict):
+            raise exceptions.NotImplementedError(
+                'PATCH replace operation with value type of '
+                '{type(value)} is not implemented'
+            )
+
+        for path, value in (value or {}).items():
+            if path in self.ATTR_MAP:
+                setattr(self.obj, self.ATTR_MAP.get(path), value)
+
+            elif path == ('emails', None, None):
+                self.parse_emails(value)
 
             else:
                 raise exceptions.NotImplementedError('Not Implemented')
@@ -424,7 +543,7 @@ class SCIMGroup(SCIMMixin):
         """
         Handle add operations.
         """
-        if path == 'members':
+        if path == ('members', None, None):
             members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
@@ -442,7 +561,7 @@ class SCIMGroup(SCIMMixin):
         """
         Handle remove operations.
         """
-        if path == 'members':
+        if path == ('members', None, None):
             members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
@@ -460,7 +579,7 @@ class SCIMGroup(SCIMMixin):
         """
         Handle the replace operations.
         """
-        if path == 'name':
+        if path == ('name', None, None):
             name = value[0].get('value')
             self.obj.name = name
             self.obj.save()
