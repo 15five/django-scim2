@@ -1,5 +1,10 @@
 CHANGE LOG
 ==========
+
+0.11.1
+------
+- Add logic to add extra SQL to filters
+
 0.11.0
 ------
 - Replace PyPlus with scim2-filter-parser for better filter parsing
