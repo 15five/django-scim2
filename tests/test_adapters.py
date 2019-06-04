@@ -132,6 +132,7 @@ class SCIMUserTestCase(TestCase):
             last_name='Ford',
             username='rford',
             email='rford@ww.com',
+            scim_external_id='Anthony.Hopkins',
         )
         ford.scim_groups.add(behavior)
 
@@ -160,6 +161,7 @@ class SCIMUserTestCase(TestCase):
             'active': True,
             'id': '1',
             'emails': [{'primary': True, 'value': 'rford@ww.com'}],
+            'externalId': 'Anthony.Hopkins',
         }
 
         ford = get_user_adapter()(ford, self.request)
@@ -263,6 +265,7 @@ class SCIMGroupTestCase(TestCase):
     def test_to_dict(self):
         behavior = get_group_model().objects.create(
             name='Behavior Group',
+            scim_external_id='ww.bg',
         )
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -286,7 +289,8 @@ class SCIMGroupTestCase(TestCase):
                     '$ref': u'https://localhost/scim/v2/Users/1'
                 }
             ],
-            'schemas': [constants.SchemaURI.GROUP]
+            'schemas': [constants.SchemaURI.GROUP],
+            'externalId': 'ww.bg',
         }
 
         behavior = get_group_adapter()(behavior, self.request)

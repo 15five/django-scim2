@@ -1,3 +1,0 @@
-Django>=1.11.13
-PlyPlus==0.7.5
-python-dateutil==2.7.3
