@@ -61,6 +61,29 @@ class SCIMMixin(object):
     def location(self):
         return urljoin(get_base_scim_location_getter()(self.request), self.path)
 
+    def to_dict(self):
+        """
+        Return a ``dict`` conforming to the object's SCIM Schema,
+        ready for conversion to a JSON object.
+        """
+        d = {
+            'id': self.id,
+            'externalId': self.obj.scim_external_id,
+        }
+
+        return d
+
+    def from_dict(self, d):
+        """
+        Consume a ``dict`` conforming to the object's SCIM Schema, updating the
+        internal object with data from the ``dict``.
+
+        This method is overridden and called by subclass adapters. Please make
+        changes there.
+        """
+        scim_external_id = d.get('externalId')
+        self.obj.scim_external_id = scim_external_id or ''
+
     def save(self):
         self.obj.save()
 
@@ -111,7 +134,7 @@ class SCIMUser(SCIMMixin):
     """
     Adapter for adding SCIM functionality to a Django User object.
 
-    This adapter can be overriden; see the ``USER_ADAPTER`` setting
+    This adapter can be overridden; see the ``USER_ADAPTER`` setting
     for details.
     """
     # not great, could be more decoupled. But \__( )__/ whatevs.
@@ -176,9 +199,9 @@ class SCIMUser(SCIMMixin):
         Return a ``dict`` conforming to the SCIM User Schema,
         ready for conversion to a JSON object.
         """
-        d = {
+        d = super().to_dict()
+        d.update({
             'schemas': [constants.SchemaURI.USER],
-            'id': self.id,
             'userName': self.obj.username,
             'name': {
                 'givenName': self.obj.first_name,
@@ -190,7 +213,7 @@ class SCIMUser(SCIMMixin):
             'active': self.obj.is_active,
             'groups': self.groups,
             'meta': self.meta,
-        }
+        })
 
         return d
 
@@ -206,8 +229,12 @@ class SCIMUser(SCIMMixin):
             scim_user.from_dict(d)
             scim_user.save()
         """
+        super().from_dict(d)
+
         username = d.get('userName')
         self.obj.username = username or ''
+
+        self.obj.scim_username = self.obj.username
 
         first_name = d.get('name', {}).get('givenName')
         self.obj.first_name = first_name or ''
@@ -293,7 +320,7 @@ class SCIMGroup(SCIMMixin):
     """
     Adapter for adding SCIM functionality to a Django Group object.
 
-    This adapter can be overriden; see the ``GROUP_ADAPTER``
+    This adapter can be overridden; see the ``GROUP_ADAPTER``
     setting for details.
     """
     # not great, could be more decoupled. But \__( )__/ whatevs.
@@ -346,13 +373,14 @@ class SCIMGroup(SCIMMixin):
         Return a ``dict`` conforming to the SCIM Group Schema,
         ready for conversion to a JSON object.
         """
-        return {
+        d = super().to_dict()
+        d.update({
             'schemas': [constants.SchemaURI.GROUP],
-            'id': self.id,
             'displayName': self.display_name,
             'members': self.members,
             'meta': self.meta,
-        }
+        })
+        return d
 
     def from_dict(self, d):
         """
@@ -366,6 +394,8 @@ class SCIMGroup(SCIMMixin):
             scim_group.from_dict(d)
             scim_group.save()
         """
+        super().from_dict(d)
+
         name = d.get('displayName')
         self.obj.name = name or ''
 

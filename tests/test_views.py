@@ -504,7 +504,10 @@ class UserTestCase(LoginMixin, TestCase):
     def test_post(self):
         url = reverse('scim:users')
         data = {
-            'schemas': [constants.SchemaURI.USER],
+            'schemas': [
+                constants.SchemaURI.USER,
+                constants.SchemaURI.ENTERPRISE_USER,
+            ],
             'userName': 'ehughes',
             'name': {
                 'givenName': 'Elsie',
@@ -512,6 +515,7 @@ class UserTestCase(LoginMixin, TestCase):
             },
             'password': 'notTooSecret',
             'emails': [{'value': 'ehughes@westworld.com', 'primary': True}],
+            'externalId': 'Shannon.Woodward',
         }
         body = json.dumps(data)
         resp = self.client.post(url, body, content_type=constants.SCIM_CONTENT_TYPE)
@@ -522,6 +526,10 @@ class UserTestCase(LoginMixin, TestCase):
         self.assertEqual(elsie.first_name, 'Elsie')
         self.assertEqual(elsie.last_name, 'Hughes')
         self.assertEqual(elsie.email, 'ehughes@westworld.com')
+
+        self.assertEqual(elsie.scim_id, str(elsie.id))
+        self.assertEqual(elsie.scim_username, 'ehughes')
+        self.assertEqual(elsie.scim_external_id, 'Shannon.Woodward')
 
         # test response
         elsie = get_user_adapter()(elsie, self.request)

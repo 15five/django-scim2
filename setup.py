@@ -24,7 +24,7 @@ def run_tests():
     from django.test.utils import get_runner
     from django.conf import settings
 
-    # eg. TEST_FILTER=django_scim.tests.test_views.UserTestCase.test_get_user_by_id
+    # eg. TEST_FILTER=tests.test_views.UserTestCase.test_get_user_by_id
     test_filter = os.environ.get('TEST_FILTER')
     test_labels = [test_filter] if test_filter else []
 
@@ -53,7 +53,8 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=[
-        'python-dateutil>=2.6.0',
+        'Django>=1.11.13',
+        'python-dateutil>=2.7.3',
         'scim2-filter-parser==0.1.0',
     ],
     tests_require=[
