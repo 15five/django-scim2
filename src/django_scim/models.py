@@ -1,4 +1,4 @@
-from six.moves.urllib.parse import urljoin
+from urllib.parse import urljoin
 
 from django.db import models
 from django.urls import reverse

@@ -14,9 +14,6 @@ This module provides the `scim_settings` object, that is used to access
 SCIM Service Provider settings, checking for user settings first, then falling
 back to the defaults.
 """
-from __future__ import unicode_literals
-from six import string_types
-
 import importlib
 
 from django.conf import settings
@@ -69,7 +66,7 @@ def perform_import(val, setting_name):
     If the given setting is a string import notation,
     then perform the necessary import or imports.
     """
-    if isinstance(val, string_types):
+    if isinstance(val, str):
         return import_from_string(val, setting_name)
     elif isinstance(val, (list, tuple)):
         return [import_from_string(item, setting_name) for item in val]

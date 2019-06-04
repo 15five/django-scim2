@@ -676,6 +676,7 @@ class UserTestCase(LoginMixin, TestCase):
         resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
+    @skip('No support for complex PATCH paths yet')
     def test_patch_replace_with_complex_path_3(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -691,8 +692,8 @@ class UserTestCase(LoginMixin, TestCase):
           ],
           "Operations": [
             {
-              "op": "Add",
-              "path": "addresses[type eq \"work\"]",
+              "op": "Replace",
+              "path": "addresses[type eq \\"work\\"]",
               "value": "Zone 3"
             }
           ]
@@ -702,6 +703,7 @@ class UserTestCase(LoginMixin, TestCase):
         resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
         self.assertEqual(resp.status_code, 200, resp.content.decode())
 
+    @skip('No support for complex PATCH paths yet')
     def test_patch_replace_with_complex_path_4(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -717,8 +719,8 @@ class UserTestCase(LoginMixin, TestCase):
           ],
           "Operations": [
             {
-              "op": "Add",
-              "path": "addresses[type eq \"work\"].locality",
+              "op": "Replace",
+              "path": "addresses[type eq \\"work\\"].locality",
               "value": "Zone 3"
             }
           ]

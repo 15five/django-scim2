@@ -204,13 +204,35 @@ class SCIMMixinPathParserTestCase(TestCase):
             ("addresses[type eq \"work\"].locality", 1),
             ("addresses[type eq \"work\"].postalCode", 1),
             ("addresses[type eq \"work\"].streetAddress", 1),
-            ("externalId", 1),
-            ("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department", 1),
         ]
 
         func = SCIMMixin(None).parse_path_and_value
         result_paths = list(map(lambda x: func(*x), paths_and_values))
         self.assertEqual(result_paths, paths_and_values)
+
+    def test_correct_path_tuples(self):
+        """
+        Test paths regex
+        """
+        paths_and_expected_values = [
+            (
+                'externalId',
+                ('externalId', None, None),
+            ),
+            (
+                'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department',
+                ('department', None, 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User'),
+            ),
+            (
+                'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:name.familyName',
+                ('name', 'familyName', 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User'),
+            ),
+        ]
+
+        func = SCIMMixin(None).parse_path_and_value
+        for path, expected_result in paths_and_expected_values:
+            result, _ = func(path, None)
+            self.assertEqual(result, expected_result)
 
 
 @override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
