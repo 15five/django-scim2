@@ -1,12 +1,27 @@
 CHANGE LOG
 ==========
 
+0.12.1
+------
+- Improve PATCH paths passed into handlers.
+
+  If you have custom handlers for patch calls defined in your adapters file
+  (eg. def handle_add(path, value, operation): ...) then you will need to 
+  update your handlers to accept a 3-tuple in place of the current string held
+  by path. A quick fix for this is to add the following line to the beginning of
+  each handler:
+
+      path, subattr, uri = path
+
+  Thanks for your patience as we migrate to a better system for handling PATCH
+  paths.
+
 0.12.0
 ------
 - Include schemas in packaged version. Thanks @stefanfoulis!
 - Fix #21. Store and return externalId
 - Fix #22. Handle more complicated PATH calls
-  Please note: the parse_path_and_value method on the SCIMMixin adapater
+  Please note: the parse_path_and_value method on the SCIMMixin adapter
   changed signature. Please update your code accordingly.
 
 0.11.1

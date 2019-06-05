@@ -141,7 +141,7 @@ class SCIMMixin(object):
 
     def parse_path_and_value(self,
                              path: Optional[str],
-                             value: Union[str, list, dict]) -> (tuple, Union[str, list, dict]):
+                             value: Union[str, list, dict]) -> (Optional[tuple], Union[str, list, dict]):
         """
         Return new path and value given an original path and value.
 
@@ -154,10 +154,15 @@ class SCIMMixin(object):
         if path and not self.is_complex_path(path):
             path = self.split_path(path)
 
+        elif path and self.is_complex_path(path):
+            # Convert path to 3-tuple format
+            path = path, None, None
+
         elif not path and isinstance(value, dict):
             # If there is no path and value is a dict, we assume that each
             # key in the dict is an attribute path. Let's convert attribute
             # paths to 3-tuples to have a uniform API.
+            path = None
             value = {self.split_path(k): v for k, v in value.items()}
 
         return path, value
@@ -169,7 +174,7 @@ class SCIMMixin(object):
     @staticmethod
     def split_path(path):
         """
-        Convert path to 3-tuple of (attr, subattr, uri) if possible
+        Convert path to 3-tuple of (attr, subattr, uri) if possible.
         """
         match = constants.PATH_RE_PAT.match(path)
         if match:
@@ -406,7 +411,7 @@ class SCIMUser(SCIMMixin):
             raise exceptions.BadRequestError('Invalid email value')
 
     def handle_replace(self,
-                       path: Optional[str],
+                       path: Optional[tuple],
                        value: Union[str, list, dict],
                        operation: dict):
         """

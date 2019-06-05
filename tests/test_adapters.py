@@ -208,7 +208,8 @@ class SCIMMixinPathParserTestCase(TestCase):
 
         func = SCIMMixin(None).parse_path_and_value
         result_paths = list(map(lambda x: func(*x), paths_and_values))
-        self.assertEqual(result_paths, paths_and_values)
+        expected = [((a, None, None), b) for a, b in paths_and_values]
+        self.assertEqual(result_paths, expected)
 
     def test_correct_path_tuples(self):
         """
