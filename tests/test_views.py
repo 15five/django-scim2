@@ -700,8 +700,9 @@ class UserTestCase(LoginMixin, TestCase):
         }
         '''
         url = reverse('scim:users', kwargs={'uuid': ford.id})
-        resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
-        self.assertEqual(resp.status_code, 200, resp.content.decode())
+        with mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handle_replace:
+            self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+            handle_replace.assert_called_with()
 
     @skip('No support for complex PATCH paths yet')
     def test_patch_replace_with_complex_path_4(self):
@@ -727,8 +728,126 @@ class UserTestCase(LoginMixin, TestCase):
         }
         '''
         url = reverse('scim:users', kwargs={'uuid': ford.id})
-        resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
-        self.assertEqual(resp.status_code, 200, resp.content.decode())
+        with mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handle_replace:
+            self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+            handle_replace.assert_called_with()
+
+    @skip('No support for complex PATCH paths yet')
+    def test_patch_replace_with_complex_path_real_example_1(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        data = '''
+        {
+          "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+          ],
+          "Operations": [
+            {
+              "op": "Add",
+              "path": "addresses[type eq \\"work\\"].country",
+              "value": "United States"
+            },
+            {
+              "op": "Add",
+              "path": "addresses[type eq \\"work\\"].locality",
+              "value": "West"
+            },
+            {
+              "op": "Add",
+              "path": "addresses[type eq \\"work\\"].postalCode",
+              "value": "12345"
+            },
+            {
+              "op": "Add",
+              "path": "addresses[type eq \\"work\\"].formatted",
+              "value": "Ext. 127"
+            },
+            {
+              "op": "Add",
+              "path": "addresses[type eq \\"work\\"].region",
+              "value": "WW"
+            },
+            {
+              "op": "Add",
+              "path": "addresses[type eq \\"work\\"].streetAddress",
+              "value": "123 Wester Lane, Suite 456"
+            },
+            {
+              "op": "Add",
+              "path": "phoneNumbers[type eq \\"fax\\"].value",
+              "value": "+1 234-456-7890"
+            },
+            {
+              "op": "Add",
+              "path": "phoneNumbers[type eq \\"mobile\\"].value",
+              "value": "+1 234-456-7890"
+            },
+            {
+              "op": "Add",
+              "path": "phoneNumbers[type eq \\"work\\"].value",
+              "value": "+1 234-456-7890"
+            },
+            {
+              "op": "Add",
+              "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department",
+              "value": "Administrative"
+            }
+          ]
+        }
+        '''
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        with mock.patch('django_scim.adapters.SCIMUser.handle_add') as handle_add:
+            self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+            handle_add.assert_called_with()
+
+    @skip('No support for complex PATCH paths yet')
+    def test_patch_replace_with_complex_path_real_example_2(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        data = '''
+        {
+          "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+          ],
+          "Operations": [
+            {
+              "op": "Replace",
+              "path": "active",
+              "value": "False"
+            },
+            {
+              "op": "Replace",
+              "path": "emails[type eq \\"work\\"].value",
+              "value": "Test.User@ww.com"
+            },
+            {
+              "op": "Replace",
+              "path": "userName",
+              "value": "8a6bcff856484461976bb4f581453c93Test.User@ww.com"
+            }
+          ]
+        }
+        '''
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        expected_args = [
+            (('active', None, None), 'False', {'op': 'Replace', 'path': 'active', 'value': 'False'}),
+            (('emails', 'value', None), 'Test.User@ww.com', {'op': 'Replace', 'path': 'emails[type eq "work"].value', 'value': 'Test.User@ww.com'}),
+            (('userName', None, None), '8a6bcff856484461976bb4f581453c93Test.User@ww.com', {'op': 'Replace', 'path': 'userName', 'value': '8a6bcff856484461976bb4f581453c93Test.User@ww.com'}),
+        ]
+        with mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handle_replace:
+            self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+            for call, expected_args in zip(handle_replace.mock_calls, expected_args):
+                self.assertEquals(call.args, expected_args)
 
     def test_patch_atomic(self):
         ford = get_user_model().objects.create(
