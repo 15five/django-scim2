@@ -28,6 +28,10 @@ class SCIMException(Exception):
         return d
 
 
+class AuthorizationError(SCIMException):
+    status = 401
+
+
 class NotFoundError(SCIMException):
     status = 404
 
