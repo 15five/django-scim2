@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.12.3
+------
+- Retain capitalization in filter queries
+- Add tests
+
 0.12.2
 ------
 - Add AuthorizationError to exceptions

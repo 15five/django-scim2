@@ -1,3 +1,5 @@
+import unittest
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import connection
@@ -192,6 +194,148 @@ class SCIMUserTestCase(TestCase):
         self.assertEqual(ford.resource_type_dict(), expected)
 
 
+@override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
+class SCIMHandleOperationsTestCase(TestCase):
+    maxDiff = None
+    request = RequestFactory().get('/fake/request')
+
+    def test_handle_replace_simple(self):
+        operations = [
+            {
+                "op": "Replace",
+                "path": "externalId",
+                "value": "Robert.Ford"
+            },
+        ]
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        expected = (
+            ('externalId', None, None),
+            'Robert.Ford',
+            operations[0]
+        )
+
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
+            ford.handle_operations(operations)
+            handler.assert_called_with(*expected)
+
+    def test_handle_replace_complex(self):
+        operations = [
+            {
+                "op": "Replace",
+                "path": "name.givenName",
+                "value": "Robert"
+            },
+        ]
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        expected = (
+            ('name', 'givenName', None),
+            'Robert',
+            operations[0]
+        )
+
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
+            ford.handle_operations(operations)
+            handler.assert_called_with(*expected)
+
+    def test_handle_add_simple(self):
+        operations = [
+            {
+                "op": "Add",
+                "path": "externalId",
+                "value": "Robert.Ford"
+            },
+        ]
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        expected = (
+            ('externalId', None, None),
+            'Robert.Ford',
+            operations[0]
+        )
+
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+            ford.handle_operations(operations)
+            handler.assert_called_with(*expected)
+
+    def test_handle_add_complex_1(self):
+        operations = [
+            {
+                "op": "Add",
+                "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department",
+                "value": "Design"
+            }
+        ]
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        expected = (
+            ('department', None, 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User'),
+            'Design',
+            operations[0]
+        )
+
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+            ford.handle_operations(operations)
+            handler.assert_called_with(*expected)
+
+    @unittest.skip
+    def test_handle_add_complex_2(self):
+        operations = [
+            {
+                "op": "Add",
+                "path": "addresses[type eq \"work\"].country",
+                "value": "Sector 9"
+            }
+        ]
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        expected = (
+            ('addresses', 'country', None),
+            'Sector 9',
+            operations[0]
+        )
+
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.test_handle_add') as handler:
+            ford.handle_operations(operations)
+            handler.assert_called_with(*expected)
+
+
 class SCIMMixinPathParserTestCase(TestCase):
     maxDiff = None
 
@@ -339,4 +483,3 @@ class SCIMGroupTestCase(TestCase):
         }
 
         self.assertEqual(behavior.resource_type_dict(), expected)
-

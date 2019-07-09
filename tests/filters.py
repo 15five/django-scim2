@@ -7,7 +7,7 @@ from django_scim.utils import get_group_model
 class UserFilterQuery(FilterQuery):
     model_getter = get_user_model
     attr_map = {
-        ('username', None, None): 'username',
+        ('userName', None, None): 'username',
     }
 
 
