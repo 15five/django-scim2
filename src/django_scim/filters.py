@@ -3,7 +3,7 @@ Transform filter query into QuerySet
 """
 from django.contrib.auth import get_user_model
 
-from scim2_filter_parser.query import Query
+from scim2_filter_parser.queries.sql import SQLQuery
 
 from .utils import get_group_model
 
@@ -12,7 +12,7 @@ class FilterQuery:
     model_getter = None
     joins = ()
     attr_map = None
-    query_class = Query
+    query_class = SQLQuery
 
     @classmethod
     def table_name(cls):

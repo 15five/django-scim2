@@ -55,7 +55,7 @@ setup(
     install_requires=[
         'Django>=1.11.13',
         'python-dateutil>=2.7.3',
-        'scim2-filter-parser==0.1.1',
+        'scim2-filter-parser==0.2.0',
     ],
     tests_require=[
         'mock',
