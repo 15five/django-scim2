@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.12.7
+------
+- Refactor location of ATTR_MAP, placed in filters.py
+- Fixed NameError
+
+
 0.12.6
 ------
 - Refactor ComplexAttrPaths to use custom class
