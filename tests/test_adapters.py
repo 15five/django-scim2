@@ -350,10 +350,31 @@ class SCIMMixinPathParserTestCase(TestCase):
             ("addresses[type eq \"work\"].streetAddress", 1),
         ]
 
+        expected_paths_and_values = [
+            {
+                'path': "addresses[type eq \"work\"].country",
+                'attr_paths': [('addresses', 'type', None), ('addresses', 'country', None)]
+            },
+            {
+                'path': "addresses[type eq \"work\"].locality",
+                'attr_paths': [('addresses', 'type', None), ('addresses', 'locality', None)]
+            },
+            {
+                'path': "addresses[type eq \"work\"].postalCode",
+                'attr_paths': [('addresses', 'type', None), ('addresses', 'postalCode', None)]
+            },
+            {
+                'path': "addresses[type eq \"work\"].streetAddress",
+                'attr_paths': [('addresses', 'type', None), ('addresses', 'streetAddress', None)]
+            }
+        ]
+
+
         func = SCIMMixin(None).parse_path_and_value
         result_paths = list(map(lambda x: func(*x), paths_and_values))
-        expected = [((a, None, None), b) for a, b in paths_and_values]
-        self.assertEqual(result_paths, expected)
+        for (path_obj, _), expected in zip(result_paths, expected_paths_and_values):
+            self.assertEqual(path_obj.path, expected['path'])
+            self.assertEqual(path_obj.attr_paths, expected['attr_paths'])
 
     def test_correct_path_tuples(self):
         """
