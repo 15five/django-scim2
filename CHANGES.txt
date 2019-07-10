@@ -1,6 +1,17 @@
 CHANGE LOG
 ==========
 
+0.12.6
+------
+- Refactor ComplexAttrPaths to use custom class
+
+  This changes the API for PATCH handlers.
+  Handlers will take a 3-tuple as before and now, additionally,
+  a ComplexAttrPath object that contains information regarding
+  the complex path. Handlers look for this object to determine
+  if they need to perform extra handling to determine the attribute
+  that needs to be updated
+
 0.12.5
 ------
 - Upgrade dependency: scim2-filter-parser -> 0.2.1
