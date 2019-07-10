@@ -1,9 +1,13 @@
 CHANGE LOG
 ==========
 
+0.12.5
+------
+- Upgrade dependency: scim2-filter-parser -> 0.2.1
+
 0.12.4
 ------
-- Upgrade dependency: scim2-filter-parser
+- Upgrade dependency: scim2-filter-parser -> 0.2.0
 
 0.12.3
 ------
