@@ -26,6 +26,7 @@ from scim2_filter_parser.attr_paths import AttrPaths
 
 from . import constants
 from . import exceptions
+from . import filters
 from . import types
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
@@ -180,7 +181,7 @@ class SCIMMixin(object):
 
         if len(attr_paths) == 0:
             msg = 'No attribute path found in request'
-            raise scim_exceptions.BadRequestError(msg)
+            raise exceptions.BadRequestError(msg)
 
         if len(attr_paths) > 1:
             # When in doubt hand it all back.
@@ -244,18 +245,7 @@ class SCIMUser(SCIMMixin):
     url_name = 'scim:users'
     resource_type = 'User'
 
-    # In order to start consolidating the frameworks for referencing
-    # attributes with scim2-filter-parser, a attribute map like
-    # the one used in that library is created here.
-    ATTR_MAP = {
-        # attr, sub attr, uri
-        ('userName', None, None): 'username',
-        ('name', 'familyName', None): 'last_name',
-        ('familyName', None, None): 'last_name',
-        ('name', 'givenName', None): 'first_name',
-        ('givenName', None, None): 'first_name',
-        ('active', None, None): 'is_active',
-    }
+    ATTR_MAP = filters.UserFilterQuery.attr_map
 
     @property
     def display_name(self):
@@ -467,6 +457,8 @@ class SCIMGroup(SCIMMixin):
     # not great, could be more decoupled. But \__( )__/ whatevs.
     url_name = 'scim:groups'
     resource_type = 'Group'
+
+    ATTR_MAP = filters.GroupFilterQuery.attr_map
 
     @property
     def display_name(self):
