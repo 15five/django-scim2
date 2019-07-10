@@ -307,7 +307,6 @@ class SCIMHandleOperationsTestCase(TestCase):
             ford.handle_operations(operations)
             handler.assert_called_with(*expected)
 
-    @unittest.skip
     def test_handle_add_complex_2(self):
         operations = [
             {
@@ -331,9 +330,50 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.test_handle_add') as handler:
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
-            handler.assert_called_with(*expected)
+            path_obj, value, op_dict = handler.call_args[0]
+            self.assertEqual(path_obj.path, "addresses[type eq \"work\"].country")
+            self.assertEqual(
+                path_obj.attr_paths,
+                [('addresses', 'type', None), ('addresses', 'country', None)]
+            )
+            self.assertEqual(value, 'Sector 9')
+            self.assertEqual(op_dict, operations[0])
+
+    def test_handle_add_complex_3(self):
+        operations = [
+            {
+                "op": "Add",
+                "path": 'members[value eq "6784"]',
+                "value": "[]"
+            }
+        ]
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        ford = get_user_adapter()(ford, self.request)
+
+        expected = (
+            ('addresses', 'country', None),
+            'Sector 9',
+            operations[0]
+        )
+
+        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+            ford.handle_operations(operations)
+            path_obj, value, op_dict = handler.call_args[0]
+            self.assertEqual(path_obj.path, 'members[value eq "6784"]')
+            self.assertEqual(
+                path_obj.attr_paths,
+                [('members', 'value', None), ('members', None, None)]
+            )
+            self.assertEqual(value, '[]')
+            self.assertEqual(op_dict, operations[0])
 
 
 class SCIMMixinPathParserTestCase(TestCase):

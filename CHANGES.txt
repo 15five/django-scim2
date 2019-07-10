@@ -5,7 +5,8 @@ CHANGE LOG
 ------
 - Refactor location of ATTR_MAP, placed in filters.py
 - Fixed NameError
-
+- Add testing around complex queries
+- Upgrade dependency: scim2-filter-parser -> 0.2.2
 
 0.12.6
 ------
