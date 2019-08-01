@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.12.8
+------
+- Upgrade dependency: scim2-filter-parser -> 0.2.3 to fix tokenization error
+
 0.12.7
 ------
 - Refactor location of ATTR_MAP, placed in filters.py
