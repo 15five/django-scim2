@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.13.1
+------
+- Allow for customization of paths to be logged
+
 0.13.0
 ------
 - Added validation methods to adapters

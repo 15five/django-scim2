@@ -38,8 +38,14 @@ class SCIMAuthCheckMiddleware(object):
             self._reverse_url = reverse('scim:root')
         return self._reverse_url
 
+    def should_log_request(self, request):
+        """
+        Return True if request should be logged.
+        """
+        return request.path.startswith(self.reverse_url)
+
     def process_request(self, request):
-        if request.path.startswith(self.reverse_url):
+        if self.should_log_request(request):
             self.log_request(request)
         # If we've just passed through the auth middleware and there is no user
         # associated with the request we can assume permission
@@ -51,7 +57,7 @@ class SCIMAuthCheckMiddleware(object):
                 return response
 
     def process_response(self, request, response):
-        if request.path.startswith(self.reverse_url):
+        if self.should_log_request(request):
             self.log_response(request, response)
         return response
 
