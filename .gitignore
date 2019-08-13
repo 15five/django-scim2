@@ -120,6 +120,7 @@ dmypy.json
 
 # Vim
 *.swp
+.ctags
 
 # MacOSX
 .DS_Store

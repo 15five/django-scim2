@@ -79,6 +79,25 @@ class SCIMMixin(object):
 
         return d
 
+    def validate_dict(self, d):
+        """
+        Validate dict from SCIM call.
+
+        Currently this method only validates:
+            - the most common attributes
+            - attributes against their expected types
+        """
+        for key, value in d.items():
+            expected_type = {
+                'active': bool,
+            }.get(key)
+
+            if expected_type and not isinstance(value, expected_type):
+                raise exceptions.BadRequestError(
+                    f'''"{key}" should be of type "{expected_type.__name__}". '''
+                    f'''Got type "{type(value).__name__}"'''
+                )
+
     def from_dict(self, d):
         """
         Consume a ``dict`` conforming to the object's SCIM Schema, updating the
@@ -139,10 +158,38 @@ class SCIMMixin(object):
                 msg = f'"path" must be specified during "remove" PATCH calls'
                 raise exceptions.BadRequestError(msg, scim_type='noTarget')
 
-            op_code = 'handle_' + op_code
-            handler = getattr(self, op_code)
+            validate_method = 'validate_op_' + op_code
+            handler = getattr(self, validate_method, self._default_validate_op)
+            if handler:
+                handler(path, value, operation)
 
+            handle_method = 'handle_' + op_code
+            handler = getattr(self, handle_method)
             handler(path, value, operation)
+
+    def _default_validate_op(self,
+                             path: Union[tuple, types.ComplexAttrPath],
+                             value: Union[str, list, dict],
+                             operation: dict):
+        """
+        Validate the operation.
+
+        Currently this method only validates:
+            - the most common attributes
+            - simple paths
+            - attributes against their expected types
+        """
+        expected_type = None
+        if not isinstance(path, types.ComplexAttrPath):
+            expected_type = {
+                ('active', None, None): bool,
+            }.get(path)
+
+        if expected_type and not isinstance(value, expected_type):
+            raise exceptions.BadRequestError(
+                f'''"{operation['path']}" should be of type "{expected_type.__name__}". '''
+                f'''Got type "{type(value).__name__}"'''
+            )
 
     def parse_path_and_value(self,
                              path: Optional[str],

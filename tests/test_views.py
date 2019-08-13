@@ -537,6 +537,29 @@ class UserTestCase(LoginMixin, TestCase):
         self.assertEqual(result, elsie.to_dict())
         self.assertEqual(resp['Location'], elsie.location)
 
+    def test_post_invalid_active_value(self):
+        url = reverse('scim:users')
+        data = {
+            'schemas': [
+                constants.SchemaURI.USER,
+                constants.SchemaURI.ENTERPRISE_USER,
+            ],
+            'userName': 'ehughes',
+            'active': 'False',
+            'name': {
+                'givenName': 'Elsie',
+                'familyName': 'Hughes',
+            },
+            'password': 'notTooSecret',
+            'emails': [{'value': 'ehughes@westworld.com', 'primary': True}],
+            'externalId': 'Shannon.Woodward',
+        }
+        body = json.dumps(data)
+        resp = self.client.post(url, body, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
+        result = json.loads(resp.content.decode())
+        self.assertEqual(result['detail'], '"active" should be of type "bool". Got type "str"')
+
     def test_post_duplicate(self):
         get_user_model().objects.create(username='ehughes')
 
@@ -584,6 +607,23 @@ class UserTestCase(LoginMixin, TestCase):
         ford = get_user_adapter()(ford, self.request)
         self.assertEqual(result, ford.to_dict())
 
+    def test_put_invalid_active_value(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        data = get_user_adapter()(ford, self.request).to_dict()
+        data['active'] = 'False'
+        body = json.dumps(data)
+        resp = self.client.put(url, body, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
+        result = json.loads(resp.content.decode())
+        self.assertEqual(result['detail'], '"active" should be of type "bool". Got type "str"')
+
     def test_put_empty_body(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
@@ -623,6 +663,31 @@ class UserTestCase(LoginMixin, TestCase):
 
         ford.refresh_from_db()
         self.assertEqual(ford.last_name, 'Updated Ford')
+
+    def test_patch_replace_invalid_active_value(self):
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        data = {
+            'schemas': [constants.SchemaURI.PATCH_OP],
+            'Operations': [
+                {
+                    'op': 'replace',
+                    'path': 'active',
+                    'value': 'False',
+                },
+            ]
+        }
+        data = json.dumps(data)
+
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 400, resp.content.decode())
+        result = json.loads(resp.content.decode())
+        self.assertEqual(result['detail'], '"active" should be of type "bool". Got type "str"')
 
     def test_patch_replace_with_complex_path_1(self):
         ford = get_user_model().objects.create(

@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.13.0
+------
+- Added validation methods to adapters
+
 0.12.8
 ------
 - Upgrade dependency: scim2-filter-parser -> 0.2.3 to fix tokenization error

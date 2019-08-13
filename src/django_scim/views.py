@@ -303,6 +303,7 @@ class PostView(object):
         if not body:
             raise exceptions.BadRequestError('POST call made with empty body')
 
+        scim_obj.validate_dict(body)
         scim_obj.from_dict(body)
 
         try:
@@ -331,6 +332,7 @@ class PutView(object):
         if not body:
             raise exceptions.BadRequestError('PUT call made with empty body')
 
+        scim_obj.validate_dict(body)
         scim_obj.from_dict(body)
         scim_obj.save()
 
