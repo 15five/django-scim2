@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.13.2
+------
+- Add ENTERPRISE_URN to list of schemas
+
 0.13.1
 ------
 - Allow for customization of paths to be logged
