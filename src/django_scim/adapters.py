@@ -462,14 +462,14 @@ class SCIMUser(SCIMMixin):
         """
         Handle the replace operations.
         """
-        if path and list(path) and isinstance(value, str):
+        if not isinstance(value, dict):
             # Restructure for use in loop below.
             value = {path: value}
 
         if not isinstance(value, dict):
             raise exceptions.NotImplementedError(
-                'PATCH replace operation with value type of '
-                '{type(value)} is not implemented'
+                f'PATCH replace operation with value type of '
+                f'{type(value)} is not implemented'
             )
 
         for path, value in (value or {}).items():

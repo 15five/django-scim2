@@ -970,6 +970,40 @@ class UserTestCase(LoginMixin, TestCase):
 
 
 @override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+class UserBugsTestCase(LoginMixin, TestCase):
+    maxDiff = None
+    request = RequestFactory().get('/fake/request')
+
+    def test_g35_patch_bool(self):
+        ford = get_user_model().objects.create(
+            is_active=False,
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+        self.assertFalse(ford.is_active)
+        data = {
+            'schemas': [constants.SchemaURI.PATCH_OP],
+            'Operations': [
+                {
+                    'op': 'replace',
+                    'path': 'active',
+                    'value': True
+                },
+            ]
+        }
+        data = json.dumps(data)
+
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        resp = self.client.patch(url, data=data, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+
+        ford.refresh_from_db()
+        self.assertTrue(ford.is_active)
+
+
+@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
 @mock.patch('django_scim.views.GroupsView.model_cls_getter', get_group_model)
 class GroupTestCase(LoginMixin, TestCase):
     maxDiff = None
