@@ -12,6 +12,7 @@ from django_scim import models as scim_models
 from django_scim.adapters import SCIMMixin
 from django_scim.utils import get_group_adapter
 from django_scim.utils import get_user_adapter
+from scim2_filter_parser.attr_paths import AttrPath
 
 
 USER_MODEL = None
@@ -224,7 +225,11 @@ class SCIMHandleOperationsTestCase(TestCase):
 
         with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
             ford.handle_operations(operations)
-            handler.assert_called_with(*expected)
+            call_args = handler.call_args[0]
+            self.assertIsInstance(call_args[0], AttrPath)
+            self.assertEqual(call_args[0].first_path, expected[0])
+            self.assertEqual(call_args[1], expected[1])
+            self.assertEqual(call_args[2], expected[2])
 
     def test_handle_replace_complex(self):
         operations = [
@@ -251,7 +256,11 @@ class SCIMHandleOperationsTestCase(TestCase):
 
         with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
             ford.handle_operations(operations)
-            handler.assert_called_with(*expected)
+            call_args = handler.call_args[0]
+            self.assertIsInstance(call_args[0], AttrPath)
+            self.assertEqual(call_args[0].first_path, expected[0])
+            self.assertEqual(call_args[1], expected[1])
+            self.assertEqual(call_args[2], expected[2])
 
     def test_handle_add_simple(self):
         operations = [
@@ -278,7 +287,11 @@ class SCIMHandleOperationsTestCase(TestCase):
 
         with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
-            handler.assert_called_with(*expected)
+            call_args = handler.call_args[0]
+            self.assertIsInstance(call_args[0], AttrPath)
+            self.assertEqual(call_args[0].first_path, expected[0])
+            self.assertEqual(call_args[1], expected[1])
+            self.assertEqual(call_args[2], expected[2])
 
     def test_handle_add_complex_1(self):
         operations = [
@@ -305,7 +318,12 @@ class SCIMHandleOperationsTestCase(TestCase):
 
         with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
-            handler.assert_called_with(*expected)
+
+            call_args = handler.call_args[0]
+            self.assertIsInstance(call_args[0], AttrPath)
+            self.assertEqual(call_args[0].first_path, expected[0])
+            self.assertEqual(call_args[1], expected[1])
+            self.assertEqual(call_args[2], expected[2])
 
     def test_handle_add_complex_2(self):
         operations = [
@@ -333,9 +351,9 @@ class SCIMHandleOperationsTestCase(TestCase):
         with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
             path_obj, value, op_dict = handler.call_args[0]
-            self.assertEqual(path_obj.path, "addresses[type eq \"work\"].country")
+            self.assertEqual(path_obj.filter, 'addresses[type eq \"work\"].country eq ""')
             self.assertEqual(
-                path_obj.attr_paths,
+                list(path_obj),
                 [('addresses', 'type', None), ('addresses', 'country', None)]
             )
             self.assertEqual(value, 'Sector 9')
@@ -367,9 +385,9 @@ class SCIMHandleOperationsTestCase(TestCase):
         with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
             path_obj, value, op_dict = handler.call_args[0]
-            self.assertEqual(path_obj.path, 'members[value eq "6784"]')
+            self.assertEqual(path_obj.filter, 'members[value eq "6784"] eq ""')
             self.assertEqual(
-                path_obj.attr_paths,
+                list(path_obj),
                 [('members', 'value', None), ('members', None, None)]
             )
             self.assertEqual(value, '[]')
@@ -384,27 +402,27 @@ class SCIMMixinPathParserTestCase(TestCase):
         Test paths typically sent by AzureAD.
         """
         paths_and_values = [
-            ("addresses[type eq \"work\"].country", 1),
-            ("addresses[type eq \"work\"].locality", 1),
-            ("addresses[type eq \"work\"].postalCode", 1),
-            ("addresses[type eq \"work\"].streetAddress", 1),
+            ('addresses[type eq \"work\"].country', 1),
+            ('addresses[type eq \"work\"].locality', 1),
+            ('addresses[type eq \"work\"].postalCode', 1),
+            ('addresses[type eq \"work\"].streetAddress', 1),
         ]
 
         expected_paths_and_values = [
             {
-                'path': "addresses[type eq \"work\"].country",
+                'path': 'addresses[type eq \"work\"].country eq ""',
                 'attr_paths': [('addresses', 'type', None), ('addresses', 'country', None)]
             },
             {
-                'path': "addresses[type eq \"work\"].locality",
+                'path': 'addresses[type eq \"work\"].locality eq ""',
                 'attr_paths': [('addresses', 'type', None), ('addresses', 'locality', None)]
             },
             {
-                'path': "addresses[type eq \"work\"].postalCode",
+                'path': 'addresses[type eq \"work\"].postalCode eq ""',
                 'attr_paths': [('addresses', 'type', None), ('addresses', 'postalCode', None)]
             },
             {
-                'path': "addresses[type eq \"work\"].streetAddress",
+                'path': 'addresses[type eq \"work\"].streetAddress eq ""',
                 'attr_paths': [('addresses', 'type', None), ('addresses', 'streetAddress', None)]
             }
         ]
@@ -413,8 +431,8 @@ class SCIMMixinPathParserTestCase(TestCase):
         func = SCIMMixin(None).parse_path_and_value
         result_paths = list(map(lambda x: func(*x), paths_and_values))
         for (path_obj, _), expected in zip(result_paths, expected_paths_and_values):
-            self.assertEqual(path_obj.path, expected['path'])
-            self.assertEqual(path_obj.attr_paths, expected['attr_paths'])
+            self.assertEqual(path_obj.filter, expected['path'])
+            self.assertEqual(list(path_obj), expected['attr_paths'])
 
     def test_correct_path_tuples(self):
         """
@@ -438,7 +456,7 @@ class SCIMMixinPathParserTestCase(TestCase):
         func = SCIMMixin(None).parse_path_and_value
         for path, expected_result in paths_and_expected_values:
             result, _ = func(path, None)
-            self.assertEqual(result, expected_result)
+            self.assertEqual(result.first_path, expected_result)
 
 
 @override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')

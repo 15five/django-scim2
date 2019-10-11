@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.14.0
+------
+- Upgrade dependency: scim2-filter-parser -> 0.3.2 to support complex paths
+- Move to the use of AttrPath objects for determining if a PATCH path
+  is complex or not. POTENTIALLY BREAKING CHANGE.
+
 0.13.2
 ------
 - Add ENTERPRISE_URN to list of schemas
