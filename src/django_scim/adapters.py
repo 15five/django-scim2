@@ -22,12 +22,11 @@ from urllib.parse import urljoin
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django import core
-from scim2_filter_parser.attr_paths import AttrPaths
+from scim2_filter_parser.attr_paths import AttrPath
 
 from . import constants
 from . import exceptions
 from . import filters
-from . import types
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
 from .utils import get_user_adapter
@@ -168,7 +167,7 @@ class SCIMMixin(object):
             handler(path, value, operation)
 
     def _default_validate_op(self,
-                             path: Union[tuple, types.ComplexAttrPath],
+                             path: Optional[AttrPath],
                              value: Union[str, list, dict],
                              operation: dict):
         """
@@ -180,10 +179,10 @@ class SCIMMixin(object):
             - attributes against their expected types
         """
         expected_type = None
-        if not isinstance(path, types.ComplexAttrPath):
+        if path and not path.is_complex:
             expected_type = {
                 ('active', None, None): bool,
-            }.get(path)
+            }.get(path.first_path)
 
         if expected_type and not isinstance(value, expected_type):
             raise exceptions.BadRequestError(
@@ -200,13 +199,13 @@ class SCIMMixin(object):
         This method can be overridden to provide a more usable path and value
         within the associated handle methods.
         """
-        # Convert all path's to 3-tuple (attr, subattr, Uri) in preparation for
-        # use of scim2-filter-parser. Complex paths can path through as the logic
-        # to handle them is not in place yet.
+        # Convert all path's to AttrPath objects in preparation for
+        # use of scim2-filter-parser. Complex paths can path through as the
+        # logic to handle them is not in place yet.
         if not path and isinstance(value, dict):
             # If there is no path and value is a dict, we assume that each
             # key in the dict is an attribute path. Let's convert attribute
-            # paths to 3-tuples to have a uniform API.
+            # paths to AttrPath objects to have a uniform API.
             new_path = None
             new_value = {}
             for k, v in value.items():
@@ -217,41 +216,33 @@ class SCIMMixin(object):
 
         return new_path, new_value
 
-    def split_path(self, path: str) -> Union[tuple, types.ComplexAttrPath]:
+    def split_path(self, path: str) -> AttrPath:
         """
-        Convert path to 3-tuple of (attr, subattr, uri) if possible.
-        """
-        # AttrPaths requires a complete filter query. Thus we tack on
-        # ' eq ""' to path to make a complete SCIM query.
-        filter_ = path + ' eq ""'
-        attr_paths = list(AttrPaths(filter_, self.ATTR_MAP))
+        Convert string path to an AttrPath object if possible.
 
-        if len(attr_paths) == 0:
-            msg = 'No attribute path found in request'
-            raise exceptions.BadRequestError(msg)
-
-        if len(attr_paths) > 1:
-            # When in doubt hand it all back.
-            return self.handle_complex_attr_path(path, attr_paths)
-
-        return attr_paths[0]
-
-    def handle_complex_attr_path(self, path: str, attr_paths: list) -> types.ComplexAttrPath:
-        """
-        Return an object that has complex path context.
-
-        It's up to the handlers to reject, ignore, handle requests with
-        these types of paths. Handling them is above and beyond what
-        the maintainer has time for.
+        An AttrPath can be complex. Eg::
 
             - "addresses[type eq "work"]"
             - "members[value eq "123"].displayName"
             - "emails[type eq "work" and value co "@example.com"].value"
+
+        It's up to the handlers to reject, ignore, handle requests with
+        these types of paths. Handling them is above and beyond what
+        the maintainer has time for.
         """
-        return types.ComplexAttrPath(path, attr_paths)
+        # AttrPath requires a complete filter query. Thus we tack on
+        # ' eq ""' to path to make a complete SCIM query.
+        filter_ = path + ' eq ""'
+        attr_path = AttrPath(filter_, self.ATTR_MAP)
+
+        if not list(attr_path):
+            msg = 'No attribute path found in request'
+            raise exceptions.BadRequestError(msg)
+
+        return attr_path
 
     def handle_add(self,
-                   path: Union[tuple, types.ComplexAttrPath],
+                   path: AttrPath,
                    value: Union[str, list, dict],
                    operation: dict):
         """
@@ -261,7 +252,7 @@ class SCIMMixin(object):
         raise exceptions.NotImplementedError
 
     def handle_remove(self,
-                      path: tuple,
+                      path: AttrPath,
                       value: Union[str, list, dict],
                       operation: dict):
         """
@@ -271,7 +262,7 @@ class SCIMMixin(object):
         raise exceptions.NotImplementedError
 
     def handle_replace(self,
-                       path: Union[tuple, types.ComplexAttrPath],
+                       path: AttrPath,
                        value: Union[str, list, dict],
                        operation: dict):
         """
@@ -465,13 +456,13 @@ class SCIMUser(SCIMMixin):
             raise exceptions.BadRequestError('Invalid email value')
 
     def handle_replace(self,
-                       path: Optional[tuple],
+                       path: Optional[AttrPath],
                        value: Union[str, list, dict],
                        operation: dict):
         """
         Handle the replace operations.
         """
-        if path and isinstance(value, str):
+        if path and list(path) and isinstance(value, str):
             # Restructure for use in loop below.
             value = {path: value}
 
@@ -482,10 +473,10 @@ class SCIMUser(SCIMMixin):
             )
 
         for path, value in (value or {}).items():
-            if path in self.ATTR_MAP:
-                setattr(self.obj, self.ATTR_MAP.get(path), value)
+            if path.first_path in self.ATTR_MAP:
+                setattr(self.obj, self.ATTR_MAP.get(path.first_path), value)
 
-            elif path == ('emails', None, None):
+            elif path.first_path == ('emails', None, None):
                 self.parse_emails(value)
 
             else:
@@ -604,7 +595,7 @@ class SCIMGroup(SCIMMixin):
         """
         Handle add operations.
         """
-        if path == ('members', None, None):
+        if path.first_path == ('members', None, None):
             members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
@@ -622,7 +613,7 @@ class SCIMGroup(SCIMMixin):
         """
         Handle remove operations.
         """
-        if path == ('members', None, None):
+        if path.first_path == ('members', None, None):
             members = value or []
             ids = [int(member.get('value')) for member in members]
             users = get_user_model().objects.filter(id__in=ids)
@@ -640,11 +631,10 @@ class SCIMGroup(SCIMMixin):
         """
         Handle the replace operations.
         """
-        if path == ('name', None, None):
+        if path.first_path == ('name', None, None):
             name = value[0].get('value')
             self.obj.name = name
             self.obj.save()
 
         else:
             raise exceptions.NotImplementedError
-

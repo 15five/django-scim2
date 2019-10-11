@@ -224,7 +224,7 @@ class SearchView(FilterMixin, SCIMView):
     # override model class so correct extra_filter/exclude_kwarg getter is fetched
     model_cls = 'search'
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         body = self.load_body(request.body)
         if body.get('schemas') != [constants.SchemaURI.SERACH_REQUEST]:
             raise exceptions.BadRequestError('Invalid schema uri. Must be SearchRequest.')
@@ -294,7 +294,7 @@ class DeleteView(object):
 
 
 class PostView(object):
-    def post(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         obj = self.model_cls()
         scim_obj = self.scim_adapter(obj, request=request)
 
