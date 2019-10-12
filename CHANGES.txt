@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.14.2
+------
+- Run PATCH handlers for each parsed path and value
+
 0.14.1
 ------
 - Fix issue #35. PATCH not working for boolean values
