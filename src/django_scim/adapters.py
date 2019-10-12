@@ -146,25 +146,32 @@ class SCIMMixin(object):
             path = operation.get('path')
             value = operation.get('value')
 
-            path, value = self.parse_path_and_value(path, value)
+            paths_and_values = self.parse_path_and_values(path, value)
 
-            op_code = operation.get('op').lower()
+            for path, value in paths_and_values:
+                self.handle_path_and_value(path, value, operation)
 
-            if op_code not in constants.VALID_PATCH_OPS:
-                raise exceptions.BadRequestError(f'Unknown PATCH op "{op_code}"')
+    def handle_path_and_value(self,
+                              path: AttrPath,
+                              value: Union[str, list, dict],
+                              operation: dict):
+        op_code = operation.get('op').lower()
 
-            if op_code == 'remove' and not path:
-                msg = f'"path" must be specified during "remove" PATCH calls'
-                raise exceptions.BadRequestError(msg, scim_type='noTarget')
+        if op_code not in constants.VALID_PATCH_OPS:
+            raise exceptions.BadRequestError(f'Unknown PATCH op "{op_code}"')
 
-            validate_method = 'validate_op_' + op_code
-            handler = getattr(self, validate_method, self._default_validate_op)
-            if handler:
-                handler(path, value, operation)
+        if op_code == 'remove' and not path:
+            msg = f'"path" must be specified during "remove" PATCH calls'
+            raise exceptions.BadRequestError(msg, scim_type='noTarget')
 
-            handle_method = 'handle_' + op_code
-            handler = getattr(self, handle_method)
+        validate_method = 'validate_op_' + op_code
+        handler = getattr(self, validate_method, self._default_validate_op)
+        if handler:
             handler(path, value, operation)
+
+        handle_method = 'handle_' + op_code
+        handler = getattr(self, handle_method)
+        handler(path, value, operation)
 
     def _default_validate_op(self,
                              path: Optional[AttrPath],
@@ -190,31 +197,37 @@ class SCIMMixin(object):
                 f'''Got type "{type(value).__name__}"'''
             )
 
-    def parse_path_and_value(self,
-                             path: Optional[str],
-                             value: Union[str, list, dict]) -> tuple:
+    def parse_path_and_values(self,
+                              path: Optional[str],
+                              value: Union[str, list, dict]) -> list:
         """
-        Return new path and value given an original path and value.
+        Return new paths and values given original paths and values.
 
         This method can be overridden to provide a more usable path and value
         within the associated handle methods.
         """
+        paths_and_values = []
         # Convert all path's to AttrPath objects in preparation for
         # use of scim2-filter-parser. Complex paths can path through as the
         # logic to handle them is not in place yet.
-        if not path and isinstance(value, dict):
+        if not path:
+            if not isinstance(value, dict):
+                raise ValueError('No path and operation value is a non-dict. Can not determine attribute.')
+
             # If there is no path and value is a dict, we assume that each
             # key in the dict is an attribute path. Let's convert attribute
             # paths to AttrPath objects to have a uniform API.
-            new_path = None
-            new_value = {}
-            for k, v in value.items():
-                new_value[self.split_path(k)] = v
+            for path, value in value.items():
+                new_path = self.split_path(path)
+                new_value = value
+                paths_and_values.append((new_path, new_value))
+
         else:
             new_path = self.split_path(path)
             new_value = value
+            paths_and_values.append((new_path, new_value))
 
-        return new_path, new_value
+        return paths_and_values
 
     def split_path(self, path: str) -> AttrPath:
         """

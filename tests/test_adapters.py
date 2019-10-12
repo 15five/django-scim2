@@ -428,9 +428,10 @@ class SCIMMixinPathParserTestCase(TestCase):
         ]
 
 
-        func = SCIMMixin(None).parse_path_and_value
+        func = SCIMMixin(None).parse_path_and_values
         result_paths = list(map(lambda x: func(*x), paths_and_values))
-        for (path_obj, _), expected in zip(result_paths, expected_paths_and_values):
+        for paths_and_values, expected in zip(result_paths, expected_paths_and_values):
+            path_obj, _ = paths_and_values[0]
             self.assertEqual(path_obj.filter, expected['path'])
             self.assertEqual(list(path_obj), expected['attr_paths'])
 
@@ -453,9 +454,9 @@ class SCIMMixinPathParserTestCase(TestCase):
             ),
         ]
 
-        func = SCIMMixin(None).parse_path_and_value
+        func = SCIMMixin(None).parse_path_and_values
         for path, expected_result in paths_and_expected_values:
-            result, _ = func(path, None)
+            result, _ = func(path, None)[0]
             self.assertEqual(result.first_path, expected_result)
 
 
