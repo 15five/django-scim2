@@ -8,6 +8,11 @@ class UserFilterQuery(FilterQuery):
     model_getter = get_user_model
     attr_map = {
         ('userName', None, None): 'username',
+        ('name', 'familyName', None): 'last_name',
+        ('familyName', None, None): 'last_name',
+        ('name', 'givenName', None): 'first_name',
+        ('givenName', None, None): 'first_name',
+        ('active', None, None): 'is_active',
     }
 
 

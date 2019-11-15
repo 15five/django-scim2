@@ -26,10 +26,11 @@ from scim2_filter_parser.attr_paths import AttrPath
 
 from . import constants
 from . import exceptions
-from . import filters
 from .utils import get_base_scim_location_getter
 from .utils import get_group_adapter
 from .utils import get_user_adapter
+from .utils import get_user_filter_parser
+from .utils import get_group_filter_parser
 
 
 class SCIMMixin(object):
@@ -296,7 +297,7 @@ class SCIMUser(SCIMMixin):
     url_name = 'scim:users'
     resource_type = 'User'
 
-    ATTR_MAP = filters.UserFilterQuery.attr_map
+    ATTR_MAP = get_user_filter_parser().attr_map
 
     @property
     def display_name(self):
@@ -509,7 +510,7 @@ class SCIMGroup(SCIMMixin):
     url_name = 'scim:groups'
     resource_type = 'Group'
 
-    ATTR_MAP = filters.GroupFilterQuery.attr_map
+    ATTR_MAP = get_group_filter_parser().attr_map
 
     @property
     def display_name(self):
