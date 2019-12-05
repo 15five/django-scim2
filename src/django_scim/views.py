@@ -13,6 +13,7 @@ from django.views.generic import View
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 
+from scim2_filter_parser.parser import SCIMParesrError
 from . import constants
 from . import exceptions
 from .utils import get_all_schemas_getter
@@ -144,7 +145,7 @@ class FilterMixin(object):
     def _search(self, request, query, start, count):
         try:
             qs = self.__class__.parser_getter().search(query, request)
-        except ValueError as e:
+        except (ValueError,  SCIMParesrError) as e:
             raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
