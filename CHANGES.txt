@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.14.3
+------
+- Handle SCIMParesrError errors gracefully
+
 0.14.2
 ------
 - Run PATCH handlers for each parsed path and value
