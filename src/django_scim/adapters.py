@@ -496,7 +496,7 @@ class SCIMUser(SCIMMixin):
             else:
                 raise exceptions.NotImplementedError('Not Implemented')
 
-        self.obj.save()
+        self.save()
 
 
 class SCIMGroup(SCIMMixin):
@@ -648,7 +648,7 @@ class SCIMGroup(SCIMMixin):
         if path.first_path == ('name', None, None):
             name = value[0].get('value')
             self.obj.name = name
-            self.obj.save()
+            self.save()
 
         else:
             raise exceptions.NotImplementedError
