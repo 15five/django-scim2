@@ -87,11 +87,10 @@ https://django-scim2.readthedocs.io/
 Tests
 -----
 
-.. |tests| image:: https://travis-ci.com/15five/django-scim2.svg?branch=master
-    :target: https://travis-ci.com/15five/django-scim2
+.. |tests| image:: https://circleci.com/gh/15five/django-scim2.svg?style=svg
+    :target: https://circleci.com/gh/15five/django-scim2
 
-https://travis-ci.com/15five/django-scim2
-
+https://circleci.com/gh/15five/django-scim2
 
 Coverage
 --------

@@ -39,7 +39,7 @@ def run_tests():
 
 setup(
     name='django-scim2',
-    version='0.14.3',
+    version='0.14.4',
     description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
     url='https://github.com/15five/django-scim2',
     download_url='https://github.com/15five/django-scim2/archive/master.zip',
@@ -55,10 +55,11 @@ setup(
     install_requires=[
         'Django>=1.11.13',
         'python-dateutil>=2.7.3',
-        'scim2-filter-parser==0.3.3',
+        'scim2-filter-parser==0.3.4',
     ],
     tests_require=[
         'mock',
+        'Django>=2.2,<3',
     ],
     test_suite='setup.run_tests',
     zip_safe=False,
@@ -71,13 +72,10 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
 )
-

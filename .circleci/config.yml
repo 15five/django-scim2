@@ -1,0 +1,27 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: python:3.8
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install Dependencies
+          command: pip3 install tox
+
+      - run:
+          name: Run Tox
+          command: tox
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only:
+                - master
