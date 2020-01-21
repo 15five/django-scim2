@@ -1,9 +1,11 @@
 CHANGE LOG
 ==========
 
-0.14.5
+0.15.0
 ------
 - Add a get_object_post_processor function.
+- Drop compatibility with all Django versions before 2.0
+  POTENTIALLY BREAKING CHANGE.
 
 0.14.4
 ------
