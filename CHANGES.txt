@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.14.5
+------
+- Add a get_object_post_processor function.
+
 0.14.4
 ------
 - Fix hard coded ATTR_MAP issue (#38). Thank you @horida.

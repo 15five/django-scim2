@@ -26,6 +26,7 @@ from .utils import get_base_scim_location_getter
 from .utils import get_service_provider_config_model
 from .utils import get_extra_model_filter_kwargs_getter
 from .utils import get_extra_model_exclude_kwargs_getter
+from .utils import get_object_post_processor_getter
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,10 @@ class SCIMView(View):
         return get_extra_model_exclude_kwargs_getter(self.model_cls)
 
     @property
+    def get_object_post_processor(self):
+        return get_object_post_processor_getter(self.model_cls)
+
+    @property
     def scim_adapter(self):
         # pull from __class__ to avoid binding adapter class getter to
         # self instance and passing self to class getter
@@ -80,7 +85,8 @@ class SCIMView(View):
         # searching for a specific single object.
 
         try:
-            return self.model_cls.objects.get(**extra_filter_kwargs)
+            obj = self.model_cls.objects.get(**extra_filter_kwargs)
+            return self.get_object_post_processor(self.request, obj)
         except ObjectDoesNotExist:
             raise exceptions.NotFoundError(uuid)
 

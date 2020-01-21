@@ -56,26 +56,34 @@ def get_base_scim_location_getter():
 
 def get_all_schemas_getter():
     """
-    Return a function that will, when called, returns the base
-    location of scim app.
+    Return a function that will, when called, returns the
+    all schemas getter function.
     """
     return scim_settings.SCHEMAS_GETTER
 
 
 def get_extra_model_filter_kwargs_getter(model):
     """
-    Return a function that will, when called, returns the base
-    location of scim app.
+    Return a function that will, when called, returns the
+    get_extra_filter_kwargs function.
     """
     return scim_settings.GET_EXTRA_MODEL_FILTER_KWARGS_GETTER(model)
 
 
 def get_extra_model_exclude_kwargs_getter(model):
     """
-    Return a function that will, when called, returns the base
-    location of scim app.
+    Return a function that will, when called, returns the
+    get_extra_exclude_kwargs function.
     """
     return scim_settings.GET_EXTRA_MODEL_EXCLUDE_KWARGS_GETTER(model)
+
+
+def get_object_post_processor_getter(model):
+    """
+    Return a function that will, when called, returns the
+    get_object_post_processor function.
+    """
+    return scim_settings.GET_OBJECT_POST_PROCESSOR_GETTER(model)
 
 
 def default_base_scim_location_getter(request=None, *args, **kwargs):
@@ -134,6 +142,28 @@ def default_get_extra_model_exclude_kwargs_getter(model):
     return get_extra_exclude_kwargs
 
 
+def default_get_object_post_processor_getter(model):
+    """
+    Return a **method** that can be used to perform any post processing
+    on an object about to be returned from SCIMView.get_object().
+
+    :param model:
+    """
+    def get_object_post_processor(request, obj, *args, **kwargs):
+        """
+        Perform any post processing on object to be returned from SCIMView.get_object().
+
+        :param request:
+        :param obj:
+        :param args:
+        :param kwargs:
+        :rtype: Django User
+        """
+        return obj
+
+    return get_object_post_processor
+
+
 def clean_structure_of_passwords(obj):
     if isinstance(obj, dict):
         new_obj = {}
@@ -164,4 +194,3 @@ def get_loggable_body(text):
     obj = clean_structure_of_passwords(obj)
 
     return json.dumps(obj)
-

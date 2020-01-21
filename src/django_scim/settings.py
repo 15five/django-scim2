@@ -32,6 +32,7 @@ DEFAULTS = {
     'BASE_LOCATION_GETTER': 'django_scim.utils.default_base_scim_location_getter',
     'GET_EXTRA_MODEL_FILTER_KWARGS_GETTER': 'django_scim.utils.default_get_extra_model_filter_kwargs_getter',
     'GET_EXTRA_MODEL_EXCLUDE_KWARGS_GETTER': 'django_scim.utils.default_get_extra_model_exclude_kwargs_getter',
+    'GET_OBJECT_POST_PROCESSOR_GETTER': 'django_scim.utils.default_get_object_post_processor_getter',
     'SCHEMAS_GETTER': 'django_scim.schemas.default_schemas_getter',
     'DOCUMENTATION_URI': None,
     'SCHEME': 'https',
@@ -57,6 +58,7 @@ IMPORT_STRINGS = (
     'BASE_LOCATION_GETTER',
     'GET_EXTRA_MODEL_FILTER_KWARGS_GETTER',
     'GET_EXTRA_MODEL_EXCLUDE_KWARGS_GETTER',
+    'GET_OBJECT_POST_PROCESSOR_GETTER',
     'SCHEMAS_GETTER',
 )
 
