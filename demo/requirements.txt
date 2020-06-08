@@ -1,4 +1,4 @@
-django<3.0.0,>=2.2
+django<3.0.0,>=2.2.13
 django-extensions==2.1.6
 django-oauth-toolkit==1.1.2
 django-scim2  # not pinning, should always work with latest release
