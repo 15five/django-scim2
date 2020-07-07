@@ -5,7 +5,6 @@ except ImportError:
 
 from . import views
 
-
 app_name = 'scim'
 
 urlpatterns = [

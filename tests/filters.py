@@ -19,4 +19,3 @@ class UserFilterQuery(FilterQuery):
 class GroupFilterQuery(FilterQuery):
     model_getter = get_group_model
     attr_map = {}
-

@@ -4,8 +4,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from . import constants
-from . import exceptions
+from . import constants, exceptions
 from .settings import scim_settings
 from .utils import get_base_scim_location_getter
 
@@ -226,4 +225,3 @@ class AbstractSCIMGroupMixin(AbstractSCIMCommonAttributesMixin):
         is_new = self.id is None
         super(AbstractSCIMGroupMixin, self).save(*args, **kwargs)
         self.set_scim_display_name(is_new)
-

@@ -16,4 +16,3 @@ class CustomSCIMAuthCheckMiddleware(SCIMAuthCheckMiddleware):
             'response_status_code': response.status_code,
             'company_id': company_id,
         }
-

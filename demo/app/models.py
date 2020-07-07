@@ -2,8 +2,9 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
 from django_extensions.db.models import TimeStampedModel
-from django_scim.models import AbstractSCIMUser, AbstractSCIMGroup
+from django_scim.models import AbstractSCIMGroup, AbstractSCIMUser
 
 
 class Company(models.Model):
@@ -82,4 +83,3 @@ class GroupMembership(models.Model):
         to='app.Group',
         on_delete=models.CASCADE
     )
-

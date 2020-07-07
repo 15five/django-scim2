@@ -19,4 +19,3 @@ class NoopPasswordHasher(BasePasswordHasher):
 
     def safe_summary(self, encoded):
         return {'desc': 'Not hashed'}
-
