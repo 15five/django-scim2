@@ -2,18 +2,14 @@ import unittest
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
-from django.db import connection
-from django.db import models
-from django.test import override_settings
-from django.test import TestCase, RequestFactory
+from django.db import connection, models
+from django.test import RequestFactory, TestCase, override_settings
+from scim2_filter_parser.attr_paths import AttrPath
 
 from django_scim import constants
 from django_scim import models as scim_models
 from django_scim.adapters import SCIMMixin
-from django_scim.utils import get_group_adapter
-from django_scim.utils import get_user_adapter
-from scim2_filter_parser.attr_paths import AttrPath
-
+from django_scim.utils import get_group_adapter, get_user_adapter
 
 USER_MODEL = None
 GROUP_MODEL = None

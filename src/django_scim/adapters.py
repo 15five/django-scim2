@@ -19,18 +19,19 @@ An adapter is instantiated with a model instance. Eg::
 from typing import Optional, Union
 from urllib.parse import urljoin
 
+from django import core
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django import core
 from scim2_filter_parser.attr_paths import AttrPath
 
-from . import constants
-from . import exceptions
-from .utils import get_base_scim_location_getter
-from .utils import get_group_adapter
-from .utils import get_user_adapter
-from .utils import get_user_filter_parser
-from .utils import get_group_filter_parser
+from . import constants, exceptions
+from .utils import (
+    get_base_scim_location_getter,
+    get_group_adapter,
+    get_group_filter_parser,
+    get_user_adapter,
+    get_user_filter_parser,
+)
 
 
 class SCIMMixin(object):
@@ -162,7 +163,7 @@ class SCIMMixin(object):
             raise exceptions.BadRequestError(f'Unknown PATCH op "{op_code}"')
 
         if op_code == 'remove' and not path:
-            msg = f'"path" must be specified during "remove" PATCH calls'
+            msg = '"path" must be specified during "remove" PATCH calls'
             raise exceptions.BadRequestError(msg, scim_type='noTarget')
 
         validate_method = 'validate_op_' + op_code

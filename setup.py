@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # Installs django-scim2
 
-from setuptools import setup, find_packages
 import os
 import sys
 import unittest
-import sys
 
+from setuptools import find_packages, setup
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 

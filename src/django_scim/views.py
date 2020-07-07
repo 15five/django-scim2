@@ -2,32 +2,32 @@ import json
 import logging
 from urllib.parse import urljoin
 
+from django import db
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django import db
 from django.db import transaction
 from django.http import HttpResponse
+from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from django.utils.decorators import method_decorator
-from django.urls import reverse
-
 from scim2_filter_parser.parser import SCIMParesrError
-from . import constants
-from . import exceptions
-from .utils import get_all_schemas_getter
-from .utils import get_group_adapter
-from .utils import get_group_model
-from .utils import get_user_adapter
-from .utils import get_user_filter_parser
-from .utils import get_group_filter_parser
-from .utils import get_base_scim_location_getter
-from .utils import get_service_provider_config_model
-from .utils import get_extra_model_filter_kwargs_getter
-from .utils import get_extra_model_exclude_kwargs_getter
-from .utils import get_object_post_processor_getter
 
+from . import constants, exceptions
+from .utils import (
+    get_all_schemas_getter,
+    get_base_scim_location_getter,
+    get_extra_model_exclude_kwargs_getter,
+    get_extra_model_filter_kwargs_getter,
+    get_group_adapter,
+    get_group_filter_parser,
+    get_group_model,
+    get_object_post_processor_getter,
+    get_service_provider_config_model,
+    get_user_adapter,
+    get_user_filter_parser,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +158,7 @@ class FilterMixin(object):
     def _search(self, request, query, start, count):
         try:
             qs = self.__class__.parser_getter().search(query, request)
-        except (ValueError,  SCIMParesrError) as e:
+        except (ValueError, SCIMParesrError) as e:
             raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
@@ -458,4 +458,3 @@ class SchemasView(SCIMView):
         content = json.dumps(doc)
         return HttpResponse(content=content,
                             content_type=constants.SCIM_CONTENT_TYPE)
-

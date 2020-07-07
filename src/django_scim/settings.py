@@ -18,7 +18,6 @@ import importlib
 
 from django.conf import settings
 
-
 # Settings defined by user in root settings file for their project.
 USER_SETTINGS = getattr(settings, 'SCIM_SERVICE_PROVIDER', None)
 
@@ -130,4 +129,3 @@ class SCIMServiceProviderSettings(object):
 
 
 scim_settings = SCIMServiceProviderSettings(USER_SETTINGS, DEFAULTS, IMPORT_STRINGS, MANDATORY)
-

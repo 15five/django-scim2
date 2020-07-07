@@ -125,4 +125,3 @@ def get_extra_model_exclude_kwargs_getter(model):
             return {}
 
     return get_extra_exclude_kwargs
-

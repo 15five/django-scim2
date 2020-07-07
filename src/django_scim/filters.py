@@ -2,7 +2,6 @@
 Transform filter query into QuerySet
 """
 from django.contrib.auth import get_user_model
-
 from scim2_filter_parser.queries.sql import SQLQuery
 
 from .utils import get_group_model
@@ -73,7 +72,7 @@ class UserFilterQuery(FilterQuery):
         ('active', None, None): 'is_active',
     }
 
+
 class GroupFilterQuery(FilterQuery):
     model_getter = get_group_model
     attr_map = {}
-

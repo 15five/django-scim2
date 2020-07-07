@@ -1,14 +1,12 @@
 import django
-from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
-from django.db import connection
-from django.db import models
-from django.test import TestCase
-from django.test import override_settings
+from django.contrib.auth.models import AbstractUser
+from django.db import connection, models
+from django.test import TestCase, override_settings
 
 from django_scim import constants
-from django_scim.utils import get_service_provider_config_model
 from django_scim import models as scim_models
+from django_scim.utils import get_service_provider_config_model
 
 
 class SCIMServiceProviderConfigTestCase(TestCase):

@@ -1,6 +1,3 @@
-import re
-
-
 ENCODING = 'utf-8'
 SCIM_CONTENT_TYPE = 'application/scim+json'
 VALID_PATCH_OPS = ('add', 'remove', 'replace')
@@ -19,4 +16,3 @@ class SchemaURI(object):
     GROUP = 'urn:ietf:params:scim:schemas:core:2.0:Group'
     RESOURCE_TYPE = 'urn:ietf:params:scim:schemas:core:2.0:ResourceType'
     SERVICE_PROVIDER_CONFIG = 'urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'
-

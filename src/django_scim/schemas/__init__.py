@@ -1,6 +1,5 @@
-import os
 import json
-
+import os
 
 SCHEMAS_DIR = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_SUB_DIRS = ('core', 'extension')

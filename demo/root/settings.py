@@ -240,4 +240,3 @@ SCIM_SERVICE_PROVIDER = {
     ],
     'WWW_AUTHENTICATE_HEADER': 'Basic realm="Template App SCIM2.0"',
 }
-

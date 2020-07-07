@@ -25,4 +25,3 @@ class Users(TestCase):
         qs = list(self.parser.search(query))
         expected = [self.ford]
         self.assertEqual(qs, expected)
-

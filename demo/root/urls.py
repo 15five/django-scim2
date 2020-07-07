@@ -17,9 +17,7 @@ from django.contrib import admin
 
 from django_scim.urls import urlpatterns as scim_urls
 
-
 urlpatterns = [
     url(r'^scim/v2/', include('django_scim.urls', namespace='scim')),
     url(r'^admin/', include(admin.site.urls)),
 ]
-

@@ -1,6 +1,7 @@
 from unittest import mock
-from django.test import TestCase, RequestFactory
+
 from django.contrib.auth.models import AnonymousUser
+from django.test import RequestFactory, TestCase
 
 from django_scim.middleware import SCIMAuthCheckMiddleware
 
@@ -41,4 +42,3 @@ class SCIMMiddlewareTestCase(TestCase):
         request = RequestFactory().get(middleware.reverse_url)
         middleware.process_response(request, None)
         log_func.assert_called()
-

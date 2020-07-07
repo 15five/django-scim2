@@ -59,4 +59,3 @@ def recursive_obfuscate(obj, keys_to_obfuscate=('password',)):
                 obj[key] = recursive_obfuscate(obj[key], keys_to_obfuscate)
 
     return obj
-

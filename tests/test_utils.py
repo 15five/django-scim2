@@ -16,5 +16,3 @@ class LogCleanerTestCase(TestCase):
             "Operations": [{"op": "replace", "value": {"password": "********"}}]
         }
         self.assertEqual(result, expected)
-
-

@@ -1,28 +1,24 @@
 import json
-from unittest import mock
-from unittest import skip
+from unittest import mock, skip
 from urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
-from django.db import connection
-from django.db import models
-from django.test import TestCase
-from django.test import Client
-from django.test import override_settings
-from django.test import RequestFactory
+from django.db import connection, models
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from django_scim import views
 from django_scim import constants
 from django_scim import models as scim_models
+from django_scim import views
 from django_scim.schemas import ALL as ALL_SCHEMAS
-from django_scim.utils import get_group_adapter
-from django_scim.utils import get_user_adapter
-from django_scim.utils import get_base_scim_location_getter
-from django_scim.utils import get_service_provider_config_model
-
+from django_scim.utils import (
+    get_base_scim_location_getter,
+    get_group_adapter,
+    get_service_provider_config_model,
+    get_user_adapter,
+)
 
 USER_MODEL = None
 GROUP_MODEL = None
@@ -1417,4 +1413,3 @@ class SchemasTestCase(LoginMixin, TestCase):
         expected = schemas_by_uri[constants.SchemaURI.USER]
         result = json.loads(resp.content.decode())
         self.assertEqual(expected, result)
-

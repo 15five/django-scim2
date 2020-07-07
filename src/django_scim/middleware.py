@@ -7,7 +7,6 @@ from . import constants
 from .settings import scim_settings
 from .utils import get_loggable_body
 
-
 logger = logging.getLogger(__name__)
 
 
