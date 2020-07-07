@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "django-scim2"
+version = "0.15.0"
+description = ""
+authors = ["Paul Logston <paul@15five.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+scim2-filter-parser = "0.3.4"
+Django = ">=2.0"
+python-dateutil = ">=2.7.3"
+
+[tool.poetry.dev-dependencies]
+mock = "^4.0.2"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.black]
+line-length = 100
+skip-string-normalization = true

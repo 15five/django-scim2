@@ -39,7 +39,6 @@ def setUpModule():
         class Meta:
             app_label = 'django_scim'
 
-
     # setup user
     class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
         scim_groups = models.ManyToManyField(
@@ -286,7 +285,7 @@ class SearchTestCase(LoginMixin, TestCase):
         """
         Test POST /Users/.search/?filter=userName eq ""
         """
-        ford = get_user_model().objects.create(
+        get_user_model().objects.create(
             first_name='Robert',
             last_name='Ford',
             username='rford',

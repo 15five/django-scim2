@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django import db
 from django.db import transaction
 from django.http import HttpResponse
@@ -70,12 +70,13 @@ class SCIMView(View):
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
 
-        assert lookup_url_kwarg in self.kwargs, (
-            'Expected view %s to be called with a URL keyword argument '
-            'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            'attribute on the view correctly.' %
-            (self.__class__.__name__, lookup_url_kwarg)
-        )
+        if lookup_url_kwarg not in self.kwargs:
+            msg = (
+                f'Expected view {self.__class__.__name__} to be called with a URL keyword argument '
+                f'named "{lookup_url_kwarg}". Fix your URL conf, or set the `.lookup_field` '
+                f'attribute on the view correctly.'
+            )
+            raise exceptions.BadRequestError(msg)
 
         uuid = self.kwargs[lookup_url_kwarg]
 
@@ -89,6 +90,12 @@ class SCIMView(View):
             return self.get_object_post_processor(self.request, obj)
         except ObjectDoesNotExist:
             raise exceptions.NotFoundError(uuid)
+        except MultipleObjectsReturned:
+            msg = (
+                f'Multiple objects returned by lookup of {lookup_url_kwarg} with value {uuid}. '
+                f'Make sure {lookup_url_kwarg} identifies a unique instance and try again.'
+            )
+            raise exceptions.BadRequestError(msg)
 
     @method_decorator(csrf_exempt)
     @method_decorator(login_required)
