@@ -2,7 +2,6 @@
 Django settings for tests.
 """
 import logging
-import os
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '+7y-ny9+un-bv60)6d^-1n-4ozv4p3bup9sl5$v24@0m5yh7n@'
@@ -107,4 +106,3 @@ SCIM_SERVICE_PROVIDER = {
         },
     ],
 }
-

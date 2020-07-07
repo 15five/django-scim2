@@ -16,6 +16,7 @@ class SCIMServiceProviderConfig(object):
     describe those authentication_schemes and features that are implemented by
     your app.
     """
+
     def __init__(self, request=None):
         self.request = request
 
@@ -107,7 +108,7 @@ class AbstractSCIMCommonAttributesMixin(models.Model):
         null=True,
         blank=True,
         default=None,
-        db_index=True,
+        unique=True,
         help_text=_('A unique identifier for a SCIM resource as defined by the service provider.'),
     )
 
