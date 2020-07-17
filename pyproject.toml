@@ -1,10 +1,31 @@
 [tool.poetry]
 name = "django-scim2"
-version = "0.16.0"
-description = ""
+version = "0.16.1"
+description = "A partial implementation of the SCIM 2.0 provider specification for use with Django."
+license = "MIT"
 authors = ["Paul Logston <paul@15five.com>"]
+maintainers = ["Devs <devs@15five.com>"]
+readme = "README.rst"
+homepage = "https://pypi.org/project/django-scim2/"
+repository = "https://github.com/15five/django-scim2"
+documentation = "https://django-scim2.readthedocs.io/en/stable/"
+keywords = ["django", "scim", "scim2", "2.0"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Web Environment",
+  "Framework :: Django",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Topic :: Internet",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 packages = [
-    { include = "src" },
+    { include = "django_scim", from = "src" },
 ]
 
 [tool.poetry.dependencies]
