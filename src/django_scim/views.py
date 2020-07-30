@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from scim2_filter_parser.parser import SCIMParesrError
+from scim2_filter_parser.parser import SCIMParserError
 
 from . import constants, exceptions
 from .utils import (
@@ -158,7 +158,7 @@ class FilterMixin(object):
     def _search(self, request, query, start, count):
         try:
             qs = self.__class__.parser_getter().search(query, request)
-        except (ValueError, SCIMParesrError) as e:
+        except (ValueError, SCIMParserError) as e:
             raise exceptions.BadRequestError('Invalid filter/search query: ' + str(e))
 
         extra_filter_kwargs = self.get_extra_filter_kwargs(request)
