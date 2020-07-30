@@ -125,4 +125,3 @@ This project was forked from https://bitbucket.org/atlassian/django_scim
 
 
 .. [1] http://www.simplecloud.info/, https://tools.ietf.org/html/rfc7644
-
