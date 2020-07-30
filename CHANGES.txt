@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.16.2
+------
+- Upgrade version of scim2-filter-parser
+
 0.16.1
 ------
 - Fix distribution issues with pyproject.toml file
