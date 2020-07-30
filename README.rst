@@ -87,8 +87,8 @@ https://django-scim2.readthedocs.io/
 Tests
 -----
 
-.. |tests| image:: https://circleci.com/gh/15five/django-scim2.svg?style=svg
-    :target: https://circleci.com/gh/15five/django-scim2
+.. |tests| image:: https://github.com/15five/django-scim2/workflows/cicd/badge.svg
+    :target: https://github.com/15five/django-scim2/actions
 
 https://circleci.com/gh/15five/django-scim2
 
