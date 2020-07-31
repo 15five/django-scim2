@@ -75,13 +75,6 @@ deps =
     flake8
 commands =
     flake8 src
-
-[flake8]
-exclude = __pycache__,.eggs/,.tox/
-max-line-length = 120
-max-complexity = 8
-ignore =
-    W391  # blank line at end of file
 """
 
 [build-system]
