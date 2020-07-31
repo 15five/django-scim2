@@ -51,6 +51,11 @@ envlist =
     py{37,38}-django{22,30}
     flake8
 
+[gh-actions]
+python =
+    3.7: py37
+    3.8: py38, flake8
+
 [testenv]
 setenv =
     PYTHONDONTWRITEBYTECODE=1
@@ -70,13 +75,6 @@ deps =
     flake8
 commands =
     flake8 src
-
-[flake8]
-exclude = __pycache__
-max-line-length = 120
-max-complexity = 8
-ignore =
-    W391  # blank line at end of file
 """
 
 [build-system]
