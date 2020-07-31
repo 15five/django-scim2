@@ -3,6 +3,11 @@ CHANGE LOG
 
 0.16.2
 ------
+- Drop explicit support for Python 3.6
+- Complete migration to GitHub Actions
+
+0.16.2
+------
 - Upgrade version of scim2-filter-parser
 
 0.16.1
