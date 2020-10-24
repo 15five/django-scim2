@@ -38,13 +38,6 @@ request should be allowed or denied.
 Add the necessary url patterns to your root urls.py file. Please note that the
 namespace is mandatory and must be named `scim`::
 
-    # Django 1.11
-    urlpatterns = [
-        ...
-        url(r'^scim/v2/', include('django_scim.urls', namespace='scim')),
-    ]
-
-    # Django 2+
     urlpatterns = [
         ...
         path('scim/v2/', include('django_scim.urls')),
@@ -117,6 +110,13 @@ PLEASE NOTE: This app does not implement authorization and authentication.
 Such tasks are left for other apps such as `Django OAuth Toolkit`_ to implement.
 
 .. _`Django OAuth Toolkit`: https://github.com/evonove/django-oauth-toolkit
+
+Development Speed
+-----------------
+
+Since this project is relatively stable, time is only dedicated to it on
+Fridays. Thus if you issue a PR, bug, etc, please note that it may take a week
+before we get back to you. Thanks you for your patience.
 
 Credits
 -------
