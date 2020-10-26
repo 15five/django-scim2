@@ -168,22 +168,29 @@ class FilterMixin(object):
 
         return self._build_response(request, qs, start, count)
 
-    def _filter_raw_queryset_with_extra_filter_kwargs(self, qs, extra_filter_kwargs):
+    def _get_nested_field(self, obj, attr_key):
+        """Get a nested field for a given object, so 'a__b__c' returns obj.a.b.c"""
+        tokens = attr_key.split('__')
+        for field_name in tokens:
+            if not hasattr(obj, field_name):
+                return None
+            obj = getattr(obj, field_name)
+        return obj
 
+    def _filter_raw_queryset_with_extra_filter_kwargs(self, qs, extra_filter_kwargs):
         obj_list = []
         for obj in qs:
             add_obj = True
-            for attr_name, attr_val in extra_filter_kwargs.items():
-                if attr_name.endswith('__in'):
-                    attr_name = attr_name.replace('__in', '')
-                    if not hasattr(obj, attr_name) or getattr(obj, attr_name) not in attr_val:
-                        add_obj = False
-                        break
-
+            for attr_key, attr_val in extra_filter_kwargs.items():
+                if attr_key.endswith('__in'):
+                    attr_key = attr_key.replace('__in', '')
                 else:
-                    if not hasattr(obj, attr_name) or getattr(obj, attr_name) != attr_val:
-                        add_obj = False
-                        break
+                    attr_val = [attr_val]
+
+                value = self._get_nested_field(obj, attr_key)
+                if not value or value not in attr_val:
+                    add_obj = False
+                    break
 
             if add_obj:
                 obj_list.append(obj)
@@ -191,21 +198,19 @@ class FilterMixin(object):
         return obj_list
 
     def _filter_raw_queryset_with_extra_exclude_kwargs(self, qs, extra_exclude_kwargs):
-
         obj_list = []
         for obj in qs:
             add_obj = True
-            for attr_name, attr_val in extra_exclude_kwargs.items():
-                if attr_name.endswith('__in'):
-                    attr_name = attr_name.replace('__in', '')
-                    if hasattr(obj, attr_name) and getattr(obj, attr_name) in attr_val:
-                        add_obj = False
-                        break
-
+            for attr_key, attr_val in extra_exclude_kwargs.items():
+                if attr_key.endswith('__in'):
+                    attr_key = attr_key.replace('__in', '')
                 else:
-                    if hasattr(obj, attr_name) and getattr(obj, attr_name) == attr_val:
-                        add_obj = False
-                        break
+                    attr_val = [attr_val]
+
+                value = self._get_nested_field(obj, attr_key)
+                if value and value in attr_val:
+                    add_obj = False
+                    break
 
             if add_obj:
                 obj_list.append(obj)
