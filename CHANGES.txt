@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.16.4
+------
+
+- Bug fixes
+
 0.16.3
 ------
 - Consider nested fields in extra_filter_kwargs and extra_exclude_kwargs
