@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.16.5
+------
+
+- Re-release of package due to PyPI release bug.
+
 0.16.4
 ------
 
