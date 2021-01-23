@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.16.6
+------
+
+- Re-release of package due to pyproject.toml bug.
+
 0.16.5
 ------
 
