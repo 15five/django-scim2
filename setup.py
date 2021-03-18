@@ -57,7 +57,7 @@ setup(
     ],
     tests_require=[
         'mock',
-        'Django>=2.2,<3',
+        'Django>=2.2,<4',
     ],
     test_suite='setup.run_tests',
     zip_safe=False,
