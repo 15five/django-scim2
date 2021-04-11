@@ -51,7 +51,7 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=[
-        'Django>=2.2.13',
+        'Django>=2.2',
         'python-dateutil>=2.7.3',
         'scim2-filter-parser==0.3.5',
     ],
@@ -72,6 +72,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
