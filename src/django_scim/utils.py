@@ -86,6 +86,14 @@ def get_object_post_processor_getter(model):
     return scim_settings.GET_OBJECT_POST_PROCESSOR_GETTER(model)
 
 
+def get_queryset_post_processor_getter(model):
+    """
+    Return a function that will, when called, returns the
+    get_queryset_post_processor function.
+    """
+    return scim_settings.GET_QUERYSET_POST_PROCESSOR_GETTER(model)
+
+
 def default_base_scim_location_getter(request=None, *args, **kwargs):
     """
     Return the default location of the app implementing the SCIM api.
@@ -162,6 +170,28 @@ def default_get_object_post_processor_getter(model):
         return obj
 
     return get_object_post_processor
+
+
+def default_get_queryset_post_processor_getter(model):
+    """
+    Return a **method** that can be used to perform any post processing
+    on a queryset about to be returned from GetView.get_many().
+
+    :param model:
+    """
+    def get_queryset_post_processor(request, qs, *args, **kwargs):
+        """
+        Perform any post processing on queryset to be returned from GetView.get_many().
+
+        :param request:
+        :param qs:
+        :param args:
+        :param kwargs:
+        :rtype: Django Queryset
+        """
+        return qs
+
+    return get_queryset_post_processor
 
 
 def clean_structure_of_passwords(obj):
