@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.17.0
+------
+
+- Inclusion of a post processor for querysets during GetView.get_many() calls.
+
 0.16.6
 ------
 
