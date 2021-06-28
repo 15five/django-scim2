@@ -496,6 +496,46 @@ class UserTestCase(LoginMixin, TestCase):
         }
         self.assertEqual(expected, result)
 
+    @mock.patch('django_scim.views.UsersView.get_queryset_post_processor')
+    def test_get_all_users_with_get_queryset_post_processor(self, func):
+        """
+        Test GET /Users with queryset post processor.
+        """
+        # get modified queryset returned by a call to get_queryset_post_processor
+        def get_queryset_post_processor(request, qs, *args, **kwargs):
+            return qs.filter(is_active=False)
+
+        func.side_effect = get_queryset_post_processor
+
+        get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+            is_active=False,
+        )
+        abernathy = get_user_adapter()(abernathy, self.request)
+
+        url = reverse('scim:users')
+        resp = self.client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+        result = json.loads(resp.content.decode())
+
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 1,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
+                abernathy.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
+
     def test_post(self):
         url = reverse('scim:users')
         data = {
@@ -1112,6 +1152,42 @@ class GroupTestCase(LoginMixin, TestCase):
         """
         # define kwargs returned by a call to get_extra_exclude_kwargs
         func.return_value = {'name': 'Behavior Group'}
+
+        get_group_model().objects.create(
+            name='Behavior Group',
+        )
+
+        security = get_group_model().objects.create(
+            name='Security Group',
+        )
+        security = get_group_adapter()(security, self.request)
+
+        url = reverse('scim:groups')
+        resp = self.client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+
+        result = json.loads(resp.content.decode())
+        expected = {
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
+            "totalResults": 1,
+            "itemsPerPage": 50,
+            "startIndex": 1,
+            'Resources': [
+                security.to_dict(),
+            ],
+        }
+        self.assertEqual(expected, result)
+
+    @mock.patch('django_scim.views.GroupsView.get_queryset_post_processor')
+    def test_get_all_groups_with_get_queryset_post_processor(self, func):
+        """
+        Test GET /Groups with queryset post processor.
+        """
+        # get modified queryset returned by a call to get_queryset_post_processor
+        def get_queryset_post_processor(request, qs, *args, **kwargs):
+            return qs.filter(name__icontains='security')
+
+        func.side_effect = get_queryset_post_processor
 
         get_group_model().objects.create(
             name='Behavior Group',

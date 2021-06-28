@@ -24,6 +24,7 @@ from .utils import (
     get_group_filter_parser,
     get_group_model,
     get_object_post_processor_getter,
+    get_queryset_post_processor_getter,
     get_service_provider_config_model,
     get_user_adapter,
     get_user_filter_parser,
@@ -58,6 +59,10 @@ class SCIMView(View):
     @property
     def get_object_post_processor(self):
         return get_object_post_processor_getter(self.model_cls)
+
+    @property
+    def get_queryset_post_processor(self):
+        return get_queryset_post_processor_getter(self.model_cls)
 
     @property
     def scim_adapter(self):
@@ -297,7 +302,9 @@ class GetView(object):
             **extra_filter_kwargs
         ).exclude(
             **extra_exclude_kwargs
-        ).order_by(self.lookup_field)
+        )
+        qs = self.get_queryset_post_processor(request, qs)
+        qs = qs.order_by(self.lookup_field)
         return self._build_response(request, qs, *self._page(request))
 
 
