@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.17.2
+------
+
+- Update tests to support Django4.0
+
 0.17.1
 ------
 
