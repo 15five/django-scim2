@@ -18,6 +18,7 @@ Contents
    models
    utils
    views
+   settings
 
 * :ref:`genindex`
 * :ref:`modindex`
