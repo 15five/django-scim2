@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-scim2"
-version = "0.17.1"
+version = "0.17.2"
 description = "A partial implementation of the SCIM 2.0 provider specification for use with Django."
 license = "MIT"
 authors = ["Paul Logston <paul@15five.com>"]
