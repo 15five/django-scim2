@@ -37,6 +37,7 @@ DEFAULTS = {
     'DOCUMENTATION_URI': None,
     'SCHEME': 'https',
     'NETLOC': None,
+    'EXPOSE_SCIM_EXCEPTIONS': False,
     'AUTHENTICATION_SCHEMES': [],
     'WWW_AUTHENTICATE_HEADER': 'Basic realm="django-scim2"',
 }

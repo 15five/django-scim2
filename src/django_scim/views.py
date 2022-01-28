@@ -15,6 +15,7 @@ from django.views.generic import View
 from scim2_filter_parser.parser import SCIMParserError
 
 from . import constants, exceptions
+from .settings import scim_settings
 from .utils import (
     get_all_schemas_getter,
     get_base_scim_location_getter,
@@ -113,7 +114,16 @@ class SCIMView(View):
         except Exception as e:
             if not isinstance(e, exceptions.SCIMException):
                 logger.exception('Unable to complete SCIM call.')
-                e = exceptions.SCIMException(str(e))
+
+                # In some circumstances it can be beneficial for the client
+                # to know what caused an error. However, this can present an
+                # unacceptable security risk for many companies. This flag
+                # allows for a generic error message to be returned when such a
+                # security risk is unacceptable.
+                if scim_settings.EXPOSE_SCIM_EXCEPTIONS:
+                    e = exceptions.SCIMException(str(e))
+                else:
+                    e = exceptions.SCIMException('Exception occurred while processing the SCIM request')
 
             content = json.dumps(e.to_dict())
             return HttpResponse(content=content,

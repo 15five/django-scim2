@@ -1,6 +1,13 @@
 CHANGE LOG
 ==========
 
+0.17.x
+------
+
+- Add a setting for exposing SCIM errors to clients, `EXPOSE_SCIM_EXCEPTIONS`.
+  This setting defaults to false for security but can be toggled on for
+  backwards compatibility.
+
 0.17.0
 ------
 
