@@ -1,7 +1,7 @@
 CHANGE LOG
 ==========
 
-0.17.x
+0.17.1
 ------
 
 - Update docs to include information for available settings.
