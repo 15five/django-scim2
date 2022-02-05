@@ -37,7 +37,7 @@ def run_tests():
 
 setup(
     name='django-scim2',
-    version='0.17.1',
+    version='0.17.2',
     description='A partial implementation of the SCIM 2.0 provider specification for use with Django.',
     url='https://github.com/15five/django-scim2',
     download_url='https://github.com/15five/django-scim2/archive/master.zip',
@@ -73,6 +73,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],

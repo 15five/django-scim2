@@ -85,6 +85,9 @@ Tests
 
 https://github.com/15five/django-scim2/actions
 
+Tests are typically run locally with `tox` (https://tox.wiki/). `tox` is
+configured via the `pyproject.toml` file.
+
 Coverage
 --------
 
