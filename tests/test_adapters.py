@@ -1,4 +1,4 @@
-import unittest
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -11,49 +11,10 @@ from django_scim import models as scim_models
 from django_scim.adapters import SCIMMixin
 from django_scim.utils import get_group_adapter, get_user_adapter
 
-USER_MODEL = None
-GROUP_MODEL = None
+from tests.models import get_group_model
 
 
-def setUpModule():
-    global USER_MODEL
-    global GROUP_MODEL
-
-    # setup group
-    class TestAdaptersGroup(scim_models.AbstractSCIMGroupMixin):
-        name = models.CharField('name', max_length=80, unique=True)
-
-        class Meta:
-            app_label = 'django_scim'
-
-    # setup user
-    class TestAdaptersUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
-        scim_groups = models.ManyToManyField(
-            TestAdaptersGroup,
-            related_name="user_set",
-        )
-        class Meta:
-            app_label = 'django_scim'
-
-    USER_MODEL = TestAdaptersUser
-    GROUP_MODEL = TestAdaptersGroup
-
-    for model in (GROUP_MODEL, USER_MODEL):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.create_model(model)
-
-
-def tearDownModule():
-    for model in (GROUP_MODEL, USER_MODEL):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.delete_model(model)
-
-
-def get_group_model():
-    return GROUP_MODEL
-
-
-@override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class SCIMUserTestCase(TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -191,7 +152,7 @@ class SCIMUserTestCase(TestCase):
         self.assertEqual(ford.resource_type_dict(), expected)
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class SCIMHandleOperationsTestCase(TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -219,7 +180,7 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
+        with patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
             ford.handle_operations(operations)
             call_args = handler.call_args[0]
             self.assertIsInstance(call_args[0], AttrPath)
@@ -250,7 +211,7 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
+        with patch('django_scim.adapters.SCIMUser.handle_replace') as handler:
             ford.handle_operations(operations)
             call_args = handler.call_args[0]
             self.assertIsInstance(call_args[0], AttrPath)
@@ -281,7 +242,7 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+        with patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
             call_args = handler.call_args[0]
             self.assertIsInstance(call_args[0], AttrPath)
@@ -312,7 +273,7 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+        with patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
 
             call_args = handler.call_args[0]
@@ -344,7 +305,7 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+        with patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
             path_obj, value, op_dict = handler.call_args[0]
             self.assertEqual(path_obj.filter, 'addresses[type eq \"work\"].country eq ""')
@@ -378,7 +339,7 @@ class SCIMHandleOperationsTestCase(TestCase):
             operations[0]
         )
 
-        with unittest.mock.patch('django_scim.adapters.SCIMUser.handle_add') as handler:
+        with patch('django_scim.adapters.SCIMUser.handle_add') as handler:
             ford.handle_operations(operations)
             path_obj, value, op_dict = handler.call_args[0]
             self.assertEqual(path_obj.filter, 'members[value eq "6784"] eq ""')
@@ -456,7 +417,7 @@ class SCIMMixinPathParserTestCase(TestCase):
             self.assertEqual(result.first_path, expected_result)
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestAdaptersUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class SCIMGroupTestCase(TestCase):
     request = RequestFactory().get('/fake/request')
 

@@ -101,7 +101,7 @@ all supported versions of Python and Django.
 To run the test suite with the current version of Python, run:
 
 ```
-poetry run test
+poetry run pytest tests/
 ```
 
 Coverage
@@ -111,6 +111,11 @@ Coverage
     :target: https://codecov.io/gh/15five/django-scim2
 
 https://codecov.io/gh/15five/django-scim2/
+
+```
+poetry run coverage run -m pytest
+poetry run coverage report -m
+```
 
 License
 -------

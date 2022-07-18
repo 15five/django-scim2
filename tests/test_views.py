@@ -8,6 +8,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import connection, models
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
+import pytest
 
 from django_scim import constants
 from django_scim import models as scim_models
@@ -20,47 +21,7 @@ from django_scim.utils import (
     get_user_adapter,
 )
 
-USER_MODEL = None
-GROUP_MODEL = None
-
-
-def setUpModule():
-    global USER_MODEL
-    global GROUP_MODEL
-
-    # setup group
-    class TestViewsGroup(scim_models.AbstractSCIMGroupMixin):
-        name = models.CharField('name', max_length=80, unique=True)
-
-        class Meta:
-            app_label = 'django_scim'
-
-    # setup user
-    class TestViewsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
-        scim_groups = models.ManyToManyField(
-            TestViewsGroup,
-            related_name="user_set",
-        )
-
-        class Meta:
-            app_label = 'django_scim'
-
-    USER_MODEL = TestViewsUser
-    GROUP_MODEL = TestViewsGroup
-
-    for model in (GROUP_MODEL, USER_MODEL):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.create_model(model)
-
-
-def tearDownModule():
-    for model in (GROUP_MODEL, USER_MODEL):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.delete_model(model)
-
-
-def get_group_model():
-    return GROUP_MODEL
+from tests.models import get_group_model
 
 
 class LoginMixin(object):
@@ -106,7 +67,7 @@ class SCIMTestCase(TestCase):
         self.fail('TODO')
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class FilterMixinTestCase(TestCase):
     maxDiff = None
     factory = RequestFactory()
@@ -253,7 +214,7 @@ class FilterMixinTestCase(TestCase):
         self.assertEqual(obj_list, expected)
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class SearchTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -343,7 +304,7 @@ class SearchTestCase(LoginMixin, TestCase):
         self.assertEqual(expected, result)
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class UserTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -1004,7 +965,7 @@ class UserTestCase(LoginMixin, TestCase):
         self.assertIsNone(ford)
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class UserBugsTestCase(LoginMixin, TestCase):
     maxDiff = None
     request = RequestFactory().get('/fake/request')
@@ -1038,7 +999,7 @@ class UserBugsTestCase(LoginMixin, TestCase):
         self.assertTrue(ford.is_active)
 
 
-@override_settings(AUTH_USER_MODEL='django_scim.TestViewsUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 @mock.patch('django_scim.views.GroupsView.model_cls_getter', get_group_model)
 class GroupTestCase(LoginMixin, TestCase):
     maxDiff = None
