@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from . import constants
 from .settings import scim_settings
-from .utils import get_loggable_body
+from .utils import get_is_authenticated_predicate, get_loggable_body
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class SCIMAuthCheckMiddleware(object):
         # If we've just passed through the auth middleware and there is no user
         # associated with the request we can assume permission
         # was denied and return a 401.
-        if not hasattr(request, 'user') or request.user.is_anonymous:
+        if not hasattr(request, 'user') or not get_is_authenticated_predicate()(request.user):
             if request.path.startswith(self.reverse_url):
                 response = HttpResponse(status=401)
                 response['WWW-Authenticate'] = scim_settings.WWW_AUTHENTICATE_HEADER

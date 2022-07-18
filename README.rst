@@ -35,6 +35,9 @@ Make sure to place this middleware after authentication middleware as this
 middleware simply checks `request.user.is_anonymous()` to determine if the SCIM
 request should be allowed or denied.
 
+If you have specific authentication needs, look into overriding the default "is
+authenticated predicate" (ie. see `GET_IS_AUTHENTICATED_PREDICATE` for details).
+
 Add the necessary url patterns to your root urls.py file. Please note that the
 namespace is mandatory and must be named `scim`::
 
@@ -98,7 +101,12 @@ https://github.com/15five/django-scim2/actions
 Tests are typically run locally with `tox` (https://tox.wiki/). Tox will test
 all supported versions of Python and Django.
 
-To run the test suite with the current version of Python, run:
+```
+tox
+```
+
+To run the test suite with a single version of Python (the version you created
+the virtualenv with), run:
 
 ```
 poetry run pytest tests/
@@ -113,8 +121,7 @@ Coverage
 https://codecov.io/gh/15five/django-scim2/
 
 ```
-poetry run coverage run -m pytest
-poetry run coverage report -m
+tox -e coverage
 ```
 
 License
