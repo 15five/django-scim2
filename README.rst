@@ -77,6 +77,16 @@ Documentation
 
 https://django-scim2.readthedocs.io/
 
+Development
+-----------
+
+This project uses Poetry to manage dependencies, etc. Thus to install the
+necessary tools when developing, run:
+
+```
+poetry install
+```
+
 Tests
 -----
 
@@ -85,8 +95,14 @@ Tests
 
 https://github.com/15five/django-scim2/actions
 
-Tests are typically run locally with `tox` (https://tox.wiki/). `tox` is
-configured via the `pyproject.toml` file.
+Tests are typically run locally with `tox` (https://tox.wiki/). Tox will test
+all supported versions of Python and Django.
+
+To run the test suite with the current version of Python, run:
+
+```
+poetry run test
+```
 
 Coverage
 --------
