@@ -8,6 +8,10 @@ from django_scim import constants
 from django_scim import models as scim_models
 from django_scim.utils import get_service_provider_config_model
 
+# Force loading of test.models so its models are registered with Django and
+# testing framework.
+from tests.models import get_group_model as _unused
+
 
 class SCIMServiceProviderConfigTestCase(TestCase):
     maxDiff = None
@@ -60,50 +64,7 @@ class SCIMServiceProviderConfigTestCase(TestCase):
         self.assertEqual(config.to_dict(), expected)
 
 
-USER_MODEL = None
-GROUP_MODEL = None
-
-
-def setUpModule():
-    global USER_MODEL
-    global GROUP_MODEL
-
-    # setup group
-    class TestModelsGroup(scim_models.AbstractSCIMGroupMixin):
-        name = models.CharField('name', max_length=80, unique=True)
-
-        class Meta:
-            app_label = 'django_scim'
-
-    # setup user
-    class TestModelsUser(scim_models.AbstractSCIMUserMixin, AbstractUser):
-        scim_groups = models.ManyToManyField(
-            TestModelsGroup,
-            related_name="user_set",
-        )
-
-        class Meta:
-            app_label = 'django_scim'
-
-    USER_MODEL = TestModelsUser
-    GROUP_MODEL = TestModelsGroup
-
-    for model in (GROUP_MODEL, USER_MODEL):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.create_model(model)
-
-
-def tearDownModule():
-    for model in (GROUP_MODEL, USER_MODEL):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.delete_model(model)
-
-
-def get_group_model():
-    return GROUP_MODEL
-
-
-@override_settings(AUTH_USER_MODEL='django_scim.TestModelsUser')
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
 class UserTestCase(TestCase):
     maxDiff = None
 

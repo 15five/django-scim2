@@ -23,21 +23,31 @@ jobs:
       - run: pip install tox tox-gh-actions poetry
       - run: tox
 
-  # Disabled until we can introduce pytest and use conventional commands for
-  # gathering coverage with Poetry, pytest, and coverage.py.
-  #coverage:
-  #  name: Coverage
+  flake8:
+    name: Flake8
 
-  #  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #  container:
-  #    image: python:3.9-buster
+    container:
+      image: python:3.10-buster
 
-  #  steps:
-  #    - uses: actions/checkout@v2
-  #    - run: pip install coverage codecov poetry
-  #    - run: poetry run coverage run -m pytest
-  #    - run: poetry run coverage report -m
-  #    - uses: "codecov/codecov-action@v1"
-  #      with:
-  #        fail_ci_if_error: true
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install tox poetry
+      - run: tox -e flake8
+
+  coverage:
+    name: Coverage
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:3.10-buster
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install tox poetry
+      - run: tox -e coverage
+      - uses: "codecov/codecov-action@v3"
+        with:
+          fail_ci_if_error: true
