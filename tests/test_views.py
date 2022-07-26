@@ -1,3 +1,4 @@
+import copy
 import json
 from unittest import mock, skip
 from urllib.parse import urljoin
@@ -104,10 +105,10 @@ class FilterMixinTestCase(TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 2,
-            "itemsPerPage": 5,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 2,
+            'itemsPerPage': 5,
+            'startIndex': 1,
             'Resources': [
                 ford.to_dict(),
                 abernathy.to_dict(),
@@ -261,11 +262,11 @@ class SearchTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 0,
-            "itemsPerPage": 50,
-            "startIndex": 1,
-            "Resources": [],
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 0,
+            'itemsPerPage': 50,
+            'startIndex': 1,
+            'Resources': [],
         }
         self.assertEqual(expected, result)
 
@@ -293,15 +294,102 @@ class SearchTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 1,
-            "itemsPerPage": 50,
-            "startIndex": 1,
-            "Resources": [
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 1,
+            'itemsPerPage': 50,
+            'startIndex': 1,
+            'Resources': [
                 ford.to_dict(),
             ]
         }
         self.assertEqual(expected, result)
+
+
+@override_settings(AUTH_USER_MODEL='django_scim.TestUser')
+class CustomAuthDecoratorCase(TestCase):
+    maxDiff = None
+    request = RequestFactory().get('/fake/request')
+
+    def setUp(self):
+        admin = get_user_model().objects.create(
+            first_name='Super',
+            last_name='Admin',
+            username='superuser',
+            password=make_password('password1'),
+        )
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+        )
+        abernathy = get_user_model().objects.create(
+            first_name='Dolores',
+            last_name='Abernathy',
+            username='dabernathy',
+        )
+
+        self.users = [admin, ford, abernathy]
+
+    def test_authed_with_login_required(self):
+        client = Client()
+        self.assertTrue(client.login(username='superuser', password='password1'))
+
+        # Test simple GET to /Users
+        url = reverse('scim:users')
+        resp = client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 200, resp.content.decode())
+
+        result = json.loads(resp.content.decode())
+        expected = {
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 3,
+            'itemsPerPage': 50,
+            'startIndex': 1,
+            'Resources': [
+                get_user_adapter()(u, self.request).to_dict() 
+                for u in self.users
+            ],
+        }
+        self.assertEqual(expected, result)
+
+    def test_unauthed_with_login_required(self):
+        client = Client()
+
+        # Test simple GET to /Users
+        url = reverse('scim:users')
+        resp = client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+        self.assertEqual(resp.status_code, 401, resp.content.decode())
+
+    def test_unauthed_with_no_login_required(self):
+        from django_scim.settings import scim_settings
+
+        old_user_settings = copy.deepcopy(scim_settings.user_settings)
+        scim_settings.user_settings['GET_IS_AUTHENTICATED_PREDICATE'] = lambda u: True
+        del scim_settings.GET_IS_AUTHENTICATED_PREDICATE
+
+        try:
+            client = Client()
+
+            # Test simple GET to /Users
+            url = reverse('scim:users')
+            resp = client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+            self.assertEqual(resp.status_code, 200, resp.content.decode())
+
+            result = json.loads(resp.content.decode())
+            expected = {
+                'schemas': [constants.SchemaURI.LIST_RESPONSE],
+                'totalResults': 3,
+                'itemsPerPage': 50,
+                'startIndex': 1,
+                'Resources': [
+                    get_user_adapter()(u, self.request).to_dict() 
+                    for u in self.users
+                ],
+            }
+            self.assertEqual(expected, result)
+        finally:
+            scim_settings.user_settings = old_user_settings
+            del scim_settings.GET_IS_AUTHENTICATED_PREDICATE
 
 
 @override_settings(AUTH_USER_MODEL='django_scim.TestUser')
@@ -319,11 +407,11 @@ class UserTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 0,
-            "itemsPerPage": 50,
-            "startIndex": 1,
-            "Resources": [],
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 0,
+            'itemsPerPage': 50,
+            'startIndex': 1,
+            'Resources': [],
         }
         self.assertEqual(expected, result)
 
@@ -370,10 +458,10 @@ class UserTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 3,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 3,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 get_user_adapter()(self.user, self.request).to_dict(),
                 ford.to_dict(),
@@ -409,10 +497,10 @@ class UserTestCase(LoginMixin, TestCase):
         result = json.loads(resp.content.decode())
 
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 2,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 2,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 get_user_adapter()(self.user, self.request).to_dict(),
                 ford.to_dict(),
@@ -447,10 +535,10 @@ class UserTestCase(LoginMixin, TestCase):
         result = json.loads(resp.content.decode())
 
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 1,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 1,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 abernathy.to_dict(),
             ],
@@ -487,10 +575,10 @@ class UserTestCase(LoginMixin, TestCase):
         result = json.loads(resp.content.decode())
 
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 1,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 1,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 abernathy.to_dict(),
             ],
@@ -748,7 +836,7 @@ class UserTestCase(LoginMixin, TestCase):
 
         data = '''
         {
-          "schemas": [
+          'schemas': [
             "urn:ietf:params:scim:api:messages:2.0:PatchOp"
           ],
           "Operations": [
@@ -776,7 +864,7 @@ class UserTestCase(LoginMixin, TestCase):
 
         data = '''
         {
-          "schemas": [
+          'schemas': [
             "urn:ietf:params:scim:api:messages:2.0:PatchOp"
           ],
           "Operations": [
@@ -804,7 +892,7 @@ class UserTestCase(LoginMixin, TestCase):
 
         data = '''
         {
-          "schemas": [
+          'schemas': [
             "urn:ietf:params:scim:api:messages:2.0:PatchOp"
           ],
           "Operations": [
@@ -877,7 +965,7 @@ class UserTestCase(LoginMixin, TestCase):
 
         data = '''
         {
-          "schemas": [
+          'schemas': [
             "urn:ietf:params:scim:api:messages:2.0:PatchOp"
           ],
           "Operations": [
@@ -1062,10 +1150,10 @@ class GroupTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 2,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 2,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 behavior.to_dict(),
                 security.to_dict(),
@@ -1096,10 +1184,10 @@ class GroupTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 1,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 1,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 behavior.to_dict(),
             ],
@@ -1129,10 +1217,10 @@ class GroupTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 1,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 1,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 security.to_dict(),
             ],
@@ -1165,10 +1253,10 @@ class GroupTestCase(LoginMixin, TestCase):
 
         result = json.loads(resp.content.decode())
         expected = {
-            "schemas": [constants.SchemaURI.LIST_RESPONSE],
-            "totalResults": 1,
-            "itemsPerPage": 50,
-            "startIndex": 1,
+            'schemas': [constants.SchemaURI.LIST_RESPONSE],
+            'totalResults': 1,
+            'itemsPerPage': 50,
+            'startIndex': 1,
             'Resources': [
                 security.to_dict(),
             ],

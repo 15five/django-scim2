@@ -94,6 +94,18 @@ def get_queryset_post_processor_getter(model):
     return scim_settings.GET_QUERYSET_POST_PROCESSOR_GETTER(model)
 
 
+def get_is_authenticated_predicate():
+    """
+    Return function that will perform customized authn/z actions during
+    `.dispatch` method processing. This defaults to Django's `user.is_authenticated`.
+    """
+    return scim_settings.GET_IS_AUTHENTICATED_PREDICATE
+
+
+def default_is_authenticated_predicate(user):
+    return user.is_authenticated
+
+
 def default_base_scim_location_getter(request=None, *args, **kwargs):
     """
     Return the default location of the app implementing the SCIM api.
