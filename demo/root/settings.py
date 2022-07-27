@@ -52,7 +52,6 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
-    'app.middleware.CustomSCIMAuthCheckMiddleware',
 )
 
 AUTHENTICATION_BACKENDS = [
@@ -229,6 +228,7 @@ SCIM_SERVICE_PROVIDER = {
     'SCHEME': 'https',
     # use default value, this will be overridden by value returned by BASE_LOCATION_GETTER
     'NETLOC': 'localhost',
+    'AUTH_CHECK_MIDDLEWARE': 'app.middleware.CustomSCIMAuthCheckMiddleware',
     'AUTHENTICATION_SCHEMES': [
         {
             'type': 'oauth2',

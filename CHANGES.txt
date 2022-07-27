@@ -1,6 +1,15 @@
 CHANGE LOG
 ==========
 
+0.18.0
+------
+
+- `SCIMAuthCheckMiddleware` is now applied as a decorator directly to
+  the SCIM view functions.  Therefore, it no longer needs to be
+  configured as a middleware in Django's `MIDDLEWARE` setting.  If you
+  want to customize it, you can do so using the
+  `AUTH_CHECK_MIDDLEWARE` key of the `SCIM_SERVICE_PROVIDER` setting.
+
 0.17.3
 ------
 

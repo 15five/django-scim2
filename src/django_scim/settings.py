@@ -34,6 +34,7 @@ DEFAULTS = {
     'GET_OBJECT_POST_PROCESSOR_GETTER': 'django_scim.utils.default_get_object_post_processor_getter',
     'GET_QUERYSET_POST_PROCESSOR_GETTER': 'django_scim.utils.default_get_queryset_post_processor_getter',
     'GET_IS_AUTHENTICATED_PREDICATE': 'django_scim.utils.default_is_authenticated_predicate',
+    'AUTH_CHECK_MIDDLEWARE': 'django_scim.middleware.SCIMAuthCheckMiddleware',
     'SCHEMAS_GETTER': 'django_scim.schemas.default_schemas_getter',
     'DOCUMENTATION_URI': None,
     'SCHEME': 'https',
@@ -63,6 +64,7 @@ IMPORT_STRINGS = (
     'GET_OBJECT_POST_PROCESSOR_GETTER',
     'GET_QUERYSET_POST_PROCESSOR_GETTER',
     'GET_IS_AUTHENTICATED_PREDICATE',
+    'AUTH_CHECK_MIDDLEWARE',
     'SCHEMAS_GETTER',
 )
 
