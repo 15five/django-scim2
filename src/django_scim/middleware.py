@@ -49,7 +49,7 @@ class SCIMAuthCheckMiddleware(object):
         # If we've just passed through the auth middleware and there is no user
         # associated with the request we can assume permission
         # was denied and return a 401.
-        if not hasattr(request, 'user') or not get_is_authenticated_predicate()(request.user):
+        if not get_is_authenticated_predicate()(request):
             if request.path.startswith(self.reverse_url):
                 response = HttpResponse(status=401)
                 response['WWW-Authenticate'] = scim_settings.WWW_AUTHENTICATE_HEADER

@@ -1,10 +1,10 @@
 import json
 import logging
+from functools import wraps
 from urllib.parse import urljoin
 
 from django import db
-from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
@@ -35,22 +35,35 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 
-def login_required(
-    function=None,
-    redirect_field_name=REDIRECT_FIELD_NAME,
-    login_url=None,
-):
+def request_passes_test(test_func):
     """
-    Decorator for views that checks that the user is logged in, redirecting to
-    the log-in page if necessary.
+    Decorator for views that checks that the request passes the given test,
+    responding with a 401 if the test does not pass. The test should be a
+    callable that takes the request object and returns True if the request
+    passes.
+    """
 
-    This function was pulled almost directly from Django's implementation.
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapper_view(request, *args, **kwargs):
+            if test_func(request):
+                return view_func(request, *args, **kwargs)
+            response = HttpResponse(status=401)
+            response['WWW-Authenticate'] = scim_settings.WWW_AUTHENTICATE_HEADER
+            return response
+
+        return _wrapper_view
+
+    return decorator
+
+
+def login_required(function):
     """
-    actual_decorator = user_passes_test(
-        get_is_authenticated_predicate(),  # <- Only line that differs from Django's implementation.
-        login_url=login_url,
-        redirect_field_name=redirect_field_name,
-    )
+    Decorator for views that checks that the request has permission to access view.
+
+    This function was heavily influenced by Django's implementation.
+    """
+    actual_decorator = request_passes_test(get_is_authenticated_predicate())
     if function:
         return actual_decorator(function)
     return actual_decorator

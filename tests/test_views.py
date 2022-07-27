@@ -364,8 +364,9 @@ class CustomAuthDecoratorCase(TestCase):
         from django_scim.settings import scim_settings
 
         old_user_settings = copy.deepcopy(scim_settings.user_settings)
-        scim_settings.user_settings['GET_IS_AUTHENTICATED_PREDICATE'] = lambda u: True
-        del scim_settings.GET_IS_AUTHENTICATED_PREDICATE
+        scim_settings.user_settings['GET_IS_AUTHENTICATED_PREDICATE'] = lambda r: True
+        if hasattr(scim_settings, 'GET_IS_AUTHENTICATED_PREDICATE'):
+            del scim_settings.GET_IS_AUTHENTICATED_PREDICATE
 
         try:
             client = Client()
@@ -387,6 +388,25 @@ class CustomAuthDecoratorCase(TestCase):
                 ],
             }
             self.assertEqual(expected, result)
+        finally:
+            scim_settings.user_settings = old_user_settings
+            del scim_settings.GET_IS_AUTHENTICATED_PREDICATE
+
+    def test_unauthed_with_login_required(self):
+        from django_scim.settings import scim_settings
+
+        old_user_settings = copy.deepcopy(scim_settings.user_settings)
+        scim_settings.user_settings['GET_IS_AUTHENTICATED_PREDICATE'] = lambda r: False
+        if hasattr(scim_settings, 'GET_IS_AUTHENTICATED_PREDICATE'):
+            del scim_settings.GET_IS_AUTHENTICATED_PREDICATE
+
+        try:
+            client = Client()
+
+            # Test simple GET to /Users
+            url = reverse('scim:users')
+            resp = client.get(url, content_type=constants.SCIM_CONTENT_TYPE)
+            self.assertEqual(resp.status_code, 401, resp.content.decode())
         finally:
             scim_settings.user_settings = old_user_settings
             del scim_settings.GET_IS_AUTHENTICATED_PREDICATE

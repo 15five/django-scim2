@@ -102,8 +102,8 @@ def get_is_authenticated_predicate():
     return scim_settings.GET_IS_AUTHENTICATED_PREDICATE
 
 
-def default_is_authenticated_predicate(user):
-    return user.is_authenticated
+def default_is_authenticated_predicate(request) -> bool:
+    return hasattr(request, 'user') and request.user.is_authenticated
 
 
 def default_base_scim_location_getter(request=None, *args, **kwargs):
