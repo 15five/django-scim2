@@ -30,7 +30,6 @@ Add the appropriate middleware to authorize or deny the SCIM calls::
         'django_scim.middleware.SCIMAuthCheckMiddleware',
         ...
     )
-    
 Make sure to place this middleware after authentication middleware as this
 middleware simply checks `request.user.is_anonymous()` to determine if the SCIM
 request should be allowed or denied.
