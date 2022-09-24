@@ -13,11 +13,11 @@ urlpatterns = [
             views.SCIMView.as_view(implemented=False),
             name='root'),
 
-    re_path(r'^.search$',
+    re_path(r'^\.search$',
             views.SearchView.as_view(implemented=False),
             name='search'),
 
-    re_path(r'^Users/.search$',
+    re_path(r'^Users/\.search$',
             views.UserSearchView.as_view(),
             name='users-search'),
 
@@ -25,7 +25,7 @@ urlpatterns = [
             views.UsersView.as_view(),
             name='users'),
 
-    re_path(r'^Groups/.search$',
+    re_path(r'^Groups/\.search$',
             views.GroupSearchView.as_view(),
             name='groups-search'),
 
