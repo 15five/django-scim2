@@ -3,8 +3,7 @@ import logging
 from urllib.parse import urljoin
 
 from django import db
-from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
@@ -24,7 +23,6 @@ from .utils import (
     get_group_adapter,
     get_group_filter_parser,
     get_group_model,
-    get_is_authenticated_predicate,
     get_object_post_processor_getter,
     get_queryset_post_processor_getter,
     get_service_provider_config_model,
@@ -33,27 +31,6 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def login_required(
-    function=None,
-    redirect_field_name=REDIRECT_FIELD_NAME,
-    login_url=None,
-):
-    """
-    Decorator for views that checks that the user is logged in, redirecting to
-    the log-in page if necessary.
-
-    This function was pulled almost directly from Django's implementation.
-    """
-    actual_decorator = user_passes_test(
-        get_is_authenticated_predicate(),  # <- Only line that differs from Django's implementation.
-        login_url=login_url,
-        redirect_field_name=redirect_field_name,
-    )
-    if function:
-        return actual_decorator(function)
-    return actual_decorator
 
 
 class SCIMView(View):
@@ -126,7 +103,7 @@ class SCIMView(View):
             raise exceptions.BadRequestError(msg)
 
     @method_decorator(csrf_exempt)
-    @method_decorator(login_required)
+    @method_decorator(scim_settings.AUTH_CHECK_MIDDLEWARE)
     def dispatch(self, request, *args, **kwargs):
         if not self.implemented:
             return self.status_501(request, *args, **kwargs)

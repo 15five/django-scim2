@@ -21,12 +21,12 @@ class SCIMAuthCheckMiddleware(object):
         # One-time configuration and initialization per server start.
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request, *args, **kwargs):
         response = None
         if hasattr(self, 'process_request'):
             response = self.process_request(request)
         if not response:
-            response = self.get_response(request)
+            response = self.get_response(request, *args, **kwargs)
         if hasattr(self, 'process_response'):
             response = self.process_response(request, response)
         return response
