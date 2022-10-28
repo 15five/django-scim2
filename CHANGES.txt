@@ -9,6 +9,8 @@ CHANGE LOG
   configured as a middleware in Django's `MIDDLEWARE` setting.  If you
   want to customize it, you can do so using the
   `AUTH_CHECK_MIDDLEWARE` key of the `SCIM_SERVICE_PROVIDER` setting.
+- Escape URL regexes so as not to match all characters in place of the
+  period in `.search`.
 
 0.17.3
 ------
