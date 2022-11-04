@@ -101,9 +101,11 @@ tox
 To run the test suite with a single version of Python (the version you created
 the virtualenv with), run:
 
+
 ```
 poetry run pytest tests/
 ```
+
 
 Coverage
 --------
