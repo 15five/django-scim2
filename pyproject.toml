@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-scim2"
-version = "0.18.0"
+version = "0.19.0"
 description = "A partial implementation of the SCIM 2.0 provider specification for use with Django."
 license = "MIT"
 authors = ["Paul Logston <paul@15five.com>"]
@@ -18,10 +18,10 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Topic :: Internet",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -30,8 +30,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7"
-scim2-filter-parser = ">=0.3.5"
+python = ">=3.8"
+scim2-filter-parser = ">=0.5.0"
 django = ">=3.2"
 
 [tool.poetry.dev-dependencies]
