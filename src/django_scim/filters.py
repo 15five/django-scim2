@@ -1,10 +1,9 @@
 """
 Transform filter query into QuerySet
 """
-from django.contrib.auth import get_user_model
 from scim2_filter_parser.queries.sql import SQLQuery
 
-from .utils import get_group_model
+from .utils import get_group_model, get_user_model
 
 
 class FilterQuery:

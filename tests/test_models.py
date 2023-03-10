@@ -1,12 +1,8 @@
 import django
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
-from django.db import connection, models
 from django.test import TestCase, override_settings
 
 from django_scim import constants
-from django_scim import models as scim_models
-from django_scim.utils import get_service_provider_config_model
+from django_scim.utils import get_service_provider_config_model, get_user_model
 
 # Force loading of test.models so its models are registered with Django and
 # testing framework.
