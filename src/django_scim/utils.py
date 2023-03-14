@@ -4,6 +4,13 @@ from urllib.parse import urlunparse
 from .settings import scim_settings
 
 
+def get_user_model():
+    """
+    Return the user model.
+    """
+    return scim_settings.USER_MODEL_GETTER()
+
+
 def get_user_adapter():
     """
     Return the user model adapter.

@@ -3,7 +3,6 @@ import logging
 from urllib.parse import urljoin
 
 from django import db
-from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
@@ -28,6 +27,7 @@ from .utils import (
     get_service_provider_config_model,
     get_user_adapter,
     get_user_filter_parser,
+    get_user_model,
 )
 
 logger = logging.getLogger(__name__)

@@ -1,21 +1,15 @@
 import copy
 import logging
-import re
 
-import django
 from django import core
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.db import IntegrityError, transaction
-from django.db.models import Prefetch
-from django.utils.functional import cached_property
+from django.db import transaction
 
 from app import constants
-from app.models import Group, User
+from app.models import Group
 from django_scim import exceptions as scim_exceptions
-from django_scim.adapters import SCIMGroup, SCIMUser
-from django_scim.constants import SchemaURI
-from django_scim.utils import get_group_adapter, get_group_model
+from django_scim.adapters import SCIMUser
+from django_scim.utils import get_group_adapter
+
 
 logger = logging.getLogger(__name__)
 

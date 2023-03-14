@@ -22,6 +22,7 @@ from django.conf import settings
 USER_SETTINGS = getattr(settings, 'SCIM_SERVICE_PROVIDER', None)
 
 DEFAULTS = {
+    'USER_MODEL_GETTER': 'django.contrib.auth.get_user_model',
     'USER_ADAPTER': 'django_scim.adapters.SCIMUser',
     'GROUP_MODEL': 'django.contrib.auth.models.Group',
     'GROUP_ADAPTER': 'django_scim.adapters.SCIMGroup',
@@ -52,6 +53,7 @@ MANDATORY = (
 
 # List of settings that may be in string import notation.
 IMPORT_STRINGS = (
+    'USER_MODEL_GETTER',
     'USER_ADAPTER',
     'GROUP_MODEL',
     'GROUP_ADAPTER',

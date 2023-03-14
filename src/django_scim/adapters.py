@@ -20,7 +20,6 @@ from typing import Optional, Union
 from urllib.parse import urljoin
 
 from django import core
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 from scim2_filter_parser.attr_paths import AttrPath
 
@@ -31,6 +30,7 @@ from .utils import (
     get_group_filter_parser,
     get_user_adapter,
     get_user_filter_parser,
+    get_user_model,
 )
 
 
