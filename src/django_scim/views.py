@@ -312,8 +312,8 @@ class GetView(object):
         ).exclude(
             **extra_exclude_kwargs
         )
-        qs = self.get_queryset_post_processor(request, qs)
         qs = qs.order_by(self.lookup_field)
+        qs = self.get_queryset_post_processor(request, qs)
         return self._build_response(request, qs, *self._page(request))
 
 
