@@ -1,6 +1,13 @@
 CHANGE LOG
 ==========
 
+0.19.1
+------
+
+- Allow sorting via get_queryset_post_processor.
+- Drop USE_L10N setting.
+- Switch to poetry-core.
+
 0.19.0
 ------
 
