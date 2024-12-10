@@ -1,4 +1,4 @@
-django>=2.2.13,<5.0.0
+django>=2.2.13,<5.2
 django-scim2  # not pinning, should always work with latest release
 Sphinx>=8,<9
 sphinx-rtd-theme
