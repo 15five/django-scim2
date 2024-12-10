@@ -21,7 +21,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('..'))
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'test_settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 import django;django.setup()
 
 import django_scim  # isort:skip
@@ -165,4 +165,4 @@ texinfo_documents = [
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {"python": ('https://docs.python.org/',  None)}
