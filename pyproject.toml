@@ -33,7 +33,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.9"
 scim2-filter-parser = ">=0.5.0"
-django = ">=3.2"
+django = ">=4.2"
 
 [tool.poetry.dev-dependencies]
 mock = "^4.0.2"
