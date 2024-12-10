@@ -77,11 +77,9 @@ Development
 -----------
 
 This project uses Poetry to manage dependencies, etc. Thus to install the
-necessary tools when developing, run:
+necessary tools when developing, run::
 
-```
-poetry install
-```
+    poetry install
 
 Tests
 -----
@@ -92,20 +90,14 @@ Tests
 https://github.com/15five/django-scim2/actions
 
 Tests are typically run locally with `tox` (https://tox.wiki/). Tox will test
-all supported versions of Python and Django.
+all supported versions of Python and Django::
 
-```
-tox
-```
+    tox
 
 To run the test suite with a single version of Python (the version you created
-the virtualenv with), run:
+the virtualenv with), run::
 
-
-```
-poetry run pytest tests/
-```
-
+    poetry run pytest tests/
 
 Coverage
 --------
@@ -115,9 +107,10 @@ Coverage
 
 https://codecov.io/gh/15five/django-scim2/
 
-```
-tox -e coverage
-```
+To run tests with coverage::
+
+    tox -e coverage
+
 
 License
 -------
