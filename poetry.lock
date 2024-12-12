@@ -421,13 +421,13 @@ testing = ["Django", "django-configurations (>=2.0)"]
 
 [[package]]
 name = "scim2-filter-parser"
-version = "0.5.0"
+version = "0.7.0"
 description = "A customizable parser/transpiler for SCIM2.0 filters."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "scim2_filter_parser-0.5.0-py3-none-any.whl", hash = "sha256:4aca1b3b64655dc038a973a9659056a103a919fb0218614e36bf19d3b5de5b48"},
-    {file = "scim2_filter_parser-0.5.0.tar.gz", hash = "sha256:104c72e6faeb9a6b873950f66b0e3b69134fb19debf67e1d3714e91a6dafd8af"},
+    {file = "scim2_filter_parser-0.7.0-py3-none-any.whl", hash = "sha256:a74f90a2d52a77e0f1bc4d77e84b79f88749469f6f7192d64a4f92e4fe50ab69"},
+    {file = "scim2_filter_parser-0.7.0.tar.gz", hash = "sha256:1e11dbe2e186fc1be6d93732b467a3bbaa9deff272dfeb3a0540394cfab7030c"},
 ]
 
 [package.dependencies]
