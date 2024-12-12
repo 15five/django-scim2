@@ -43,7 +43,7 @@ toml = "^0.10.1"
 flake8-isort = "^3.0.0"
 pytest = ">=5.4.0"
 pytest-django = "4.9.0"
-coverage = "^6.4.2"
+coverage = "^7.6.9"
 pytest-cov = "5.0.0"
 
 [tool.black]
