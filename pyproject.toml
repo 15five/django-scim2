@@ -37,7 +37,7 @@ django = ">=4.2"
 
 [tool.poetry.dev-dependencies]
 mock = "^5.1.0"
-tox = "^4.24.2"
+tox = "^4.25.0"
 flake8 = "^7.1.1"
 toml = "^0.10.1"
 flake8-isort = "^6.1.1"
