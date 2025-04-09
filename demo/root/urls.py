@@ -12,12 +12,13 @@ Class-based views
 Including another URLconf
     1. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import include, url
+
+from django.urls import include, path
 from django.contrib import admin
 
-from django_scim.urls import urlpatterns as scim_urls
+from django_scim.urls import urlpatterns as django_scim_urls
 
 urlpatterns = [
-    url(r'^scim/v2/', include('django_scim.urls', namespace='scim')),
-    url(r'^admin/', include(admin.site.urls)),
+    path('scim/v2/', include((django_scim_urls, "scim"), namespace="scim")),
+    path('admin/', admin.site.urls),
 ]
