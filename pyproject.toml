@@ -36,7 +36,7 @@ scim2-filter-parser = ">=0.5.0"
 django = ">=4.2"
 
 [tool.poetry.dev-dependencies]
-mock = "^5.1.0"
+mock = "^5.2.0"
 tox = "^4.28.4"
 flake8 = "^7.3.0"
 toml = "^0.10.1"
