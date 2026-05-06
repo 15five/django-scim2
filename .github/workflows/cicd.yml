@@ -13,14 +13,14 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install tox tox-gh-actions poetry==1.4.2
+      - run: pip install -U tox tox-gh-actions poetry
       - run: tox
 
   flake8:
@@ -29,11 +29,11 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: python:3.11-bullseye
+      image: python:3.12
 
     steps:
       - uses: actions/checkout@v2
-      - run: pip install tox poetry==1.4.2
+      - run: pip install tox poetry
       - run: tox -e flake8
 
   coverage:
@@ -42,11 +42,11 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: python:3.11-bullseye
+      image: python:3.12
 
     steps:
       - uses: actions/checkout@v2
-      - run: pip install tox poetry==1.4.2
+      - run: pip install -U tox poetry
       - run: tox -e coverage
       - uses: codecov/codecov-action@v5
         with:
