@@ -1,6 +1,18 @@
 CHANGE LOG
 ==========
 
+0.21.0
+------
+
+- Fix ``itemsPerPage`` in SCIM list responses to report the number of
+  resources actually returned rather than the requested ``count``
+  (SCIM RFC 7644 section 3.4.2). (#208, #210)
+- Drop support for EOL Python 3.8 and Django < 4.2.
+- Add support for Python 3.12 / 3.13 and Django 5.0 / 5.1.
+- Update dependencies (Django 4.2.30, scim2-filter-parser, pytest,
+  pytest-django, tox, coverage, flake8, mock).
+- Demo app and documentation fixes (Sphinx 8, Read the Docs config).
+
 0.19.1
 ------
 
