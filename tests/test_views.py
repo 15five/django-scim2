@@ -103,7 +103,7 @@ class FilterMixinTestCase(TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 2,
-            'itemsPerPage': 5,
+            'itemsPerPage': 2,
             'startIndex': 1,
             'Resources': [
                 ford.to_dict(),
@@ -111,6 +111,35 @@ class FilterMixinTestCase(TestCase):
             ],
         }
         self.assertEqual(expected, result)
+
+    def test__build_response_items_per_page_reflects_returned_count(self):
+        # Regression for #208: itemsPerPage must be the number of resources
+        # actually returned, not the requested count (SCIM RFC 7644).
+        get_user_model().objects.create(
+            first_name='Robert', last_name='Ford', username='rford',
+        )
+        get_user_model().objects.create(
+            first_name='Dolores', last_name='Abernathy', username='dabernathy',
+        )
+        mixin = views.FilterMixin()
+        mixin.scim_adapter = get_user_adapter()
+        req = self.factory.get('/fake/request')
+
+        # count (100) larger than available (2) -> itemsPerPage == 2
+        result = json.loads(
+            mixin._build_response(req, get_user_model().objects.all(), 1, 100).content.decode()
+        )
+        self.assertEqual(result['totalResults'], 2)
+        self.assertEqual(result['itemsPerPage'], 2)
+        self.assertEqual(len(result['Resources']), 2)
+
+        # startIndex beyond the result set -> empty page -> itemsPerPage == 0
+        result = json.loads(
+            mixin._build_response(req, get_user_model().objects.all(), 101, 100).content.decode()
+        )
+        self.assertEqual(result['totalResults'], 2)
+        self.assertEqual(result['itemsPerPage'], 0)
+        self.assertEqual(result['Resources'], [])
 
     def test__filter_raw_queryset_with_extra_filter_kwargs(self):
         ford = get_user_model().objects.create(
@@ -260,7 +289,7 @@ class SearchTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 0,
-            'itemsPerPage': 50,
+            'itemsPerPage': 0,
             'startIndex': 1,
             'Resources': [],
         }
@@ -292,7 +321,7 @@ class SearchTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 1,
-            'itemsPerPage': 50,
+            'itemsPerPage': 1,
             'startIndex': 1,
             'Resources': [
                 ford.to_dict(),
@@ -339,7 +368,7 @@ class CustomAuthDecoratorCase(TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 3,
-            'itemsPerPage': 50,
+            'itemsPerPage': 3,
             'startIndex': 1,
             'Resources': [
                 get_user_adapter()(u, self.request).to_dict() 
@@ -375,7 +404,7 @@ class CustomAuthDecoratorCase(TestCase):
             expected = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],
                 'totalResults': 3,
-                'itemsPerPage': 50,
+                'itemsPerPage': 3,
                 'startIndex': 1,
                 'Resources': [
                     get_user_adapter()(u, self.request).to_dict() 
@@ -405,7 +434,7 @@ class UserTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 0,
-            'itemsPerPage': 50,
+            'itemsPerPage': 0,
             'startIndex': 1,
             'Resources': [],
         }
@@ -456,7 +485,7 @@ class UserTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 3,
-            'itemsPerPage': 50,
+            'itemsPerPage': 3,
             'startIndex': 1,
             'Resources': [
                 get_user_adapter()(self.user, self.request).to_dict(),
@@ -495,7 +524,7 @@ class UserTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 2,
-            'itemsPerPage': 50,
+            'itemsPerPage': 2,
             'startIndex': 1,
             'Resources': [
                 get_user_adapter()(self.user, self.request).to_dict(),
@@ -533,7 +562,7 @@ class UserTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 1,
-            'itemsPerPage': 50,
+            'itemsPerPage': 1,
             'startIndex': 1,
             'Resources': [
                 abernathy.to_dict(),
@@ -573,7 +602,7 @@ class UserTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 1,
-            'itemsPerPage': 50,
+            'itemsPerPage': 1,
             'startIndex': 1,
             'Resources': [
                 abernathy.to_dict(),
@@ -1148,7 +1177,7 @@ class GroupTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 2,
-            'itemsPerPage': 50,
+            'itemsPerPage': 2,
             'startIndex': 1,
             'Resources': [
                 behavior.to_dict(),
@@ -1182,7 +1211,7 @@ class GroupTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 1,
-            'itemsPerPage': 50,
+            'itemsPerPage': 1,
             'startIndex': 1,
             'Resources': [
                 behavior.to_dict(),
@@ -1215,7 +1244,7 @@ class GroupTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 1,
-            'itemsPerPage': 50,
+            'itemsPerPage': 1,
             'startIndex': 1,
             'Resources': [
                 security.to_dict(),
@@ -1251,7 +1280,7 @@ class GroupTestCase(LoginMixin, TestCase):
         expected = {
             'schemas': [constants.SchemaURI.LIST_RESPONSE],
             'totalResults': 1,
-            'itemsPerPage': 50,
+            'itemsPerPage': 1,
             'startIndex': 1,
             'Resources': [
                 security.to_dict(),

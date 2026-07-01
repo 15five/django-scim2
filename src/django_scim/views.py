@@ -239,7 +239,7 @@ class FilterMixin(object):
             doc = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],
                 'totalResults': total_count,
-                'itemsPerPage': count,
+                'itemsPerPage': len(resources),
                 'startIndex': start,
                 'Resources': resources,
             }
