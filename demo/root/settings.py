@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.8/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
@@ -47,7 +48,7 @@ MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -112,24 +113,18 @@ sender.setup('app')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda r: not DEBUG
+            'callback': lambda r: not DEBUG,
         }
     },
-
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(name)s %(module)s %(process)d %(thread)d %(message)s'
         },
-        'medium': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
+        'medium': {'format': '%(levelname)s %(asctime)s %(message)s'},
+        'simple': {'format': '%(levelname)s %(message)s'},
         'fluentd': {
             '()': 'fluent.handler.FluentRecordFormatter',
             'format': {
@@ -152,7 +147,7 @@ LOGGING = {
                 'thread': '%(thread)d',
                 'threadName': '%(threadName)s',
                 'exc_text': '%(exc_text)s',
-            }
+            },
         },
         # This formatter is specifically for use with the
         # SCIMFluentHandler handler.
@@ -182,15 +177,14 @@ LOGGING = {
                 'request_absolute_uri': '%(request_absolute_uri)s',
                 'request_method': '%(request_method)s',
                 'response_status_code': '%(response_status_code)s',
-            }
-        }
+            },
+        },
     },
-
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
+            'class': 'django.utils.log.AdminEmailHandler',
         },
         'debug': {
             'level': 'DEBUG',
@@ -205,7 +199,6 @@ LOGGING = {
             'tag': 'app.scim',
         },
     },
-
 }
 
 # Static files (CSS, JavaScript, Images)

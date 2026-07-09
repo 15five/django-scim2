@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-scim2"
-version = "0.19.1"
+version = "0.21.0"
 description = "A partial implementation of the SCIM 2.0 provider specification for use with Django."
 license = "MIT"
 authors = ["Paul Logston <paul@15five.com>"]
@@ -33,18 +33,19 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.9"
 scim2-filter-parser = ">=0.5.0"
-django = ">=4.2"
+django = "4.2.30"
+pygments = "2.20.0"
 
 [tool.poetry.dev-dependencies]
-mock = "^4.0.2"
-tox = "^3.16.1"
-flake8 = "^3.8.3"
+mock = "^5.2.0"
+tox = "^4.30.3"
+flake8 = "^7.3.0"
 toml = "^0.10.1"
-flake8-isort = "^3.0.0"
+flake8-isort = "^6.1.2"
 pytest = ">=5.4.0"
-pytest-django = "4.5.2"
-coverage = "^6.4.2"
-pytest-cov = "3.0.0"
+pytest-django = "4.11.1"
+coverage = "^7.10.7"
+pytest-cov = "7.1.0"
 
 [tool.black]
 line-length = 100

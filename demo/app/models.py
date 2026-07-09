@@ -1,10 +1,10 @@
 from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from django_extensions.db.models import TimeStampedModel
-from django_scim.models import AbstractSCIMGroup, AbstractSCIMUser
+from django_scim.models import AbstractSCIMGroupMixin, AbstractSCIMUserMixin
 
 
 class Company(models.Model):
@@ -14,14 +14,43 @@ class Company(models.Model):
     )
 
 
-class User(AbstractSCIMUser, TimeStampedModel, AbstractBaseUser):
+class ScimUserManager(BaseUserManager):
+    use_in_migrations = True
+
+    def _create_user(self, scim_username, password, **extra_fields):
+        if not scim_username:
+            raise ValueError('Users require a scim_usernamefield')
+        user = self.model(scim_username=scim_username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, scim_username, password=None, **extra_fields):
+        company, _ = Company.objects.get_or_create(name="Demo Inc")
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('company_id', company.id)
+        return self._create_user(scim_username, password, **extra_fields)
+
+    def create_superuser(self, scim_username, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self._create_user(scim_username, password, **extra_fields)
+
+
+class User(AbstractSCIMUserMixin, TimeStampedModel, AbstractBaseUser, PermissionsMixin):
     company = models.ForeignKey(
         'app.Company',
+        blank=True,
+        null=True,
         on_delete=models.CASCADE,
     )
 
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+
     # Why override this? Can't we just use what the AbstractSCIMUser mixin
-    # gives us? The USERNAME_FIELD needs to be "unique" and for flexibility, 
+    # gives us? The USERNAME_FIELD needs to be "unique" and for flexibility,
     # AbstractSCIMUser.scim_username is not unique by default.
     scim_username = models.CharField(
         _('SCIM Username'),
@@ -55,8 +84,10 @@ class User(AbstractSCIMUser, TimeStampedModel, AbstractBaseUser):
     def get_short_name(self):
         return self.first_name + (' ' + self.last_name[0] if self.last_name else '')
 
+    objects = ScimUserManager()
 
-class Group(TimeStampedModel, AbstractSCIMGroup):
+
+class Group(TimeStampedModel, AbstractSCIMGroupMixin):
     company = models.ForeignKey(
         'app.Company',
         on_delete=models.CASCADE,
@@ -79,7 +110,4 @@ class GroupMembership(models.Model):
         on_delete=models.CASCADE,
     )
 
-    group = models.ForeignKey(
-        to='app.Group',
-        on_delete=models.CASCADE
-    )
+    group = models.ForeignKey(to='app.Group', on_delete=models.CASCADE)
