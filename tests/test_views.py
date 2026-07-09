@@ -716,6 +716,32 @@ class UserTestCase(LoginMixin, TestCase):
         ford = get_user_adapter()(ford, self.request)
         self.assertEqual(result, ford.to_dict())
 
+    def test_put_integrity_error_returns_scim_error(self):
+        # Regression test for #209: a database IntegrityError raised while saving in
+        # PutView must surface as a SCIM error response (409 Conflict) rather than an
+        # unhandled 500, matching PostView's behaviour.
+        import django.db.utils
+
+        ford = get_user_model().objects.create(
+            first_name='Robert',
+            last_name='Ford',
+            username='rford',
+            email='rford@ww.com',
+        )
+
+        url = reverse('scim:users', kwargs={'uuid': ford.id})
+        data = get_user_adapter()(ford, self.request).to_dict()
+        data['userName'] = 'updatedrford'
+        body = json.dumps(data)
+
+        with mock.patch(
+            'django_scim.adapters.SCIMUser.save',
+            side_effect=django.db.utils.IntegrityError('duplicate key'),
+        ):
+            resp = self.client.put(url, body, content_type=constants.SCIM_CONTENT_TYPE)
+
+        self.assertEqual(resp.status_code, 409, resp.content.decode())
+
     def test_put_invalid_active_value(self):
         ford = get_user_model().objects.create(
             first_name='Robert',
