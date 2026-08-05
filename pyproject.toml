@@ -22,6 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Internet",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -32,7 +33,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10"
 scim2-filter-parser = ">=0.5.0"
-django = "^4.2.30"
+django = ">=4.2.30,<5.3"
 pygments = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
