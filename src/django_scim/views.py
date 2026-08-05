@@ -239,7 +239,7 @@ class FilterMixin(object):
             doc = {
                 'schemas': [constants.SchemaURI.LIST_RESPONSE],
                 'totalResults': total_count,
-                'itemsPerPage': count,
+                'itemsPerPage': len(resources),
                 'startIndex': start,
                 'Resources': resources,
             }
@@ -369,7 +369,12 @@ class PutView(object):
 
         scim_obj.validate_dict(body)
         scim_obj.from_dict(body)
-        scim_obj.save()
+        try:
+            scim_obj.save()
+        except db.utils.IntegrityError as e:
+            # Cast error to a SCIM IntegrityError to use the status
+            # attribute on the SCIM IntegrityError.
+            raise exceptions.IntegrityError(str(e))
 
         content = json.dumps(scim_obj.to_dict())
         response = HttpResponse(content=content,
