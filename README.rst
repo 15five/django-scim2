@@ -102,10 +102,10 @@ the virtualenv with), run::
 Coverage
 --------
 
-.. |coverage| image:: https://codecov.io/gh/15five/django-scim2/graph/badge.svg
-    :target: https://codecov.io/gh/15five/django-scim2
+.. |coverage| image:: https://coveralls.io/repos/github/15five/django-scim2/badge.svg
+    :target: https://coveralls.io/github/15five/django-scim2
 
-https://codecov.io/gh/15five/django-scim2/
+https://coveralls.io/github/15five/django-scim2
 
 To run tests with coverage::
 
