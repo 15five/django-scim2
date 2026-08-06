@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+Unreleased
+----------
+
+- Add support for Django 6.0.
+
 0.22.0
 ------
 
