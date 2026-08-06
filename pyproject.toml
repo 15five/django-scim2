@@ -33,7 +33,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10"
 scim2-filter-parser = ">=0.5.0"
-django = ">=4.2.30,<6.1"
+django = ">=5.2.8,<6.1"
 pygments = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
