@@ -1,6 +1,18 @@
 CHANGE LOG
 ==========
 
+0.22.0
+------
+
+- Add support for Python 3.14. (#219)
+- Raise a SCIM error on ``IntegrityError`` in ``PutView`` rather than
+  returning a 500. (#209, #214)
+- Bump minimum supported Python version to 3.10. (#217)
+- Run CI on pull requests. (#216)
+- Move coverage reporting to coveralls.io. (#206)
+- Update dependencies (django-oauth-toolkit 3.4.0, pytest 9.0.3,
+  Sphinx 8.1.3). (#211, #212, #215, #218)
+
 0.21.0
 ------
 
