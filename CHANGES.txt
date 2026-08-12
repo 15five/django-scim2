@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Add support for Django 6.0.
+- Drop support for Django 4.2 (end of extended support April 2026).
 
 0.22.0
 ------
