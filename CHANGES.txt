@@ -4,8 +4,11 @@ CHANGE LOG
 Unreleased
 ----------
 
-- Add support for Django 6.0.
-- Drop support for Django 4.2 (end of extended support April 2026).
+0.23.0
+------
+
+- Add support for Django 6.0. (#221)
+- Drop support for Django 4.2 (end of extended support April 2026). (#222)
 
 0.22.0
 ------
