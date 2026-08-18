@@ -38,7 +38,7 @@ pygments = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
 mock = "^5.2.0"
-tox = "^4.58.0"
+tox = "^4.60.0"
 flake8 = "^7.3.0"
 toml = "^0.10.1"
 flake8-isort = "^7.0.0"
