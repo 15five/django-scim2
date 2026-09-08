@@ -1,6 +1,12 @@
 Settings
 ========
 
+USER_MODEL_GETTER
+    Default: 'django.contrib.auth.get_user_model'
+
+    This setting names the function that returns your user model.
+    Set this setting when your project uses a custom user model.
+
 USER_ADAPTER
     Default: 'django_scim.adapters.SCIMUser'
 
@@ -33,6 +39,19 @@ GET_OBJECT_POST_PROCESSOR_GETTER
 
 GET_QUERYSET_POST_PROCESSOR_GETTER
     Default: 'django_scim.utils.default_get_queryset_post_processor_getter'
+
+GET_IS_AUTHENTICATED_PREDICATE
+    Default: 'django_scim.utils.default_is_authenticated_predicate'
+
+    This setting names the function that checks if a request is authenticated.
+    The default function checks the value of request.user.is_authenticated.
+    Set this setting to use your own authentication check.
+
+AUTH_CHECK_MIDDLEWARE
+    Default: 'django_scim.middleware.SCIMAuthCheckMiddleware'
+
+    This setting names the middleware class that runs the authentication check.
+    Subclass this middleware to change how django-scim2 checks authentication.
 
 SCHEMAS_GETTER
     Default: 'django_scim.schemas.default_schemas_getter'

@@ -85,6 +85,15 @@ class AbstractSCIMCommonAttributesMixin(models.Model):
     over older definitions that may be included in existing schemas.
     """
 
+    scim_id = models.CharField(
+        _('SCIM ID'),
+        max_length=254,
+        null=True,
+        blank=True,
+        default=None,
+        unique=True,
+        help_text=_('A unique identifier for a SCIM resource as defined by the service provider.'),
+    )
     """
     id
       A unique identifier for a SCIM resource as defined by the service
@@ -101,16 +110,16 @@ class AbstractSCIMCommonAttributesMixin(models.Model):
       "always".  See Section 9 for additional considerations regarding
       privacy.
     """
-    scim_id = models.CharField(
-        _('SCIM ID'),
+
+    scim_external_id = models.CharField(
+        _('SCIM External ID'),
         max_length=254,
         null=True,
         blank=True,
         default=None,
-        unique=True,
-        help_text=_('A unique identifier for a SCIM resource as defined by the service provider.'),
+        db_index=True,
+        help_text=_('A string that is an identifier for the resource as defined by the provisioning client.'),
     )
-
     """
     externalId
       A String that is an identifier for the resource as defined by the
@@ -132,15 +141,6 @@ class AbstractSCIMCommonAttributesMixin(models.Model):
       "caseExact" as "true" and a mutability of "readWrite".  This
       attribute is OPTIONAL.
     """
-    scim_external_id = models.CharField(
-        _('SCIM External ID'),
-        max_length=254,
-        null=True,
-        blank=True,
-        default=None,
-        db_index=True,
-        help_text=_('A string that is an identifier for the resource as defined by the provisioning client.'),
-    )
 
     def set_scim_id(self, is_new):
         if is_new:
@@ -163,6 +163,15 @@ class AbstractSCIMUserMixin(AbstractSCIMCommonAttributesMixin):
     # https://tools.ietf.org/html/rfc7643#section-4.1
     """
 
+    scim_username = models.CharField(
+        _('SCIM Username'),
+        max_length=254,
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text=_("A service provider's unique identifier for the user"),
+    )
     """
     userName
       A service provider's unique identifier for the user, typically
@@ -174,15 +183,6 @@ class AbstractSCIMUserMixin(AbstractSCIMCommonAttributesMixin):
       the service provider's entire set of Users.  This attribute is
       REQUIRED and is case insensitive.
     """
-    scim_username = models.CharField(
-        _('SCIM Username'),
-        max_length=254,
-        null=True,
-        blank=True,
-        default=None,
-        db_index=True,
-        help_text=_("A service provider's unique identifier for the user"),
-    )
 
     @property
     def scim_groups(self):
@@ -199,10 +199,6 @@ class AbstractSCIMGroupMixin(AbstractSCIMCommonAttributesMixin):
     # https://tools.ietf.org/html/rfc7643#section-4.2
     """
 
-    """
-    displayName
-      A human-readable name for the Group.  REQUIRED.
-    """
     scim_display_name = models.CharField(
         _('SCIM Display Name'),
         max_length=254,
@@ -212,6 +208,10 @@ class AbstractSCIMGroupMixin(AbstractSCIMCommonAttributesMixin):
         db_index=True,
         help_text=_("A human-readable name for the Group."),
     )
+    """
+    displayName
+      A human-readable name for the Group.  REQUIRED.
+    """
 
     class Meta:
         abstract = True
