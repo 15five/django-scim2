@@ -54,6 +54,12 @@ Finally, add settings appropriate for you app to your settings.py file::
 
 Other SCIM settings can be provided but those listed above are required.
 
+Demo App
+--------
+
+The ``demo`` folder has a small Django project that uses django-scim2.
+Use it as a working example, alongside the settings above.
+
 PyPI
 ----
 
