@@ -4,6 +4,8 @@ CHANGE LOG
 Unreleased
 ----------
 
+- Add support for Django < 2028 (Django is changing to year-based versioning after 6.x) (#249)
+
 0.23.0
 ------
 
