@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Add support for Django < 2028 (Django is changing to year-based versioning after 6.x) (#249)
+- Add support for Python 3.15. (#251)
 
 0.23.0
 ------
