@@ -133,7 +133,7 @@ class SCIMUserTestCase(TestCase):
         ford = get_user_adapter()(ford, self.request)
 
         expected = {
-            'endpoint': u'/scim/v2/Users',
+            'endpoint': u'/Users',
             'description': 'User Account',
             'name': 'User',
             'meta': {
@@ -503,7 +503,7 @@ class SCIMGroupTestCase(TestCase):
         behavior = get_group_adapter()(behavior, self.request)
 
         expected = {
-            'endpoint': u'/scim/v2/Groups',
+            'endpoint': u'/Groups',
             'description': 'Group',
             'name': 'Group',
             'meta': {
