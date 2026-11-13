@@ -4,6 +4,9 @@ CHANGE LOG
 Unreleased
 ----------
 
+- Fix ResourceType ``endpoint`` to be relative to the SCIM base URL (e.g. ``/Users``)
+  instead of including the URL prefix the app is mounted at (RFC 7643 §6).
+
 0.24.0
 ------
 

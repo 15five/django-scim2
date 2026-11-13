@@ -68,6 +68,14 @@ class SCIMMixin(object):
     def location(self):
         return urljoin(get_base_scim_location_getter()(self.request), self.path)
 
+    @classmethod
+    def resource_type_endpoint(cls):
+        """
+        Return the resource endpoint relative to the SCIM base URL
+        """
+        base_url = reverse('scim:root').rstrip('/')
+        return reverse(cls.url_name).removeprefix(base_url)
+
     def to_dict(self):
         """
         Return a ``dict`` conforming to the object's SCIM Schema,
@@ -424,7 +432,7 @@ class SCIMUser(SCIMMixin):
             'schemas': [constants.SchemaURI.RESOURCE_TYPE],
             'id': id_,
             'name': 'User',
-            'endpoint': reverse('scim:users'),
+            'endpoint': cls.resource_type_endpoint(),
             'description': 'User Account',
             'schema': constants.SchemaURI.USER,
             'meta': {
@@ -597,7 +605,7 @@ class SCIMGroup(SCIMMixin):
             'schemas': [constants.SchemaURI.RESOURCE_TYPE],
             'id': id_,
             'name': 'Group',
-            'endpoint': reverse('scim:groups'),
+            'endpoint': cls.resource_type_endpoint(),
             'description': 'Group',
             'schema': constants.SchemaURI.GROUP,
             'meta': {
